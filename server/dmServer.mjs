@@ -4,7 +4,13 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { assertDmConfig, requestAutonomousCrewAction, requestDmTurn } from "./api.js";
-import { deleteSession, listSessions, loadSession, saveSession } from "./sessionStore.js";
+import {
+  deleteSession,
+  getSessionBackendMode,
+  listSessions,
+  loadSession,
+  saveSession,
+} from "./sessionStore.js";
 import { dynamicVaultRoot, storageMode } from "./storagePaths.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,6 +23,7 @@ const PORT = Number(process.env.PORT || process.env.DM_API_PORT || 8787);
 const hasBuiltClient = existsSync(indexHtmlPath);
 const hasOpenAiKey = Boolean(process.env.OPENAI_API_KEY);
 const modelName = process.env.OPENAI_MODEL || "gpt-4.1-mini";
+const sessionBackendMode = getSessionBackendMode();
 
 const app = express();
 app.disable("x-powered-by");
@@ -29,6 +36,7 @@ app.get("/healthz", (_req, res) => {
     frontend: hasBuiltClient ? "built" : "not-built",
     api: "up",
     storageMode,
+    sessionBackendMode,
   });
 });
 
@@ -40,6 +48,7 @@ app.get("/api/health", (_req, res) => {
     openaiConfigured: hasOpenAiKey,
     model: modelName,
     storageMode,
+    sessionBackendMode,
     dynamicVaultRoot,
   });
 });
@@ -191,4 +200,5 @@ app.listen(PORT, () => {
     console.warn("OPENAI_API_KEY is not set. Gameplay requests to /api/turn and /api/autonomous-action will return 503.");
   }
   console.log(`Dynamic session storage: ${dynamicVaultRoot} (${storageMode})`);
+  console.log(`Session backend: ${sessionBackendMode}`);
 });

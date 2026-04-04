@@ -82,6 +82,12 @@ Optional persistent storage variable:
 DATA_DIR=/var/data/dungeonmaister
 ```
 
+Optional durable database variable:
+
+```bash
+DATABASE_URL=postgres://user:password@host/dbname?sslmode=require
+```
+
 Operational endpoints:
 
 - `GET /healthz`: deployment health probe for the combined app
@@ -95,14 +101,17 @@ Render path:
    - Start command: `npm start`
    - Health check path: `/healthz`
 3. Add `OPENAI_API_KEY` and optionally `OPENAI_MODEL`.
-4. For durable saves, mount a persistent disk and set `DATA_DIR` to a folder on that disk.
+4. For durable saves, either:
+   - set `DATABASE_URL` to a Neon/Postgres instance, or
+   - mount a persistent disk and set `DATA_DIR` to a folder on that disk.
 
 Deployment note:
 
 - Static lore continues to load from the repository under `vault/static/`.
-- Dynamic saves and session mirrors now write to a configurable data root.
-- If `DATA_DIR` is unset, they fall back to local `vault/dynamic/` behavior.
-- On Render, set `DATA_DIR` to your mounted disk path to keep saves across restarts and redeploys.
+- With `DATABASE_URL` set, save slots are stored durably in Postgres.
+- Dynamic session mirrors for prompt context still write to a configurable data root.
+- If neither `DATABASE_URL` nor `DATA_DIR` is set, the app falls back to local `vault/dynamic/` behavior.
+- Cheapest durable path: Neon Postgres via `DATABASE_URL`.
 
 ## Current Gameplay Flow
 

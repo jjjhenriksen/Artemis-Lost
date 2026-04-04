@@ -1,5 +1,6 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import postgres from "postgres";
 import { dynamicVaultRoot } from "./storagePaths.js";
 
 const dynamicRoot = dynamicVaultRoot;
@@ -11,6 +12,11 @@ const sessionStateMdPath = path.join(dynamicRoot, "session-state.md");
 const logMdPath = path.join(dynamicRoot, "log.md");
 const npcOverridePath = path.join(overridesRoot, "npc-override.md");
 const locationDeltaPath = path.join(overridesRoot, "location-delta.md");
+const DATABASE_URL = process.env.DATABASE_URL || "";
+const databaseEnabled = Boolean(DATABASE_URL);
+
+let sqlClient = null;
+let schemaReadyPromise = null;
 
 export const SAVE_SLOTS = [
   { id: "slot-1", label: "Slot 1" },
@@ -24,6 +30,42 @@ function joinLines(lines) {
 
 function getSlotPath(slotId) {
   return path.join(slotsRoot, `${slotId}.json`);
+}
+
+function getSql() {
+  if (!databaseEnabled) return null;
+  if (!sqlClient) {
+    sqlClient = postgres(DATABASE_URL, {
+      max: 1,
+      ssl: DATABASE_URL.includes("sslmode=require") ? "require" : "prefer",
+    });
+  }
+  return sqlClient;
+}
+
+async function ensureDatabaseSchema() {
+  if (!databaseEnabled) return;
+  if (schemaReadyPromise) return schemaReadyPromise;
+
+  const sql = getSql();
+  schemaReadyPromise = (async () => {
+    await sql`
+      create table if not exists sessions (
+        slot_id text primary key,
+        payload jsonb not null,
+        last_updated_iso timestamptz not null default now()
+      )
+    `;
+
+    await sql`
+      create table if not exists app_meta (
+        key text primary key,
+        value jsonb not null
+      )
+    `;
+  })();
+
+  return schemaReadyPromise;
 }
 
 function withSlotMetadata(slotId, session) {
@@ -155,6 +197,115 @@ async function writeSlotsIndex(index) {
   await writeFile(`${slotsIndexPath}`, `${JSON.stringify(index, null, 2)}\n`, "utf8");
 }
 
+async function getActiveSlotIdFromDatabase() {
+  await ensureDatabaseSchema();
+  const sql = getSql();
+  const rows = await sql`select value from app_meta where key = 'activeSlotId'`;
+  return rows[0]?.value?.slotId || null;
+}
+
+async function setActiveSlotIdInDatabase(slotId) {
+  await ensureDatabaseSchema();
+  const sql = getSql();
+  await sql`
+    insert into app_meta (key, value)
+    values ('activeSlotId', ${sql.json({ slotId })})
+    on conflict (key) do update set value = excluded.value
+  `;
+}
+
+async function listSessionsFromDatabase() {
+  await ensureDatabaseSchema();
+  const sql = getSql();
+  const [rows, activeSlotId] = await Promise.all([
+    sql`select slot_id, payload, last_updated_iso from sessions`,
+    getActiveSlotIdFromDatabase(),
+  ]);
+
+  const bySlotId = new Map(
+    rows.map((row) => [
+      row.slot_id,
+      {
+        ...row.payload,
+        lastUpdatedIso: row.last_updated_iso?.toISOString?.() || row.payload?.lastUpdatedIso || null,
+      },
+    ])
+  );
+
+  return {
+    activeSlotId,
+    slots: SAVE_SLOTS.map(({ id, label }) => ({
+      id,
+      label,
+      session: bySlotId.has(id) ? withSlotMetadata(id, bySlotId.get(id)) : null,
+    })),
+  };
+}
+
+async function loadSessionFromDatabase(slotId) {
+  await ensureDatabaseSchema();
+  if (!slotId) {
+    slotId = await getActiveSlotIdFromDatabase();
+  }
+  if (!slotId) return null;
+
+  const sql = getSql();
+  const rows = await sql`select payload, last_updated_iso from sessions where slot_id = ${slotId} limit 1`;
+  const row = rows[0];
+  if (!row?.payload) return null;
+
+  const payload = {
+    ...row.payload,
+    lastUpdatedIso: row.last_updated_iso?.toISOString?.() || row.payload?.lastUpdatedIso || null,
+  };
+
+  await setActiveSlotIdInDatabase(slotId);
+  await syncActiveMirror(slotId, payload);
+  return withSlotMetadata(slotId, payload);
+}
+
+async function saveSessionToDatabase(slotId, session) {
+  await ensureDatabaseSchema();
+  const sql = getSql();
+
+  const payload = {
+    worldState: session.worldState,
+    narration: session.narration,
+    turn: session.turn,
+    conversationHistory: session.conversationHistory ?? [],
+    createdFromCharacterCreation: Boolean(session.createdFromCharacterCreation),
+    lastUpdatedIso: new Date().toISOString(),
+  };
+
+  await sql`
+    insert into sessions (slot_id, payload, last_updated_iso)
+    values (${slotId}, ${sql.json(payload)}, ${payload.lastUpdatedIso})
+    on conflict (slot_id) do update
+    set payload = excluded.payload,
+        last_updated_iso = excluded.last_updated_iso
+  `;
+
+  await setActiveSlotIdInDatabase(slotId);
+  await syncActiveMirror(slotId, payload);
+
+  return withSlotMetadata(slotId, payload);
+}
+
+async function deleteSessionFromDatabase(slotId) {
+  await ensureDatabaseSchema();
+  const sql = getSql();
+  const activeSlotId = await getActiveSlotIdFromDatabase();
+
+  await sql`delete from sessions where slot_id = ${slotId}`;
+
+  if (activeSlotId === slotId) {
+    await setActiveSlotIdInDatabase(null);
+    await syncActiveMirror(null, null);
+  }
+
+  return { slotId, deleted: true };
+}
+
 async function syncActiveMirror(slotId, payload) {
   if (!payload?.worldState) {
     await Promise.all([
@@ -187,6 +338,10 @@ export async function ensureSessionPaths() {
   await mkdir(overridesRoot, { recursive: true });
   await mkdir(slotsRoot, { recursive: true });
 
+  if (databaseEnabled) {
+    await ensureDatabaseSchema();
+  }
+
   await Promise.all([
     writeIfMissing(
       npcOverridePath,
@@ -211,6 +366,11 @@ export async function ensureSessionPaths() {
 }
 
 export async function listSessions() {
+  if (databaseEnabled) {
+    await ensureSessionPaths();
+    return listSessionsFromDatabase();
+  }
+
   await ensureSessionPaths();
   const index = await readSlotsIndex();
 
@@ -232,6 +392,11 @@ export async function listSessions() {
 }
 
 export async function loadSession(slotId) {
+  if (databaseEnabled) {
+    await ensureSessionPaths();
+    return loadSessionFromDatabase(slotId);
+  }
+
   await ensureSessionPaths();
   if (!slotId) {
     const index = await readSlotsIndex();
@@ -250,6 +415,14 @@ export async function loadSession(slotId) {
 }
 
 export async function saveSession(slotId, session) {
+  if (databaseEnabled) {
+    await ensureSessionPaths();
+    if (!SAVE_SLOTS.some((slot) => slot.id === slotId)) {
+      throw new Error(`Unknown save slot: ${slotId}`);
+    }
+    return saveSessionToDatabase(slotId, session);
+  }
+
   await ensureSessionPaths();
   if (!SAVE_SLOTS.some((slot) => slot.id === slotId)) {
     throw new Error(`Unknown save slot: ${slotId}`);
@@ -283,6 +456,11 @@ export async function saveSession(slotId, session) {
 }
 
 export async function deleteSession(slotId) {
+  if (databaseEnabled) {
+    await ensureSessionPaths();
+    return deleteSessionFromDatabase(slotId);
+  }
+
   await ensureSessionPaths();
   await rm(getSlotPath(slotId), { force: true });
 
@@ -299,4 +477,8 @@ export async function deleteSession(slotId) {
   await writeSlotsIndex(index);
 
   return { slotId, deleted: true };
+}
+
+export function getSessionBackendMode() {
+  return databaseEnabled ? "database" : "filesystem";
 }
