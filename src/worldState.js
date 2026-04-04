@@ -365,6 +365,70 @@ function getCharacterProfileMap(profiles = DEFAULT_CHARACTER_PROFILES) {
   return new Map(profiles.map((profile) => [profile.id, profile]));
 }
 
+function getShortCrewName(name = "") {
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "Crew";
+  return parts[parts.length - 1];
+}
+
+function buildCrewTemplateValues(profilesById) {
+  const commander = profilesById.get("vasquez")?.name || "Commander Vasquez";
+  const engineer = profilesById.get("okafor")?.name || "Chief Engineer";
+  const scientist = profilesById.get("reyes")?.name || "Science Officer";
+  const specialist = profilesById.get("park")?.name || "Mission Specialist";
+
+  return {
+    commander,
+    engineer,
+    scientist,
+    specialist,
+    commanderShort: getShortCrewName(commander),
+    engineerShort: getShortCrewName(engineer),
+    scientistShort: getShortCrewName(scientist),
+    specialistShort: getShortCrewName(specialist),
+  };
+}
+
+function applyCrewTemplates(value, templateValues) {
+  if (typeof value !== "string") return value;
+  return value.replace(/\{(\w+)\}/g, (_, key) => templateValues[key] || "");
+}
+
+export function resolveMissionSeed(seedInput, profiles = DEFAULT_CHARACTER_PROFILES) {
+  const profilesById = getCharacterProfileMap(profiles);
+  const seed = normalizeMissionSeed(seedInput);
+  const templateValues = buildCrewTemplateValues(profilesById);
+
+  return {
+    ...seed,
+    label: applyCrewTemplates(seed.label, templateValues),
+    summary: applyCrewTemplates(seed.summary, templateValues),
+    decisionPressure: applyCrewTemplates(seed.decisionPressure || "", templateValues),
+    suggestedOpening: applyCrewTemplates(seed.suggestedOpening || "", templateValues),
+    mission: {
+      ...seed.mission,
+      briefing: applyCrewTemplates(seed.mission?.briefing || "", templateValues),
+      objectives: (seed.mission?.objectives || []).map((objective) =>
+        applyCrewTemplates(objective, templateValues)
+      ),
+    },
+    environment: {
+      ...seed.environment,
+      location: applyCrewTemplates(seed.environment?.location || "", templateValues),
+      anomaly: applyCrewTemplates(seed.environment?.anomaly || "", templateValues),
+      visibility: applyCrewTemplates(seed.environment?.visibility || "", templateValues),
+      pressure: applyCrewTemplates(seed.environment?.pressure || "", templateValues),
+      hazards: (seed.environment?.hazards || []).map((hazard) =>
+        applyCrewTemplates(hazard, templateValues)
+      ),
+    },
+    eventLog: (seed.eventLog || []).map((entry) => ({
+      ...entry,
+      msg: applyCrewTemplates(entry.msg, templateValues),
+    })),
+  };
+}
+
 export function createInitialWorldState(profiles = DEFAULT_CHARACTER_PROFILES) {
   return createInitialWorldStateForSeed(profiles, DEFAULT_MISSION_SEED);
 }
@@ -374,7 +438,7 @@ export function createInitialWorldStateForSeed(
   missionSeed = DEFAULT_MISSION_SEED
 ) {
   const profilesById = getCharacterProfileMap(profiles);
-  const seed = normalizeMissionSeed(missionSeed);
+  const seed = resolveMissionSeed(missionSeed, profiles);
 
   return {
     mission: {
@@ -382,6 +446,9 @@ export function createInitialWorldStateForSeed(
       seedId: seed.id,
       seedLabel: seed.label,
       seedSummary: seed.summary,
+      seedTone: seed.tone || [],
+      decisionPressure: seed.decisionPressure || "",
+      suggestedOpening: seed.suggestedOpening || "",
       ...seed.mission,
     },
     environment: { ...seed.environment },
@@ -432,12 +499,17 @@ export function createOpeningNarration(worldState) {
   const pressure = worldState?.environment?.pressure || "EVA pressure";
   const briefing = worldState?.mission?.briefing || "The mission state has become unstable.";
   const objective = worldState?.mission?.objectives?.[0] || "Find the source before the window closes.";
+  const decisionPressure = worldState?.mission?.decisionPressure || "Make the next call before the window collapses.";
+  const suggestedOpening = worldState?.mission?.suggestedOpening || "";
+  const seedTone = worldState?.mission?.seedTone?.length
+    ? worldState.mission.seedTone.join(", ")
+    : "procedural, high-pressure";
 
   return `Artemis-07 settles into a tense hold at ${location}. ${briefing} Outside the hull, ${visibility.toLowerCase()}, and every instrument on board keeps circling back to the same impossible fact: ${anomaly}.
 
 ${scientist} has already pushed the first pass of analysis and only made the situation stranger. ${engineer} is tracking how long the rover can keep absorbing this strain. ${specialist} is poised to move the moment the order comes. ${commander}, the crew is reading you for the next call.
 
-Primary pressure: ${pressure}. Immediate objective: ${objective}`;
+Primary pressure: ${pressure}. Immediate objective: ${objective}. Decision pressure: ${decisionPressure}. Tone target: ${seedTone}.${suggestedOpening ? ` Suggested opening move: ${suggestedOpening}` : ""}`;
 }
 
 export function createMissionSession(

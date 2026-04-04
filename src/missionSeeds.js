@@ -1,9 +1,53 @@
+/**
+ * @typedef {"sensor" | "risk" | "system" | "command" | "trait"} MissionSeedEventType
+ */
+
+/**
+ * @typedef {Object} MissionSeed
+ * @property {string} id
+ * @property {string} label
+ * @property {string} summary
+ * @property {string[]} tone
+ * @property {string} decisionPressure
+ * @property {string} suggestedOpening
+ * @property {{
+ *   name: string,
+ *   phase: string,
+ *   met: string,
+ *   objectives: string[],
+ *   briefing: string
+ * }} mission
+ * @property {{
+ *   location: string,
+ *   hazards: string[],
+ *   anomaly: string,
+ *   visibility: string,
+ *   pressure: string
+ * }} environment
+ * @property {{
+ *   o2: number,
+ *   power: number,
+ *   comms: number,
+ *   propulsion: number,
+ *   scrubber: string,
+ *   thermal: number,
+ *   nav: number
+ * }} systems
+ * @property {{ ts: string, msg: string, type: MissionSeedEventType }[]} eventLog
+ */
+
+/** @type {MissionSeed[]} */
 export const MISSION_SEEDS = [
   {
     id: "apollo-signal",
     label: "Apollo Echo",
     summary:
       "A dead Apollo-band transmission is pulsing from the crater darkness in deliberate intervals.",
+    tone: ["procedural", "mysterious", "high-risk"],
+    decisionPressure:
+      "Decide whether to hold position, isolate the signal, or commit to a dangerous crater descent before comms collapse further.",
+    suggestedOpening:
+      "Assign {engineerShort} to harden rover systems while {scientistShort} confirms whether the Apollo-band pattern is actually intentional.",
     mission: {
       name: "Lost Signal",
       phase: "Crater approach - active",
@@ -50,7 +94,7 @@ export const MISSION_SEEDS = [
       },
       {
         ts: "T+14:11",
-        msg: "Okafor patched the primary scrubber bypass after a dust-line leak.",
+        msg: "{engineerShort} patched the primary scrubber bypass after a dust-line leak.",
         type: "system",
       },
       {
@@ -65,6 +109,11 @@ export const MISSION_SEEDS = [
     label: "Cryovent Whisper",
     summary:
       "A buried ice vent is venting patterned vibrations through the regolith and scrambling the rover's instrument stack.",
+    tone: ["procedural", "fragile", "scientific"],
+    decisionPressure:
+      "Choose whether to descend, sample, or withdraw before suit margin and thermal stability slip past recovery.",
+    suggestedOpening:
+      "Have {scientistShort} map the resonance pattern while {specialistShort} confirms whether the vent shelf can support a controlled EVA approach.",
     mission: {
       name: "Subsurface Murmur",
       phase: "Vent perimeter hold",
@@ -106,7 +155,7 @@ export const MISSION_SEEDS = [
       },
       {
         ts: "T+09:29",
-        msg: "Reyes isolated the resonance from rover engine noise and confirmed an internal cadence.",
+        msg: "{scientistShort} isolated the resonance from rover engine noise and confirmed an internal cadence.",
         type: "sensor",
       },
       {
@@ -126,6 +175,11 @@ export const MISSION_SEEDS = [
     label: "Buried Array",
     summary:
       "A pre-Artemis reflector field is waking up under the regolith and bouncing telemetry in impossible directions.",
+    tone: ["procedural", "disorienting", "systems-heavy"],
+    decisionPressure:
+      "Stabilize navigation and decide whether to probe the buried array or back away before guidance errors strand the rover.",
+    suggestedOpening:
+      "Send {engineerShort} to isolate the nav stack while {commanderShort} coordinates a cautious sensor sweep for the buried reflector nodes.",
     mission: {
       name: "Silent Reflector",
       phase: "Array intercept",
@@ -167,12 +221,12 @@ export const MISSION_SEEDS = [
       },
       {
         ts: "T+17:56",
-        msg: "Park marked a debris-safe path after lidar started double-reporting terrain edges.",
+        msg: "{specialistShort} marked a debris-safe path after lidar started double-reporting terrain edges.",
         type: "system",
       },
       {
         ts: "T+17:49",
-        msg: "Okafor isolated the nav stack from the external relay bus to stop recursive feedback.",
+        msg: "{engineerShort} isolated the nav stack from the external relay bus to stop recursive feedback.",
         type: "system",
       },
       {
@@ -187,6 +241,11 @@ export const MISSION_SEEDS = [
     label: "Blackglass Breach",
     summary:
       "A vitrified impact seam is shedding heat and radio noise like it is still remembering the strike.",
+    tone: ["procedural", "ominous", "volatile"],
+    decisionPressure:
+      "Decide whether the crew pushes closer for evidence or preserves shielding margin before the seam destabilizes the whole shelf.",
+    suggestedOpening:
+      "Put {specialistShort} on fallback-line prep and task {scientistShort} with separating the seam's machine-band pulses from the thermal bloom.",
     mission: {
       name: "Blackglass Memory",
       phase: "Impact seam survey",
@@ -228,12 +287,12 @@ export const MISSION_SEEDS = [
       },
       {
         ts: "T+11:46",
-        msg: "Reyes identified narrowband pulses inside the thermal noise bloom.",
+        msg: "{scientistShort} identified narrowband pulses inside the thermal noise bloom.",
         type: "sensor",
       },
       {
         ts: "T+11:39",
-        msg: "Park anchored a fallback line after the shelf surface turned slick under cabin light.",
+        msg: "{specialistShort} anchored a fallback line after the shelf surface turned slick under cabin light.",
         type: "system",
       },
       {
@@ -250,6 +309,8 @@ export function getMissionSeedById(seedId) {
 }
 
 export function pickMissionSeed(excludeSeedId = null) {
-  const pool = MISSION_SEEDS.filter((seed) => seed.id !== excludeSeedId);
+  const pool = excludeSeedId
+    ? MISSION_SEEDS.filter((seed) => seed.id !== excludeSeedId)
+    : MISSION_SEEDS;
   return pool[Math.floor(Math.random() * pool.length)] || MISSION_SEEDS[0];
 }

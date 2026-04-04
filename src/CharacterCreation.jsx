@@ -5,6 +5,7 @@ import {
   deriveCrewDynamics,
   rerollCharacterProfile,
   rerollCharacterProfiles,
+  resolveMissionSeed,
 } from "./worldState";
 import { MISSION_SEEDS, pickMissionSeed, getMissionSeedById } from "./missionSeeds";
 
@@ -24,6 +25,10 @@ export default function CharacterCreation({
   const [lockedProfileIds, setLockedProfileIds] = useState(() => new Set());
   const [missionSeed, setMissionSeed] = useState(() => pickMissionSeed());
   const crewDynamics = useMemo(() => deriveCrewDynamics(profiles), [profiles]);
+  const resolvedMissionSeed = useMemo(
+    () => resolveMissionSeed(missionSeed, profiles),
+    [missionSeed, profiles]
+  );
   const lockedCount = lockedProfileIds.size;
 
   function toggleLockedProfile(id) {
@@ -89,7 +94,7 @@ export default function CharacterCreation({
           <div className="creator-seed__header">
             <div>
               <div className="section-title section-title--mb-6">MISSION SEED</div>
-              <div className="creator-seed__title">{missionSeed.label}</div>
+              <div className="creator-seed__title">{resolvedMissionSeed.label}</div>
             </div>
             <button
               type="button"
@@ -99,11 +104,16 @@ export default function CharacterCreation({
               Reroll Mission
             </button>
           </div>
-          <div className="creator-seed__summary">{missionSeed.summary}</div>
+          <div className="creator-seed__summary">{resolvedMissionSeed.summary}</div>
+          <div className="creator-seed__summary">{resolvedMissionSeed.decisionPressure}</div>
+          <div className="creator-seed__summary">
+            Suggested opening: {resolvedMissionSeed.suggestedOpening}
+          </div>
           <div className="creator-seed__meta">
-            <span>{missionSeed.environment.location}</span>
-            <span>{missionSeed.environment.pressure}</span>
-            <span>{missionSeed.mission.phase}</span>
+            <span>{resolvedMissionSeed.environment.location}</span>
+            <span>{resolvedMissionSeed.environment.pressure}</span>
+            <span>{resolvedMissionSeed.mission.phase}</span>
+            <span>{resolvedMissionSeed.tone.join(" / ")}</span>
           </div>
         </div>
 
