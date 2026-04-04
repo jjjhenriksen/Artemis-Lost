@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { requestDmTurn } from "./dmApi";
 import { applyStateDelta } from "./applyStateDelta";
+import {
+  appendConversationEntry,
+  createActionLogEntry,
+  getNextTurnIndex,
+} from "./gameLoop";
 
 // ── World state seed ──────────────────────────────────────────────
 const INITIAL_WORLD_STATE = {
@@ -173,6 +178,9 @@ export default function ArtemisLost() {
   const [ws, setWs] = useState(INITIAL_WORLD_STATE);
   const [turn, setTurn] = useState(0);
   const [narration, setNarration] = useState(OPENING);
+  const [conversationHistory, setConversationHistory] = useState([
+    { role: "dm", text: OPENING },
+  ]);
   const [input, setInput] = useState("");
   const [waiting, setWaiting] = useState(false);
   const inputRef = useRef(null);
@@ -186,16 +194,18 @@ export default function ArtemisLost() {
     setInput("");
     setWaiting(true);
 
-    const newLog = {
-      ts: ws.mission.met,
-      msg: `${activeCrew.name}: "${action}"`,
-      type: "action",
-    };
+    const newLog = createActionLogEntry(ws, activeCrew, action);
+    const nextHistory = appendConversationEntry(conversationHistory, {
+      role: "player",
+      text: `${activeCrew.name} (${activeCrew.role}): ${action}`,
+    });
 
     const result = await requestDmTurn({
       worldState: ws,
       action,
       activeCrew,
+      conversationHistory: nextHistory,
+      currentTurn: turn,
     });
 
     if (result.error) {
@@ -206,8 +216,9 @@ export default function ArtemisLost() {
         ...prev,
         eventLog: [newLog, ...prev.eventLog].slice(0, 12),
       }));
+      setConversationHistory(nextHistory);
       setWaiting(false);
-      setTurn((t) => (t + 1) % 4);
+      setTurn((t) => getNextTurnIndex(ws.crew, t));
       setTimeout(() => inputRef.current?.focus(), 100);
       return;
     }
@@ -221,8 +232,14 @@ export default function ArtemisLost() {
       return applyStateDelta(withAction, stateDelta);
     });
     setNarration(nextText);
+    setConversationHistory(
+      appendConversationEntry(nextHistory, {
+        role: "dm",
+        text: nextText,
+      })
+    );
     setWaiting(false);
-    setTurn((t) => (t + 1) % 4);
+    setTurn((t) => getNextTurnIndex(ws.crew, t));
     setTimeout(() => inputRef.current?.focus(), 100);
   }
 

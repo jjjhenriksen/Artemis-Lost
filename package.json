@@ -7,6 +7,7 @@
     "dev": "concurrently -k \"npm run dev:api\" \"npm run dev:vite\"",
     "dev:vite": "vite",
     "dev:api": "node server/dmServer.mjs",
+    "smoke:dm": "node server/smokeTurn.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },
