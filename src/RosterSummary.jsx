@@ -1,6 +1,15 @@
 import { memo } from "react";
+import { getCrewCoordinationSnapshot } from "./roleMechanics";
 
-function RosterSummary({ crew }) {
+function formatLedger(ledger) {
+  if (ledger > 0) return `+${ledger}`;
+  return String(ledger);
+}
+
+function RosterSummary({ crew, worldState }) {
+  const coordination = getCrewCoordinationSnapshot(worldState);
+  const activeSupportWindow = worldState?.mission?.supportWindow || null;
+
   return (
     <div className="roster-summary">
       <div className="section-title section-title--mb-10">CREW DOSSIER</div>
@@ -21,6 +30,34 @@ function RosterSummary({ crew }) {
             </div>
           </div>
         ))}
+      </div>
+      <div className="roster-summary__state">
+        <div className="section-title section-title--mb-10">LIVE COORDINATION</div>
+        <div className="roster-summary__state-card">
+          <div className="roster-summary__state-label">Active handoff</div>
+          <div className="roster-summary__state-copy">
+            {activeSupportWindow
+              ? `${activeSupportWindow.sourceCrewName} -> ${activeSupportWindow.targetCrewName} (${activeSupportWindow.strength}${activeSupportWindow.priorityHandoff ? ", priority" : ""})`
+              : "No live follow-through window."}
+          </div>
+        </div>
+        <div className="roster-summary__coordination-list">
+          {coordination.map((entry) => (
+            <div key={entry.key} className="roster-summary__coordination-row">
+              <div className="roster-summary__coordination-names">
+                {entry.sourceCrewName} {"->"} {entry.targetCrewName}
+              </div>
+              <div
+                className={`roster-summary__coordination-state roster-summary__coordination-state--${entry.state}`}
+              >
+                {entry.state}
+              </div>
+              <div className="roster-summary__coordination-ledger">
+                {formatLedger(entry.ledger)}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

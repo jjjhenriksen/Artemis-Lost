@@ -25,6 +25,7 @@ export default function ActionInput({
   botPreviewLoading,
   narrationReady,
   worldState,
+  uiState,
 }) {
   const roleGuidance = getRoleGuidance(worldState, activeCrew);
   const roleMechanicSummary = getRoleMechanicSummary(activeCrew);
@@ -37,7 +38,11 @@ export default function ActionInput({
         ACTION INPUT
       </div>
 
-      <TurnIndicator activeCrew={activeCrew} waiting={waiting} />
+      <TurnIndicator
+        activeCrew={activeCrew}
+        waiting={waiting}
+        coordinationAlert={uiState?.coordinationAlert}
+      />
 
       <div className={`action-input__panel${waiting ? " action-input__panel--waiting" : ""}`}>
         {!waiting && !isBotTurn ? (
@@ -67,7 +72,7 @@ export default function ActionInput({
                 ) : null}
                 {roleSupportPreview.relationshipProfile ? (
                   <div className="action-input__support-row">
-                    <span className="action-input__support-label">Relationship fit</span>
+                    <span className="action-input__support-label">Crew fit</span>
                     <span className="action-input__support-copy">
                       {roleSupportPreview.relationshipProfile.label[0].toUpperCase() +
                         roleSupportPreview.relationshipProfile.label.slice(1)}

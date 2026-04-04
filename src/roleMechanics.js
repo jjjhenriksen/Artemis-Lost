@@ -282,7 +282,6 @@ function createRelationshipLedgerDelta(worldState, supportWindow, baseStrength, 
   if (
     !supportWindow?.sourceCrewId ||
     !supportWindow?.targetCrewId ||
-    supportWindow.sourceRole !== "Commander" ||
     supportWindow.targetCrewId !== activeCrew?.id
   ) {
     return {};
@@ -308,10 +307,58 @@ function createRelationshipLedgerDelta(worldState, supportWindow, baseStrength, 
         type: EVENT_LOG_TYPES.TRAIT,
         msg:
           relationshipShift > 0
-            ? `${activeCrew.name} validates command trust and strengthens the handoff rhythm.`
-            : `${activeCrew.name} fumbles the handoff window, putting strain on command trust.`,
+            ? `${activeCrew.name} validates the crew handoff and strengthens operational trust.`
+            : `${activeCrew.name} fumbles the handoff window, putting strain on crew coordination.`,
       },
     ],
+  };
+}
+
+function getPairRelationshipProfile(sourceCrew, targetCrew, worldState) {
+  if (!sourceCrew || !targetCrew || sourceCrew.id === targetCrew.id) {
+    return {
+      boost: 0,
+      label: "standard crew fit",
+      state: "standard",
+    };
+  }
+
+  if (sourceCrew.role === "Commander") {
+    return getCommanderRelationshipProfile(sourceCrew, targetCrew, worldState);
+  }
+
+  const sourceText = getCharacterProfileText(sourceCrew);
+  const targetText = getCharacterProfileText(targetCrew);
+  const sharedText = `${sourceText} ${targetText}`;
+  const ledgerDelta = getRelationshipLedgerDelta(sourceCrew, targetCrew, worldState);
+
+  let score = ledgerDelta;
+
+  score += countTextMatches(sharedText, ["procedural", "measured", "steady", "stabil", "careful"]);
+  score += countTextMatches(sharedText, ["signal", "pattern", "repair", "route", "field"]);
+  score -= countTextMatches(sharedText, ["clashing", "colliding", "argument", "reckless", "obsessive"]);
+  score -= countTextMatches(sharedText, ["impulsive", "rigid", "slipping"]);
+
+  if (score >= 3) {
+    return {
+      boost: 1,
+      label: "trusted crew fit",
+      state: "trusted",
+    };
+  }
+
+  if (score <= -1) {
+    return {
+      boost: -1,
+      label: "tense crew fit",
+      state: "tense",
+    };
+  }
+
+  return {
+    boost: 0,
+    label: "standard crew fit",
+    state: "standard",
   };
 }
 
@@ -339,10 +386,7 @@ function createFollowThroughWindow(worldState, activeCrew, actionText, effectStr
     directedCrew ||
     getCrewByRole(worldState, getNextRoleTarget(activeCrew?.role, actionText));
   if (!targetCrew) return null;
-  const relationshipProfile =
-    activeCrew?.role === "Commander"
-      ? getCommanderRelationshipProfile(activeCrew, targetCrew, worldState)
-      : null;
+  const relationshipProfile = getPairRelationshipProfile(activeCrew, targetCrew, worldState);
 
   return {
     sourceRole: activeCrew.role,
@@ -617,8 +661,8 @@ export function getRolePromptBrief(worldState, activeCrew, actionText = "") {
   const delegationProfile =
     activeCrew?.role === "Commander" ? getCommanderDelegationProfile(activeCrew) : null;
   const relationshipProfile =
-    activeCrew?.role === "Commander" && supportWindow?.targetCrewId
-      ? getCommanderRelationshipProfile(
+    supportWindow?.targetCrewId
+      ? getPairRelationshipProfile(
           activeCrew,
           worldState?.crew?.find((member) => member.id === supportWindow.targetCrewId),
           worldState
@@ -691,10 +735,9 @@ export function getRoleSupportPreview(worldState, activeCrew, actionText = "") {
   const outgoingTargetCrew = directedCrew || getCrewByRole(worldState, outgoingTargetRole);
   const delegationProfile =
     activeCrew?.role === "Commander" ? getCommanderDelegationProfile(activeCrew) : null;
-  const relationshipProfile =
-    activeCrew?.role === "Commander" && outgoingTargetCrew
-      ? getCommanderRelationshipProfile(activeCrew, outgoingTargetCrew, worldState)
-      : null;
+  const relationshipProfile = outgoingTargetCrew
+    ? getPairRelationshipProfile(activeCrew, outgoingTargetCrew, worldState)
+    : null;
 
   return {
     incoming,
@@ -707,13 +750,14 @@ export function getRoleSupportPreview(worldState, activeCrew, actionText = "") {
             targetCrewName: outgoingTargetCrew.name,
             priorityHandoff: Boolean(directedCrew && directedCrew.id !== activeCrew?.id),
             strength:
-              activeCrew?.role === "Commander"
-                ? delegationProfile?.boost + (relationshipProfile?.boost || 0) >= 2
-                  ? "strong"
-                  : delegationProfile?.boost + (relationshipProfile?.boost || 0) >= 0
-                    ? "soft"
-                    : "fragile"
-                : null,
+              (activeCrew?.role === "Commander" ? delegationProfile?.boost || 0 : 0) +
+                (relationshipProfile?.boost || 0) >= 2
+                ? "strong"
+                : (activeCrew?.role === "Commander" ? delegationProfile?.boost || 0 : 0) +
+                      (relationshipProfile?.boost || 0) >=
+                    0
+                  ? "soft"
+                  : "fragile",
           }
         : null,
   };
@@ -726,4 +770,73 @@ export function getPriorityHandoffTarget(worldState) {
   }
 
   return worldState?.crew?.find((member) => member.id === supportWindow.targetCrewId) || null;
+}
+
+export function getCrewCoordinationSnapshot(worldState) {
+  const crew = worldState?.crew || [];
+  const relationshipLedger = getRelationshipLedger(worldState);
+  const entries = [];
+
+  crew.forEach((sourceCrew) => {
+    crew.forEach((targetCrew) => {
+      if (!sourceCrew?.id || !targetCrew?.id || sourceCrew.id === targetCrew.id) return;
+
+      const profile = getPairRelationshipProfile(sourceCrew, targetCrew, worldState);
+      const key = createRelationshipKey(sourceCrew.id, targetCrew.id);
+
+      entries.push({
+        key,
+        sourceCrewId: sourceCrew.id,
+        sourceCrewName: sourceCrew.name,
+        targetCrewId: targetCrew.id,
+        targetCrewName: targetCrew.name,
+        state: profile.state,
+        label: profile.label,
+        ledger: clampRelationshipLedger(relationshipLedger[key] || 0),
+      });
+    });
+  });
+
+  return entries.sort((left, right) => {
+    const priority = { tense: 0, trusted: 1, standard: 2 };
+    const leftRank = priority[left.state] ?? 3;
+    const rightRank = priority[right.state] ?? 3;
+    if (leftRank !== rightRank) return leftRank - rightRank;
+    return `${left.sourceCrewName}${left.targetCrewName}`.localeCompare(
+      `${right.sourceCrewName}${right.targetCrewName}`
+    );
+  });
+}
+
+export function getTopCoordinationAlert(worldState) {
+  const activeSupportWindow = worldState?.mission?.supportWindow || null;
+  if (activeSupportWindow?.priorityHandoff) {
+    return {
+      tone: "info",
+      label: "Priority Handoff",
+      msg: `${activeSupportWindow.sourceCrewName} has pushed initiative to ${activeSupportWindow.targetCrewName}.`,
+    };
+  }
+
+  const coordination = getCrewCoordinationSnapshot(worldState);
+  const topEntry = coordination[0];
+  if (!topEntry) return null;
+
+  if (topEntry.state === "tense") {
+    return {
+      tone: "risk",
+      label: "Crew Friction",
+      msg: `${topEntry.sourceCrewName} -> ${topEntry.targetCrewName} is running tense (${topEntry.ledger}).`,
+    };
+  }
+
+  if (topEntry.state === "trusted") {
+    return {
+      tone: "good",
+      label: "Crew Sync",
+      msg: `${topEntry.sourceCrewName} -> ${topEntry.targetCrewName} is running trusted (${topEntry.ledger > 0 ? `+${topEntry.ledger}` : topEntry.ledger}).`,
+    };
+  }
+
+  return null;
 }

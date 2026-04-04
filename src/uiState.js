@@ -1,4 +1,5 @@
 import { EVENT_LOG_TYPES, normalizeEventType } from "./eventLogTypes.js";
+import { getTopCoordinationAlert } from "./roleMechanics";
 
 function getDangerLevel(worldState) {
   const warningCount = [
@@ -129,6 +130,7 @@ export function getUiState(worldState) {
     dominantFailure,
     anomalyIntensity: getAnomalyIntensity(worldState),
     latestAlert: getLatestAlert(worldState?.eventLog || []),
+    coordinationAlert: getTopCoordinationAlert(worldState),
     headerSubtitle: failureCopy.subtitle,
     consolePrefix: failureCopy.consolePrefix,
   };

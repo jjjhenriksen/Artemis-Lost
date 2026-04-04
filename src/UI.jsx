@@ -307,14 +307,16 @@ export default function ArtemisLost({
       </div>
 
       <div className="app-grid">
-        <div className="app-grid__main">
+        <div className="app-grid__narration">
           <NarrationPanel
             text={narration}
             eventLog={ws.eventLog}
             uiState={uiState}
             onTypewriterDone={setNarrationReady}
           />
+        </div>
 
+        <div className="app-grid__action">
           <ActionInput
             activeCrew={activeCrew}
             input={input}
@@ -328,32 +330,39 @@ export default function ArtemisLost({
             botPreviewLoading={botPreviewLoading}
             narrationReady={narrationReady}
             worldState={ws}
+            uiState={uiState}
           />
         </div>
 
-        <div className="sidebar-panel">
-          <div>
-            <div className="section-title section-title--with-divider">CREW STATUS</div>
-          </div>
-          <div className="crew-grid">
-            {ws.crew.map((member, index) => (
-              <CrewCard
-                key={member.id}
-                member={member}
-                isActive={index === turn}
+        <div className="sidebar-panel app-grid__bottom">
+          <div className="bottom-deck">
+            <div className="bottom-deck__card">
+              <div>
+                <div className="section-title section-title--with-divider">CREW STATUS</div>
+              </div>
+              <div className="crew-grid">
+                {ws.crew.map((member, index) => (
+                  <CrewCard
+                    key={member.id}
+                    member={member}
+                    isActive={index === turn}
+                    uiState={uiState}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="bottom-deck__card">
+              <RoleView
+                activeCrew={activeCrew}
+                roleView={roleView}
+                worldState={ws}
+                activeTurn={turn}
                 uiState={uiState}
               />
-            ))}
+            </div>
           </div>
-
-          <RoleView
-            activeCrew={activeCrew}
-            roleView={roleView}
-            worldState={ws}
-            activeTurn={turn}
-            uiState={uiState}
-          />
-          <RosterSummary crew={ws.crew} />
+          <RosterSummary crew={ws.crew} worldState={ws} />
         </div>
       </div>
     </div>

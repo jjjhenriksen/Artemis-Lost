@@ -1039,17 +1039,32 @@ body::after {
 
 .app-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.9fr);
-  align-items: start;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.9fr);
+  grid-template-areas:
+    "narration action"
+    "bottom bottom";
+  align-items: stretch;
   gap: 16px;
   position: relative;
   z-index: 1;
 }
 
-.app-grid__main {
-  display: grid;
-  gap: 16px;
+.app-grid__narration,
+.app-grid__action {
   min-width: 0;
+  display: flex;
+}
+
+.app-grid__narration {
+  grid-area: narration;
+}
+
+.app-grid__action {
+  grid-area: action;
+}
+
+.app-grid__bottom {
+  grid-area: bottom;
 }
 
 .sidebar-panel {
@@ -1061,10 +1076,6 @@ body::after {
   backdrop-filter: blur(18px);
 }
 
-.app-grid__main {
-  align-content: start;
-}
-
 .sidebar-panel {
   padding: 14px;
   min-width: 0;
@@ -1073,6 +1084,53 @@ body::after {
 .app-shell--elevated .sidebar-panel,
 .app-shell--critical .sidebar-panel {
   border-color: color-mix(in srgb, var(--panel-border-strong) 55%, var(--text-warn));
+}
+
+.app-grid__bottom .crew-grid {
+  margin-bottom: 0;
+}
+
+.app-grid__bottom .roster-summary {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 14px;
+}
+
+.bottom-deck {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.bottom-deck__card {
+  min-width: 0;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background:
+    linear-gradient(180deg, var(--list-item-gradient-start) 0%, var(--list-item-gradient-end) 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.bottom-deck__card .role-view,
+.bottom-deck__card .roster-summary {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.bottom-deck__card .role-view {
+  flex: 1;
+}
+
+.app-grid__bottom .roster-summary__list {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.app-grid__bottom .roster-summary__coordination-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .section-title {
@@ -1426,6 +1484,8 @@ body::after {
   display: flex;
   flex-direction: column;
   min-height: min(62vh, 720px);
+  width: 100%;
+  height: 100%;
   position: relative;
   overflow: hidden;
 }
@@ -2926,6 +2986,94 @@ body::after {
   color: var(--text-muted);
 }
 
+.roster-summary__state {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.roster-summary__state-card {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  background:
+    linear-gradient(180deg, var(--list-item-gradient-start) 0%, var(--list-item-gradient-end) 100%);
+}
+
+.roster-summary__state-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.roster-summary__state-copy {
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--text-good-strong);
+}
+
+.roster-summary__coordination-list {
+  display: grid;
+  gap: 6px;
+}
+
+.roster-summary__coordination-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--surface-elevated) 70%, transparent);
+}
+
+.roster-summary__coordination-names {
+  min-width: 0;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text-body);
+}
+
+.roster-summary__coordination-state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--status-chip-border);
+  background: var(--status-chip-bg);
+  font-size: 9px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.roster-summary__coordination-state--trusted {
+  border-color: var(--border-good);
+  background: var(--bg-pill-good);
+  color: var(--text-good-strong);
+}
+
+.roster-summary__coordination-state--standard {
+  color: var(--text-body);
+}
+
+.roster-summary__coordination-state--tense {
+  border-color: var(--tag-risk-border);
+  background: color-mix(in srgb, var(--tag-risk-bg) 72%, var(--surface-elevated));
+  color: var(--tag-risk-text);
+}
+
+.roster-summary__coordination-ledger {
+  min-width: 22px;
+  text-align: right;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
 .turn-indicator {
   display: flex;
   align-items: center;
@@ -2963,6 +3111,48 @@ body::after {
   color: var(--text-warn-soft);
 }
 
+.turn-indicator__coordination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.turn-indicator__coordination-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--status-chip-border);
+  background: var(--status-chip-bg);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-body);
+}
+
+.turn-indicator__coordination--good .turn-indicator__coordination-label {
+  border-color: var(--border-good);
+  background: var(--bg-pill-good);
+  color: var(--text-good-strong);
+}
+
+.turn-indicator__coordination--risk .turn-indicator__coordination-label {
+  border-color: var(--tag-risk-border);
+  background: color-mix(in srgb, var(--tag-risk-bg) 72%, var(--surface-elevated));
+  color: var(--tag-risk-text);
+}
+
+.turn-indicator__coordination--info .turn-indicator__coordination-label {
+  border-color: var(--tag-command-border);
+  background: var(--tag-command-bg);
+  color: var(--tag-command-text);
+}
+
 .turn-indicator__badge {
   font-size: 10px;
   color: var(--text-good);
@@ -2986,6 +3176,9 @@ body::after {
   border: 1px solid var(--border-info);
   border-radius: 12px;
   padding: 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .action-input__panel--waiting {
@@ -3159,6 +3352,7 @@ body::after {
   display: flex;
   gap: 8px;
   align-items: stretch;
+  margin-top: auto;
 }
 
 .al-input {
@@ -3833,6 +4027,10 @@ body::after {
 
   .app-grid {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "narration"
+      "action"
+      "bottom";
   }
 
   .app-header {
@@ -3856,6 +4054,15 @@ body::after {
 
   .action-input__row {
     flex-direction: column;
+  }
+
+  .app-grid__bottom .roster-summary__list,
+  .app-grid__bottom .roster-summary__coordination-list {
+    grid-template-columns: 1fr;
+  }
+
+  .bottom-deck {
+    grid-template-columns: 1fr;
   }
 
   .al-btn {
