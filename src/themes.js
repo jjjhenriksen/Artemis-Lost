@@ -29,19 +29,28 @@ export const THEME_FAMILIES = [
     id: "artemis",
     label: "Artemis",
     accent: "#6fd3ff",
-    description: "Cold command-console blues with a sharper editorial sci-fi finish.",
+    descriptions: {
+      dark: "Cold command-console blues with a sharper editorial sci-fi finish.",
+      light: "Steel-blue daylight instrumentation with a cleaner control-room read.",
+    },
   },
   {
     id: "canopy",
     label: "Canopy",
     accent: "#2d6a4f",
-    description: "High-contrast sage, carbon, and gold with a clean signal-room edge.",
+    descriptions: {
+      dark: "High-contrast sage, carbon, and gold with a clean signal-room edge.",
+      light: "Muted sage and field-manual khaki tuned for a brighter operations deck.",
+    },
   },
   {
     id: "nocturne",
     label: "Nocturne",
     accent: "#8c3d4f",
-    description: "Rose, smoke, and brass tuned into a sharper late-night noir interface.",
+    descriptions: {
+      dark: "Rose, smoke, and brass tuned into a sharper late-night noir interface.",
+      light: "Dusty rose and brass under soft daylight with a warmer editorial finish.",
+    },
   },
 ];
 
@@ -52,6 +61,7 @@ export const THEMES = THEME_FAMILIES.flatMap((family) =>
     familyId: family.id,
     mode: mode.id,
     modeLabel: mode.label,
+    description: family.descriptions?.[mode.id] || family.descriptions?.[DEFAULT_THEME_MODE] || "",
   }))
 );
 

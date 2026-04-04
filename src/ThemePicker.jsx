@@ -57,6 +57,9 @@ export default function ThemePicker({
                 </option>
               ))}
             </select>
+            <span className="theme-picker__caret" aria-hidden="true">
+              ▾
+            </span>
           </label>
         </div>
       </section>
@@ -92,17 +95,22 @@ export default function ThemePicker({
 
         <label className="theme-picker__field">
           <span className="theme-picker__field-label">Theme</span>
-          <select
-            className="theme-picker__select"
-            value={activeFamilyId}
-            onChange={(event) => onThemeChange(buildThemeId(event.target.value, activeMode))}
-          >
-            {THEME_FAMILIES.map((theme) => (
-              <option key={theme.id} value={theme.id}>
-                {theme.label}
-              </option>
-            ))}
-          </select>
+          <span className="theme-picker__select-wrap">
+            <select
+              className="theme-picker__select"
+              value={activeFamilyId}
+              onChange={(event) => onThemeChange(buildThemeId(event.target.value, activeMode))}
+            >
+              {THEME_FAMILIES.map((theme) => (
+                <option key={theme.id} value={theme.id}>
+                  {theme.label}
+                </option>
+              ))}
+            </select>
+            <span className="theme-picker__caret" aria-hidden="true">
+              ▾
+            </span>
+          </span>
         </label>
       </div>
 
