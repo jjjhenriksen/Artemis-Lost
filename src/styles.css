@@ -1645,6 +1645,10 @@ body::after {
   padding: 16px;
   box-shadow: var(--shadow-panel);
   backdrop-filter: blur(18px);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .menu-loading,
