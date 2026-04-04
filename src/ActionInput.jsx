@@ -6,6 +6,12 @@ import {
   getRoleSupportPreview,
 } from "./roleMechanics";
 
+function formatSetupStrength(strength) {
+  if (strength === "strong") return "strong";
+  if (strength === "fragile") return "fragile";
+  return "soft";
+}
+
 export default function ActionInput({
   activeCrew,
   input,
@@ -49,6 +55,26 @@ export default function ActionInput({
             </div>
             {roleSupportPreview.incoming || roleSupportPreview.outgoing ? (
               <div className="action-input__support">
+                {roleSupportPreview.delegationProfile ? (
+                  <div className="action-input__support-row">
+                    <span className="action-input__support-label">Command style</span>
+                    <span className="action-input__support-copy">
+                      {roleSupportPreview.delegationProfile.label[0].toUpperCase() +
+                        roleSupportPreview.delegationProfile.label.slice(1)}
+                      .
+                    </span>
+                  </div>
+                ) : null}
+                {roleSupportPreview.relationshipProfile ? (
+                  <div className="action-input__support-row">
+                    <span className="action-input__support-label">Relationship fit</span>
+                    <span className="action-input__support-copy">
+                      {roleSupportPreview.relationshipProfile.label[0].toUpperCase() +
+                        roleSupportPreview.relationshipProfile.label.slice(1)}
+                      .
+                    </span>
+                  </div>
+                ) : null}
                 {roleSupportPreview.incoming ? (
                   <div className="action-input__support-row">
                     <span className="action-input__support-label">Incoming setup</span>
@@ -63,8 +89,12 @@ export default function ActionInput({
                     <span className="action-input__support-label">Follow-through</span>
                     <span className="action-input__support-copy">
                       {roleSupportPreview.outgoing.priorityHandoff
-                        ? `This command hands initiative to ${roleSupportPreview.outgoing.targetCrewName} next.`
-                        : `This move can tee up ${roleSupportPreview.outgoing.targetCrewName} next.`}
+                        ? `This command hands initiative to ${roleSupportPreview.outgoing.targetCrewName} next with a ${formatSetupStrength(roleSupportPreview.outgoing.strength)} setup.`
+                        : `This move can tee up ${roleSupportPreview.outgoing.targetCrewName} next${
+                            roleSupportPreview.outgoing.strength
+                              ? ` with a ${formatSetupStrength(roleSupportPreview.outgoing.strength)} setup`
+                              : ""
+                          }.`}
                     </span>
                   </div>
                 ) : null}
