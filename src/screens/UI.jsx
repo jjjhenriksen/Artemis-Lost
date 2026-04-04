@@ -9,11 +9,13 @@ import RoleView from "../components/RoleView.jsx";
 import ThemePicker from "../components/ThemePicker.jsx";
 import { requestAutonomousAction, requestDmTurn } from "../services/dmApi.js";
 import { appendConversationEntry } from "../game/gameLoop.js";
+import { getMissionOutcome } from "../game/missionOutcome.js";
 import { getViewForRole } from "../game/roleFilters.js";
 import { saveSession as persistSession } from "../services/sessionApi.js";
 import { resolveTurnWorldState } from "../game/turnRuntime.js";
 import { getUiState } from "../game/uiState.js";
 import { INITIAL_WORLD_STATE, OPENING_NARRATION } from "../game/worldState.js";
+import MissionResolution from "./MissionResolution.jsx";
 
 function createFallbackSession() {
   return {
@@ -55,6 +57,7 @@ export default function ArtemisLost({
   const [botPreview, setBotPreview] = useState("");
   const [narrationReady, setNarrationReady] = useState(false);
   const [botPreviewLoading, setBotPreviewLoading] = useState(false);
+  const [showResolutionScreen, setShowResolutionScreen] = useState(false);
   const inputRef = useRef(null);
 
   const activeCrew = ws.crew[turn];
@@ -68,6 +71,8 @@ export default function ArtemisLost({
     [activeCrew, input, ws]
   );
   const isBotTurn = activeCrew?.character?.controller === "bot";
+  const missionOutcome = getMissionOutcome(ws);
+  const missionResolved = missionOutcome.status !== "active";
 
   function buildSessionPayload(overrides = {}) {
     return {
@@ -99,8 +104,14 @@ export default function ArtemisLost({
     setTimeout(() => inputRef.current?.focus(), 100);
   }
 
+  useEffect(() => {
+    if (missionResolved) {
+      setShowResolutionScreen(true);
+    }
+  }, [missionResolved]);
+
   async function resolveTurn(action) {
-    if (!action.trim() || waiting) return;
+    if (!action.trim() || waiting || missionResolved) return;
     const actionText = action.trim();
 
     setWaiting(true);
@@ -129,12 +140,17 @@ export default function ArtemisLost({
         actionText,
         currentTurn: turn,
       });
+      const nextOutcome = nextWorldState?.mission?.outcome || missionOutcome;
+      const resolvedNarration =
+        missionOutcome.status === "active" && nextOutcome.status !== "active"
+          ? `${errorNarration}\n\n${nextOutcome.title}: ${nextOutcome.summary}`
+          : errorNarration;
 
-      setNarration(errorNarration);
+      setNarration(resolvedNarration);
       setWs(nextWorldState);
       await saveCurrentSession({
         worldState: nextWorldState,
-        narration: errorNarration,
+        narration: resolvedNarration,
         turn: nextTurn,
         conversationHistory: nextConversationHistory,
       });
@@ -156,13 +172,18 @@ export default function ArtemisLost({
       stateDelta,
       currentTurn: turn,
     });
+    const nextOutcome = nextWorldState?.mission?.outcome || missionOutcome;
+    const resolvedNarration =
+      missionOutcome.status === "active" && nextOutcome.status !== "active"
+        ? `${nextText}\n\n${nextOutcome.title}: ${nextOutcome.summary}`
+        : nextText;
 
     setWs(nextWorldState);
-    setNarration(nextText);
+    setNarration(resolvedNarration);
     setConversationHistory(assistantHistory);
     await saveCurrentSession({
       worldState: nextWorldState,
-      narration: nextText,
+      narration: resolvedNarration,
       turn: nextTurn,
       conversationHistory: assistantHistory,
     });
@@ -170,14 +191,14 @@ export default function ArtemisLost({
   }
 
   async function handleSubmit() {
-    if (!input.trim() || waiting || isBotTurn) return;
+    if (!input.trim() || waiting || isBotTurn || missionResolved) return;
     const action = input.trim();
     setInput("");
     await resolveTurn(action);
   }
 
   useEffect(() => {
-    if (!isBotTurn || waiting || !activeCrew) {
+    if (!isBotTurn || waiting || !activeCrew || missionResolved) {
       setBotPreview("");
       setBotPreviewLoading(false);
       return;
@@ -209,10 +230,10 @@ export default function ArtemisLost({
     return () => {
       cancelled = true;
     };
-  }, [activeCrew, conversationHistory, isBotTurn, turn, waiting, ws]);
+  }, [activeCrew, conversationHistory, isBotTurn, turn, waiting, ws, missionResolved]);
 
   async function handleAdvanceAutonomousTurn() {
-    if (!isBotTurn || !botPreview || waiting || !narrationReady) return;
+    if (!isBotTurn || !botPreview || waiting || !narrationReady || missionResolved) return;
     await resolveTurn(botPreview);
   }
 
@@ -221,6 +242,20 @@ export default function ArtemisLost({
       event.preventDefault();
       handleSubmit();
     }
+  }
+
+  if (showResolutionScreen && missionResolved) {
+    return (
+      <MissionResolution
+        worldState={ws}
+        narration={narration}
+        slotId={initialSession?.slotLabel || slotId}
+        themeId={themeId}
+        themes={themes}
+        onReviewMission={() => setShowResolutionScreen(false)}
+        onReturnToMenu={onExitToMenu}
+      />
+    );
   }
 
   return (
@@ -296,6 +331,7 @@ export default function ArtemisLost({
             botPreviewLoading={botPreviewLoading}
             narrationReady={narrationReady}
             uiState={uiState}
+            missionResolved={missionResolved}
           />
         </div>
 

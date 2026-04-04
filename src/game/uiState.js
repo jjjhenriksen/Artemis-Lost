@@ -1,5 +1,6 @@
 import { EVENT_LOG_TYPES, normalizeEventType } from "./eventLogTypes.js";
 import { getMissionMechanicSummary, getMissionOpportunityPreview } from "./missionMechanics.js";
+import { getMissionOutcome } from "./missionOutcome.js";
 import { getRoleGuidance } from "./roleGuidance.js";
 import { getTopCoordinationAlert } from "./roleMechanics.js";
 import {
@@ -170,6 +171,7 @@ export function getUiState(worldState, options = {}) {
   const dangerLevel = getDangerLevel(worldState);
   const dominantFailure = getDominantFailure(worldState);
   const failureCopy = getFailureCopy(dominantFailure, dangerLevel);
+  const missionOutcome = getMissionOutcome(worldState);
 
   return {
     dangerLevel,
@@ -177,8 +179,14 @@ export function getUiState(worldState, options = {}) {
     anomalyIntensity: getAnomalyIntensity(worldState),
     latestAlert: getLatestAlert(worldState?.eventLog || []),
     coordinationAlert: getTopCoordinationAlert(worldState),
-    headerSubtitle: failureCopy.subtitle,
+    headerSubtitle:
+      missionOutcome.status === "victory"
+        ? missionOutcome.summary
+        : missionOutcome.status === "defeat"
+          ? missionOutcome.summary
+          : failureCopy.subtitle,
     consolePrefix: failureCopy.consolePrefix,
+    missionOutcome,
     actionPanel: getActionPanelState(worldState, activeCrew, input),
   };
 }

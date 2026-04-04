@@ -449,6 +449,11 @@ export function createInitialWorldStateForSeed(
       seedTone: seed.tone || [],
       decisionPressure: seed.decisionPressure || "",
       suggestedOpening: seed.suggestedOpening || "",
+      outcome: {
+        status: "active",
+        title: "",
+        summary: "",
+      },
       ...seed.mission,
     },
     environment: { ...seed.environment },

@@ -7,6 +7,7 @@ import {
   prependCappedEntries,
 } from "./gameLoop.js";
 import { createMissionTurnEffect } from "./missionMechanics.js";
+import { applyMissionOutcome } from "./missionOutcome.js";
 import { createRoleTurnEffect, getFollowThroughTurnTarget } from "./roleMechanics.js";
 
 function createTurnBaseWorldState(worldState, activeCrew, actionText) {
@@ -64,8 +65,16 @@ export function resolveTurnWorldState({
 }) {
   const baseWorldState = createTurnBaseWorldState(worldState, activeCrew, actionText);
   const dmResolvedWorldState = applyDmStateDelta(baseWorldState, stateDelta);
-  const nextWorldState = applyLocalTurnEffects(dmResolvedWorldState, activeCrew, actionText);
-  const nextTurn = resolveNextTurnIndex(nextWorldState, currentTurn, worldState?.crew || []);
+  const locallyResolvedWorldState = applyLocalTurnEffects(
+    dmResolvedWorldState,
+    activeCrew,
+    actionText
+  );
+  const nextWorldState = applyMissionOutcome(locallyResolvedWorldState);
+  const missionResolved = nextWorldState?.mission?.outcome?.status !== "active";
+  const nextTurn = missionResolved
+    ? currentTurn
+    : resolveNextTurnIndex(nextWorldState, currentTurn, worldState?.crew || []);
 
   return {
     nextWorldState,
