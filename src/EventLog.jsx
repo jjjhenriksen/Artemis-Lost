@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { getEventTypeLabel, normalizeEventType } from "./eventLogTypes";
 
 function EventLog({ eventLog, logRef }) {
   return (
@@ -10,6 +11,11 @@ function EventLog({ eventLog, logRef }) {
         {eventLog.map((event, index) => (
           <div key={`${event.ts}-${event.msg}-${index}`} className="event-log__row">
             <span className="event-log__timestamp">{event.ts}</span>
+            <span
+              className={`event-log__tag event-log__tag--${normalizeEventType(event.type)}`}
+            >
+              {getEventTypeLabel(event.type)}
+            </span>
             <span
               className={`event-log__message${
                 index === 0 ? " event-log__message--latest" : ""

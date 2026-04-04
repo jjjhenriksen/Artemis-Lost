@@ -9,6 +9,7 @@ import ThemePicker from "./ThemePicker";
 import { applyStateDelta } from "./applyStateDelta";
 import { requestDmTurn } from "./dmApi";
 import {
+  advanceMissionMet,
   appendConversationEntry,
   createActionLogEntry,
   getNextTurnIndex,
@@ -116,8 +117,13 @@ export default function ArtemisLost({
 
     if (result.error) {
       const errorNarration = `Could not reach the DM service.\n\n${result.error}\n\nCheck that both dev servers are running (\`npm run dev\`), your .env has OPENAI_API_KEY, and OPENAI_MODEL matches an available model.`;
+      const advancedMet = advanceMissionMet(ws.mission.met);
       const nextWorldState = {
         ...ws,
+        mission: {
+          ...ws.mission,
+          met: advancedMet,
+        },
         eventLog: prependCappedEntries(ws.eventLog, newLog),
       };
       const nextTurn = getNextTurnIndex(ws.crew, turn);
@@ -135,6 +141,7 @@ export default function ArtemisLost({
     }
 
     const { narration: nextText, stateDelta } = result;
+    const advancedMet = advanceMissionMet(ws.mission.met);
     const assistantHistory = appendConversationEntry(nextConversationHistory, {
       role: "assistant",
       turn,
@@ -144,9 +151,19 @@ export default function ArtemisLost({
     const nextWorldState = applyStateDelta(
       {
         ...ws,
+        mission: {
+          ...ws.mission,
+          met: advancedMet,
+        },
         eventLog: prependCappedEntries(ws.eventLog, newLog),
       },
-      stateDelta
+      {
+        ...stateDelta,
+        mission: {
+          ...(stateDelta.mission || {}),
+          met: stateDelta?.mission?.met || advancedMet,
+        },
+      }
     );
     const nextTurn = getNextTurnIndex(ws.crew, turn);
 
@@ -241,7 +258,12 @@ export default function ArtemisLost({
             ))}
           </div>
 
-          <RoleView activeCrew={activeCrew} roleView={roleView} />
+          <RoleView
+            activeCrew={activeCrew}
+            roleView={roleView}
+            worldState={ws}
+            activeTurn={turn}
+          />
           <RosterSummary crew={ws.crew} />
         </div>
       </div>

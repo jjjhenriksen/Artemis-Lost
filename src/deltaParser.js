@@ -1,3 +1,5 @@
+import { normalizeEventType } from "./eventLogTypes";
+
 const MAX_EVENT_LOG_ENTRIES = 12;
 const NUMERIC_SYSTEM_FIELDS = new Set(["o2", "power", "comms", "propulsion", "thermal", "nav"]);
 const NUMERIC_CREW_FIELDS = new Set(["health", "morale"]);
@@ -79,7 +81,7 @@ function normalizeEventEntry(entry) {
 
   const ts = typeof entry.ts === "string" && entry.ts.trim() ? entry.ts.trim() : "T+00:00";
   const msg = typeof entry.msg === "string" ? entry.msg.trim() : "";
-  const type = typeof entry.type === "string" && entry.type.trim() ? entry.type.trim() : "info";
+  const type = normalizeEventType(entry.type);
 
   if (!msg) return undefined;
 

@@ -118,6 +118,21 @@
   --button-inset: rgba(217, 242, 255, 0.12);
   --button-hover-ring: rgba(140, 221, 255, 0.18);
   --scrollbar-thumb: rgba(104, 195, 255, 0.34);
+  --tag-command-bg: rgba(104, 195, 255, 0.16);
+  --tag-command-border: rgba(104, 195, 255, 0.34);
+  --tag-command-text: #d9f2ff;
+  --tag-system-bg: rgba(217, 242, 255, 0.08);
+  --tag-system-border: rgba(93, 164, 224, 0.24);
+  --tag-system-text: #bdd1e5;
+  --tag-sensor-bg: rgba(140, 221, 255, 0.16);
+  --tag-sensor-border: rgba(140, 221, 255, 0.32);
+  --tag-sensor-text: #d9f2ff;
+  --tag-trait-bg: rgba(242, 178, 80, 0.14);
+  --tag-trait-border: rgba(242, 178, 80, 0.3);
+  --tag-trait-text: #ffe4ba;
+  --tag-risk-bg: rgba(226, 112, 74, 0.16);
+  --tag-risk-border: rgba(226, 112, 74, 0.32);
+  --tag-risk-text: #ffd4c7;
   --ambient-orb-primary: rgba(104, 195, 255, 0.22);
   --ambient-orb-secondary: rgba(242, 178, 80, 0.12);
   --ambient-scan: rgba(104, 195, 255, 0.08);
@@ -242,6 +257,21 @@
   --button-inset: rgba(222, 251, 232, 0.12);
   --button-hover-ring: rgba(155, 245, 191, 0.18);
   --scrollbar-thumb: rgba(130, 239, 177, 0.34);
+  --tag-command-bg: rgba(130, 239, 177, 0.16);
+  --tag-command-border: rgba(130, 239, 177, 0.34);
+  --tag-command-text: #defbe8;
+  --tag-system-bg: rgba(244, 255, 246, 0.08);
+  --tag-system-border: rgba(122, 189, 147, 0.24);
+  --tag-system-text: #c9dfcf;
+  --tag-sensor-bg: rgba(155, 245, 191, 0.16);
+  --tag-sensor-border: rgba(155, 245, 191, 0.32);
+  --tag-sensor-text: #defbe8;
+  --tag-trait-bg: rgba(230, 193, 120, 0.14);
+  --tag-trait-border: rgba(230, 193, 120, 0.3);
+  --tag-trait-text: #f7e9c9;
+  --tag-risk-bg: rgba(224, 123, 102, 0.16);
+  --tag-risk-border: rgba(224, 123, 102, 0.32);
+  --tag-risk-text: #ffd7cf;
   --ambient-orb-primary: rgba(130, 239, 177, 0.2);
   --ambient-orb-secondary: rgba(230, 193, 120, 0.12);
   --ambient-scan: rgba(155, 245, 191, 0.08);
@@ -366,6 +396,21 @@
   --button-inset: rgba(255, 212, 222, 0.12);
   --button-hover-ring: rgba(240, 180, 196, 0.18);
   --scrollbar-thumb: rgba(240, 164, 186, 0.34);
+  --tag-command-bg: rgba(240, 164, 186, 0.16);
+  --tag-command-border: rgba(240, 164, 186, 0.34);
+  --tag-command-text: #ffd4de;
+  --tag-system-bg: rgba(255, 240, 234, 0.08);
+  --tag-system-border: rgba(195, 111, 135, 0.24);
+  --tag-system-text: #d6b9bf;
+  --tag-sensor-bg: rgba(240, 180, 196, 0.16);
+  --tag-sensor-border: rgba(240, 180, 196, 0.32);
+  --tag-sensor-text: #ffd4de;
+  --tag-trait-bg: rgba(233, 187, 130, 0.14);
+  --tag-trait-border: rgba(233, 187, 130, 0.3);
+  --tag-trait-text: #f3d2a5;
+  --tag-risk-bg: rgba(223, 123, 114, 0.16);
+  --tag-risk-border: rgba(223, 123, 114, 0.32);
+  --tag-risk-text: #ffd2cc;
   --ambient-orb-primary: rgba(240, 164, 186, 0.2);
   --ambient-orb-secondary: rgba(233, 187, 130, 0.12);
   --ambient-scan: rgba(240, 180, 196, 0.08);
@@ -866,6 +911,11 @@ body::after {
 .role-view__console-copy {
   font-size: 11px;
   line-height: 1.6;
+  color: var(--text-good-strong);
+}
+
+.role-view__console-copy--flavor {
+  margin-top: 8px;
   color: var(--text-muted);
 }
 
@@ -969,6 +1019,7 @@ body::after {
   gap: 8px;
   font-size: 11px;
   padding: 4px 0;
+  align-items: flex-start;
 }
 
 .event-log__timestamp {
@@ -976,8 +1027,54 @@ body::after {
   flex-shrink: 0;
 }
 
+.event-log__tag {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 7px;
+  border-radius: 999px;
+  border: 1px solid var(--tag-system-border);
+  background: var(--tag-system-bg);
+  color: var(--tag-system-text);
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.event-log__tag--command {
+  border-color: var(--tag-command-border);
+  background: var(--tag-command-bg);
+  color: var(--tag-command-text);
+}
+
+.event-log__tag--system {
+  border-color: var(--tag-system-border);
+  background: var(--tag-system-bg);
+  color: var(--tag-system-text);
+}
+
+.event-log__tag--sensor {
+  border-color: var(--tag-sensor-border);
+  background: var(--tag-sensor-bg);
+  color: var(--tag-sensor-text);
+}
+
+.event-log__tag--trait {
+  border-color: var(--tag-trait-border);
+  background: var(--tag-trait-bg);
+  color: var(--tag-trait-text);
+}
+
+.event-log__tag--risk {
+  border-color: var(--tag-risk-border);
+  background: var(--tag-risk-bg);
+  color: var(--tag-risk-text);
+}
+
 .event-log__message {
   color: var(--text-dim);
+  min-width: 0;
 }
 
 .event-log__message--latest {

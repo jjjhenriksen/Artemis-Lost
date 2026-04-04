@@ -1,3 +1,5 @@
+import { EVENT_LOG_TYPES } from "./eventLogTypes";
+
 function clampPercent(value) {
   const num = Number(value);
   if (!Number.isFinite(num)) return 0;
@@ -73,27 +75,27 @@ const EVENT_LOG_TEMPLATE = [
   {
     ts: "T+14:22",
     msg: "Anomaly signal detected from Shackleton Crater interior.",
-    type: "alert",
+    type: EVENT_LOG_TYPES.SENSOR,
   },
   {
     ts: "T+14:19",
     msg: "Telemetry confirms the signal is repeating in deliberate geometric bursts.",
-    type: "info",
+    type: EVENT_LOG_TYPES.SENSOR,
   },
   {
     ts: "T+14:18",
     msg: "Long-range comms degraded after the rover crossed the rim shadow line.",
-    type: "warn",
+    type: EVENT_LOG_TYPES.RISK,
   },
   {
     ts: "T+14:11",
     msg: "Okafor patched the primary scrubber bypass after a dust-line leak.",
-    type: "info",
+    type: EVENT_LOG_TYPES.SYSTEM,
   },
   {
     ts: "T+13:55",
     msg: "Artemis-07 rover reached the crater rim with all crew nominal.",
-    type: "info",
+    type: EVENT_LOG_TYPES.SYSTEM,
   },
 ];
 

@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { getConsoleBrief } from "./roleFilters";
 
 const ROLE_FLAVOR = {
   Commander: "You hold the tempo. Weigh the signal, the crew, and the cost of every order.",
@@ -10,7 +11,7 @@ const ROLE_FLAVOR = {
     "You operate where the risk becomes physical. Every tool choice is a bet against the environment.",
 };
 
-function RoleView({ activeCrew, roleView }) {
+function RoleView({ activeCrew, roleView, worldState, activeTurn }) {
   return (
     <div className="role-view">
       <div className="section-title section-title--mb-10">
@@ -20,6 +21,9 @@ function RoleView({ activeCrew, roleView }) {
       <div className="role-view__console">
         <div className="role-view__console-title">{activeCrew.name} console</div>
         <div className="role-view__console-copy">
+          {getConsoleBrief(worldState, activeTurn)}
+        </div>
+        <div className="role-view__console-copy role-view__console-copy--flavor">
           {ROLE_FLAVOR[activeCrew.role] ?? "Role-specific telemetry incoming."}
         </div>
       </div>

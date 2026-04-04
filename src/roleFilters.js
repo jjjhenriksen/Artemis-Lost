@@ -7,6 +7,16 @@ function createItem(key, val, warn = false) {
   return { key, val, warn };
 }
 
+function summarizeComms(ws) {
+  if (ws.systems.comms < 30) return "Command relay is near blackout.";
+  if (ws.systems.comms < 50) return "Earth link remains degraded.";
+  return "Command relay is holding steady.";
+}
+
+function summarizeObjective(ws) {
+  return ws.mission.objectives[0] || "Maintain crew survival and recover useful signal data.";
+}
+
 function getCrewById(ws, id) {
   return ws.crew.find((member) => member.id === id);
 }
@@ -64,12 +74,33 @@ const VIEW_BY_ROLE = {
   "Mission Specialist": specialistView,
 };
 
+const CONSOLE_BRIEF_BY_ROLE = {
+  Commander: (ws) =>
+    `MET ${ws.mission.met}. ${summarizeComms(ws)} Primary objective: ${summarizeObjective(ws)}`,
+  "Flight Engineer": (ws, crewMember) =>
+    `MET ${ws.mission.met}. Scrubber status is ${ws.systems.scrubber}. ${crewMember.status}. O2 reserve is ${ws.systems.o2}%.`,
+  "Science Officer": (ws) =>
+    `MET ${ws.mission.met}. Signal profile: ${ws.environment.anomaly}. Visibility is ${ws.environment.visibility}.`,
+  "Mission Specialist": (ws, crewMember) =>
+    `MET ${ws.mission.met}. Surface hazard focus: ${ws.environment.hazards[1] || "terrain instability"}. ${crewMember.status}.`,
+};
+
 export function getViewForRole(ws, roleIndex) {
   const crewMember = ws?.crew?.[roleIndex];
   if (!crewMember) return [];
 
   const builder = VIEW_BY_ROLE[crewMember.role];
   if (!builder) return [];
+
+  return builder(ws, crewMember);
+}
+
+export function getConsoleBrief(ws, roleIndex) {
+  const crewMember = ws?.crew?.[roleIndex];
+  if (!crewMember) return "Role-specific telemetry incoming.";
+
+  const builder = CONSOLE_BRIEF_BY_ROLE[crewMember.role];
+  if (!builder) return "Role-specific telemetry incoming.";
 
   return builder(ws, crewMember);
 }
