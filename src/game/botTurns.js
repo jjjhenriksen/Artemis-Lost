@@ -1,6 +1,6 @@
-function getShortName(name = "") {
-  const parts = String(name).trim().split(/\s+/).filter(Boolean);
-  return parts[parts.length - 1] || name || "crew";
+function getCrewReference(name = "", fallback = "crew") {
+  const cleaned = String(name).trim();
+  return cleaned || fallback;
 }
 
 function getTopSystemPressure(systems = {}) {
@@ -27,22 +27,22 @@ function getHazard(worldState) {
 function createCommanderAction(worldState, crew) {
   const engineer = crew[1];
   const scientist = crew[2];
-  return `Coordinate ${getShortName(engineer?.name)} to stabilize ${getTopSystemPressure(worldState?.systems)} while ${getShortName(scientist?.name)} verifies the anomaly pattern and reports whether we should press toward ${getObjective(worldState)}.`;
+  return `Coordinate ${getCrewReference(engineer?.name, "the engineer")} to stabilize ${getTopSystemPressure(worldState?.systems)} while ${getCrewReference(scientist?.name, "the science lead")} verifies the anomaly pattern and reports whether we should press toward ${getObjective(worldState)}.`;
 }
 
 function createEngineerAction(worldState, crew, activeCrew) {
   const hazard = getHazard(worldState);
-  return `${getShortName(activeCrew.name)} reroutes load through the safest available bus, checks for failure around ${hazard}, and reports what system margin we can recover before the next move.`;
+  return `${getCrewReference(activeCrew.name, "The engineer")} reroutes load through the safest available bus, checks for failure around ${hazard}, and reports what system margin we can recover before the next move.`;
 }
 
 function createScientistAction(worldState, crew, activeCrew) {
   const anomaly = worldState?.environment?.anomaly || "the signal";
-  return `${getShortName(activeCrew.name)} isolates the cleanest possible read on ${anomaly}, compares it against the last sweep, and flags whether the crew is looking at a real pattern, a trap, or environmental noise.`;
+  return `${getCrewReference(activeCrew.name, "The science lead")} isolates the cleanest possible read on ${anomaly}, compares it against the last sweep, and flags whether the crew is looking at a real pattern, a trap, or environmental noise.`;
 }
 
 function createSpecialistAction(worldState, crew, activeCrew) {
   const hazard = getHazard(worldState);
-  return `${getShortName(activeCrew.name)} scouts the safest approach around ${hazard}, secures a fallback path, and confirms what physical move the crew can attempt without burning the whole safety margin.`;
+  return `${getCrewReference(activeCrew.name, "The specialist")} scouts the safest approach around ${hazard}, secures a fallback path, and confirms what physical move the crew can attempt without burning the whole safety margin.`;
 }
 
 export function createBotAction(worldState, activeCrew) {
@@ -58,6 +58,6 @@ export function createBotAction(worldState, activeCrew) {
     case "Mission Specialist":
       return createSpecialistAction(worldState, worldState?.crew || [], activeCrew);
     default:
-      return `${getShortName(activeCrew.name)} assesses the situation, prioritizes ${getObjective(worldState)}, and reports the safest next move for the crew.`;
+      return `${getCrewReference(activeCrew.name, "The crew lead")} assesses the situation, prioritizes ${getObjective(worldState)}, and reports the safest next move for the crew.`;
   }
 }

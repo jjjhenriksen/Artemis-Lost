@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-const DEFAULT_COUNTDOWN_STEP_MS = 620;
+const DEFAULT_COUNTDOWN_STEP_MS = 1000;
 const DEFAULT_POST_COUNTDOWN_MS = 3200;
 const REDUCED_MOTION_DURATION_MS = 1200;
 const COUNTDOWN_START = 10;

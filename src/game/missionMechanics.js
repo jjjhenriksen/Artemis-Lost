@@ -6,6 +6,10 @@ function actionIncludesAny(actionText = "", keywords = []) {
   return keywords.some((keyword) => normalized.includes(keyword));
 }
 
+function getCrewNameByRole(worldState, role, fallback) {
+  return worldState?.crew?.find((member) => member.role === role)?.name || fallback;
+}
+
 const MISSION_MECHANICS = {
   "apollo-signal": {
     label: "Apollo-band lock",
@@ -14,7 +18,7 @@ const MISSION_MECHANICS = {
     roles: ["Commander", "Science Officer"],
     keywords: ["signal", "apollo", "carrier", "relay", "comms", "isolate", "pattern"],
     suggestionByRole: {
-      Commander: "Direct the science officer to isolate the Apollo-band carrier while command tightens relay discipline.",
+      Commander: "Direct the science lead to isolate the Apollo-band carrier while command tightens relay discipline.",
       "Science Officer":
         "Strip the Apollo-band noise down to the cleanest carrier trace and report whether the pattern is intentional.",
     },
@@ -264,8 +268,14 @@ export function getMissionOpportunityPreview(worldState, activeCrew, actionText 
 
 export function getMissionSuggestion(worldState, activeCrew) {
   const mechanic = getMissionMechanic(worldState?.mission?.seedId);
-  if (!mechanic || !activeCrew?.role) return null;
-  return mechanic.suggestionByRole?.[activeCrew.role] || null;
+  if (!mechanic || !activeCrew?.role) return "";
+
+  if (activeCrew.role === "Commander" && worldState?.mission?.seedId === "apollo-signal") {
+    const scientistName = getCrewNameByRole(worldState, "Science Officer", "the science lead");
+    return `Direct ${scientistName} to isolate the Apollo-band carrier while command tightens relay discipline.`;
+  }
+
+  return mechanic.suggestionByRole?.[activeCrew.role] || "";
 }
 
 export function getMissionPromptBrief(worldState, activeCrew, actionText = "") {
