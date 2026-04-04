@@ -219,3 +219,33 @@ export function getRoleMechanicSummary(activeCrew) {
       return "Role-aligned actions create a small mechanical edge each turn.";
   }
 }
+
+function getRoleOpportunity(worldState, activeCrew) {
+  switch (activeCrew?.role) {
+    case "Commander":
+      return `Crew cohesion is fragile and comms are at ${worldState?.systems?.comms ?? "unknown"}%.`;
+    case "Flight Engineer":
+      return `The weakest live system is ${String(getWeakestSystemKey(worldState) || "power").toUpperCase()}.`;
+    case "Science Officer":
+      return `The anomaly is ${worldState?.environment?.anomaly || "behaving unpredictably"}, and telemetry confidence remains contested.`;
+    case "Mission Specialist":
+      return `The immediate physical hazard is ${worldState?.environment?.hazards?.[0] || worldState?.environment?.visibility || "terrain instability"}.`;
+    default:
+      return "The next move should reduce pressure without wasting the crew's narrow margin.";
+  }
+}
+
+export function getRolePromptBrief(worldState, activeCrew, actionText = "") {
+  const aligned = isActionRoleAligned(activeCrew?.role, actionText);
+  const roleSummary = getRoleMechanicSummary(activeCrew);
+  const roleOpportunity = getRoleOpportunity(worldState, activeCrew);
+
+  return {
+    aligned,
+    summary: roleSummary,
+    opportunity: roleOpportunity,
+    framing: aligned
+      ? "The action is role-aligned, so treat success as more efficient, controlled, and lower-cost unless the fiction clearly justifies complications."
+      : "The action is off-role or only weakly aligned, so it may still work, but it should usually carry more friction, delay, exposure, or collateral pressure than a role-native move.",
+  };
+}

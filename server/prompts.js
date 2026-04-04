@@ -1,3 +1,5 @@
+import { getRolePromptBrief } from "../src/roleMechanics.js";
+
 const STATE_DELTA_SHAPE = `STATE_DELTA:
 {
   "mission": {},
@@ -27,6 +29,8 @@ State rules:
 - Preserve momentum and pressure without flattening the simulation into random volatility.
 - Do not overwrite unchanged data.
 - Treat crew personality as gameplay material, not decoration. Traits, flaws, specialties, personal stakes, and crew tension notes should shape outcomes when relevant.
+- Treat role specialization as mechanical truth, not just flavor. When an action fits the active crew member's role, specialty, and console context, it should usually achieve cleaner gains with less fallout than an off-role move.
+- Off-role actions can still succeed, but they should more often create tradeoffs, extra exposure, slower progress, or system stress unless the narration clearly establishes why this crew member is uniquely suited anyway.
 - When a crew trait or flaw materially changes what happens, add an eventLog entry with type "trait".
 - If the action introduces escalating danger, fallout, or instability, prefer eventLog type "risk".
 - Use eventLog types only from: "command", "system", "sensor", "trait", "risk".
@@ -75,6 +79,7 @@ export function createDmUserPrompt({
   const historyBlock = conversationHistory.length
     ? JSON.stringify(conversationHistory.slice(-8), null, 2)
     : "[]";
+  const rolePromptBrief = getRolePromptBrief(worldState, activeCrew, action);
 
   // Vault context is optional, so we only inject it when static lore is available.
   const vaultBlock = vaultContext ? `${vaultContext}\n\n` : "";
@@ -88,6 +93,9 @@ ${historyBlock}
 
 Current world state:
 ${JSON.stringify(worldState, null, 2)}
+
+Role pressure brief:
+${JSON.stringify(rolePromptBrief, null, 2)}
 
 ${vaultBlock}Player action:
 ${action}
@@ -105,6 +113,7 @@ export function createAutonomousCrewUserPrompt({
   const historyBlock = conversationHistory.length
     ? JSON.stringify(conversationHistory.slice(-8), null, 2)
     : "[]";
+  const rolePromptBrief = getRolePromptBrief(worldState, activeCrew, "");
 
   const vaultBlock = vaultContext ? `${vaultContext}\n\n` : "";
 
@@ -117,6 +126,9 @@ ${historyBlock}
 
 Current world state:
 ${JSON.stringify(worldState, null, 2)}
+
+Role pressure brief:
+${JSON.stringify(rolePromptBrief, null, 2)}
 
 ${vaultBlock}Return only the action this crew member should take next.`;
 }
