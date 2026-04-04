@@ -123,6 +123,9 @@
   --ambient-scan: rgba(104, 195, 255, 0.08);
   --ambient-grid-glow: rgba(104, 195, 255, 0.04);
   --ambient-noise: rgba(217, 242, 255, 0.03);
+  --ambient-shell-orb-primary: rgba(104, 195, 255, 0.24);
+  --ambient-shell-orb-secondary: rgba(242, 178, 80, 0.16);
+  --ambient-shell-sweep: rgba(104, 195, 255, 0.08);
   --ambient-duration-a: 24s;
   --ambient-duration-b: 34s;
 }
@@ -244,6 +247,9 @@
   --ambient-scan: rgba(155, 245, 191, 0.08);
   --ambient-grid-glow: rgba(130, 239, 177, 0.04);
   --ambient-noise: rgba(244, 255, 246, 0.025);
+  --ambient-shell-orb-primary: rgba(130, 239, 177, 0.24);
+  --ambient-shell-orb-secondary: rgba(230, 193, 120, 0.16);
+  --ambient-shell-sweep: rgba(155, 245, 191, 0.08);
   --ambient-duration-a: 28s;
   --ambient-duration-b: 40s;
 }
@@ -365,6 +371,9 @@
   --ambient-scan: rgba(240, 180, 196, 0.08);
   --ambient-grid-glow: rgba(240, 164, 186, 0.04);
   --ambient-noise: rgba(255, 240, 234, 0.028);
+  --ambient-shell-orb-primary: rgba(240, 164, 186, 0.24);
+  --ambient-shell-orb-secondary: rgba(233, 187, 130, 0.16);
+  --ambient-shell-sweep: rgba(240, 180, 196, 0.08);
   --ambient-duration-a: 26s;
   --ambient-duration-b: 38s;
 }
@@ -452,11 +461,28 @@ body::after {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 20% 18%, var(--ambient-orb-primary), transparent 20%),
-    radial-gradient(circle at 80% 78%, var(--ambient-orb-secondary), transparent 18%);
-  opacity: 0.6;
-  filter: blur(40px);
+    radial-gradient(circle at 16% 18%, var(--ambient-shell-orb-primary), transparent 18%),
+    radial-gradient(circle at 82% 76%, var(--ambient-shell-orb-secondary), transparent 16%);
+  opacity: 0.58;
+  filter: blur(42px);
   animation: ambientPulse calc(var(--ambient-duration-a) * 0.7) ease-in-out infinite;
+}
+
+.app-shell::after,
+.menu-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 30% 28%, var(--ambient-shell-sweep), transparent 22%),
+    radial-gradient(circle at 74% 68%, var(--ambient-shell-sweep), transparent 20%);
+  background-size:
+    auto,
+    auto;
+  opacity: 0.34;
+  filter: blur(18px);
+  animation: ambientShellSweep calc(var(--ambient-duration-b) * 0.9) ease-in-out infinite alternate;
 }
 
 .app-shell__glow {
@@ -559,7 +585,6 @@ body::after {
   min-width: 0;
 }
 
-.app-grid__main,
 .sidebar-panel {
   background:
     linear-gradient(180deg, var(--panel-gradient-start) 0%, var(--panel-gradient-end) 100%);
@@ -567,6 +592,10 @@ body::after {
   border-radius: 18px;
   box-shadow: var(--shadow-panel);
   backdrop-filter: blur(18px);
+}
+
+.app-grid__main {
+  align-content: start;
 }
 
 .sidebar-panel {
@@ -881,6 +910,10 @@ body::after {
 .narration-panel {
   background:
     linear-gradient(180deg, var(--panel-gradient-start) 0%, var(--panel-gradient-end) 100%);
+  border: 1px solid var(--panel-border-strong);
+  border-radius: 18px;
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(18px);
   padding: 18px;
   display: flex;
   flex-direction: column;
@@ -1523,11 +1556,27 @@ body::after {
   }
 }
 
+@keyframes ambientShellSweep {
+  0% {
+    transform: translate3d(-2%, -1%, 0) scale(1);
+    opacity: 0.18;
+  }
+  50% {
+    opacity: 0.38;
+  }
+  100% {
+    transform: translate3d(2%, 1%, 0) scale(1.04);
+    opacity: 0.24;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   body::before,
   body::after,
   .app-shell::before,
-  .menu-shell::before {
+  .menu-shell::before,
+  .app-shell::after,
+  .menu-shell::after {
     animation: none;
   }
 }
