@@ -12,6 +12,7 @@ export async function saveSession({
   narration,
   turn,
   conversationHistory,
+  createdFromCharacterCreation,
 }) {
   const res = await fetch("/api/session", {
     method: "PUT",
@@ -21,6 +22,7 @@ export async function saveSession({
       narration,
       turn,
       conversationHistory,
+      createdFromCharacterCreation,
     }),
   });
 

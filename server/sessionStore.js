@@ -149,6 +149,7 @@ export async function saveSession(session) {
     narration: session.narration,
     turn: session.turn,
     conversationHistory: session.conversationHistory ?? [],
+    createdFromCharacterCreation: Boolean(session.createdFromCharacterCreation),
     lastUpdatedIso: new Date().toISOString(),
   };
 

@@ -20,7 +20,13 @@ app.get("/api/session", async (_req, res) => {
 
 app.put("/api/session", async (req, res) => {
   try {
-    const { worldState, narration, turn, conversationHistory = [] } = req.body || {};
+    const {
+      worldState,
+      narration,
+      turn,
+      conversationHistory = [],
+      createdFromCharacterCreation = false,
+    } = req.body || {};
     if (!worldState || typeof turn !== "number") {
       res.status(400).json({ error: "Missing worldState or turn" });
       return;
@@ -31,6 +37,7 @@ app.put("/api/session", async (req, res) => {
       narration: narration || "",
       turn,
       conversationHistory,
+      createdFromCharacterCreation,
     });
 
     res.json({ session });

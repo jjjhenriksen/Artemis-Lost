@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import ActionInput from "./ActionInput";
 import CrewCard from "./CrewCard";
 import CrewStatusBar from "./CrewStatusBar";
@@ -13,60 +13,67 @@ import {
   prependCappedEntries,
 } from "./gameLoop";
 import { getViewForRole } from "./roleFilters";
-import { loadSession, saveSession as persistSession } from "./sessionApi";
+import { saveSession as persistSession } from "./sessionApi";
 import { INITIAL_WORLD_STATE, OPENING_NARRATION } from "./worldState";
 
-export default function ArtemisLost() {
-  const [ws, setWs] = useState(INITIAL_WORLD_STATE);
-  const [turn, setTurn] = useState(0);
-  const [narration, setNarration] = useState(OPENING_NARRATION);
+function createFallbackSession() {
+  return {
+    worldState: INITIAL_WORLD_STATE,
+    narration: OPENING_NARRATION,
+    turn: 0,
+    conversationHistory: [],
+    createdFromCharacterCreation: false,
+  };
+}
+
+export default function ArtemisLost({
+  initialSession,
+  onExitToMenu,
+  onSessionPersisted,
+}) {
+  const session = initialSession?.worldState ? initialSession : createFallbackSession();
+
+  const [ws, setWs] = useState(session.worldState);
+  const [turn, setTurn] = useState(session.turn || 0);
+  const [narration, setNarration] = useState(session.narration || OPENING_NARRATION);
   const [input, setInput] = useState("");
   const [waiting, setWaiting] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState([]);
-  const [sessionReady, setSessionReady] = useState(false);
+  const [conversationHistory, setConversationHistory] = useState(
+    session.conversationHistory || []
+  );
+  const [saveState, setSaveState] = useState("idle");
   const inputRef = useRef(null);
 
   const activeCrew = ws.crew[turn];
   const roleView = getViewForRole(ws, turn);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function hydrateSession() {
-      const session = await loadSession();
-      if (cancelled) return;
-
-      if (session && session.worldState) {
-        setWs(session.worldState);
-        setNarration(session.narration || OPENING_NARRATION);
-        setTurn(typeof session.turn === "number" ? session.turn : 0);
-        setConversationHistory(session.conversationHistory || []);
-      }
-
-      setSessionReady(true);
-    }
-
-    hydrateSession();
-
-    return () => {
-      cancelled = true;
+  function buildSessionPayload(overrides = {}) {
+    return {
+      worldState: overrides.worldState ?? ws,
+      narration: overrides.narration ?? narration,
+      turn: overrides.turn ?? turn,
+      conversationHistory: overrides.conversationHistory ?? conversationHistory,
+      createdFromCharacterCreation:
+        overrides.createdFromCharacterCreation ?? session.createdFromCharacterCreation,
     };
-  }, []);
+  }
 
-  useEffect(() => {
-    if (!sessionReady) return;
+  async function saveCurrentSession(overrides = {}) {
+    const payload = buildSessionPayload(overrides);
+    setSaveState("saving");
+    const persisted = await persistSession(payload);
+    if (!persisted?.error) {
+      setSaveState("saved");
+      onSessionPersisted?.(persisted);
+      window.setTimeout(() => setSaveState("idle"), 1200);
+    } else {
+      setSaveState("error");
+    }
+  }
 
-    persistSession({
-      worldState: ws,
-      narration,
-      turn,
-      conversationHistory,
-    }).catch(() => {});
-  }, [conversationHistory, narration, sessionReady, turn, ws]);
-
-  function completeTurn() {
+  function completeTurn(nextTurn) {
     setWaiting(false);
-    setTurn((currentTurn) => getNextTurnIndex(ws.crew, currentTurn));
+    setTurn(nextTurn);
     setTimeout(() => inputRef.current?.focus(), 100);
   }
 
@@ -95,35 +102,51 @@ export default function ArtemisLost() {
     });
 
     if (result.error) {
-      setNarration(
-        `Could not reach the DM service.\n\n${result.error}\n\nCheck that both dev servers are running (\`npm run dev\`), your .env has ANTHROPIC_API_KEY, and ANTHROPIC_MODEL matches an available model.`
-      );
-      setWs((prev) => ({
-        ...prev,
-        eventLog: prependCappedEntries(prev.eventLog, newLog),
-      }));
-      completeTurn();
+      const errorNarration = `Could not reach the DM service.\n\n${result.error}\n\nCheck that both dev servers are running (\`npm run dev\`), your .env has ANTHROPIC_API_KEY, and ANTHROPIC_MODEL matches an available model.`;
+      const nextWorldState = {
+        ...ws,
+        eventLog: prependCappedEntries(ws.eventLog, newLog),
+      };
+      const nextTurn = getNextTurnIndex(ws.crew, turn);
+
+      setNarration(errorNarration);
+      setWs(nextWorldState);
+      await saveCurrentSession({
+        worldState: nextWorldState,
+        narration: errorNarration,
+        turn: nextTurn,
+        conversationHistory: nextConversationHistory,
+      });
+      completeTurn(nextTurn);
       return;
     }
 
     const { narration: nextText, stateDelta } = result;
-    setWs((prev) => {
-      const withAction = {
-        ...prev,
-        eventLog: prependCappedEntries(prev.eventLog, newLog),
-      };
-      return applyStateDelta(withAction, stateDelta);
+    const assistantHistory = appendConversationEntry(nextConversationHistory, {
+      role: "assistant",
+      turn,
+      crewName: activeCrew.name,
+      content: nextText,
     });
-    setNarration(nextText);
-    setConversationHistory((prev) =>
-      appendConversationEntry(prev, {
-        role: "assistant",
-        turn,
-        crewName: activeCrew.name,
-        content: nextText,
-      })
+    const nextWorldState = applyStateDelta(
+      {
+        ...ws,
+        eventLog: prependCappedEntries(ws.eventLog, newLog),
+      },
+      stateDelta
     );
-    completeTurn();
+    const nextTurn = getNextTurnIndex(ws.crew, turn);
+
+    setWs(nextWorldState);
+    setNarration(nextText);
+    setConversationHistory(assistantHistory);
+    await saveCurrentSession({
+      worldState: nextWorldState,
+      narration: nextText,
+      turn: nextTurn,
+      conversationHistory: assistantHistory,
+    });
+    completeTurn(nextTurn);
   }
 
   function handleKeyDown(event) {
@@ -143,7 +166,26 @@ export default function ArtemisLost() {
           <div className="app-header__title">Artemis Lost</div>
         </div>
 
-        <CrewStatusBar mission={ws.mission} systems={ws.systems} />
+        <div className="app-header__controls">
+          <CrewStatusBar mission={ws.mission} systems={ws.systems} />
+          <div className="header-actions">
+            <div className={`save-indicator save-indicator--${saveState}`}>
+              {saveState === "saving"
+                ? "Saving..."
+                : saveState === "saved"
+                  ? "Saved"
+                  : saveState === "error"
+                    ? "Save failed"
+                    : "Autosave ready"}
+            </div>
+            <button className="header-button" onClick={() => saveCurrentSession()}>
+              Save
+            </button>
+            <button className="header-button" onClick={onExitToMenu}>
+              Menu
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="app-grid">
