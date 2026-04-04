@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-const DEFAULT_DURATION_MS = 9600;
+const DEFAULT_COUNTDOWN_STEP_MS = 620;
+const DEFAULT_POST_COUNTDOWN_MS = 3200;
 const REDUCED_MOTION_DURATION_MS = 1200;
 const COUNTDOWN_START = 10;
 
@@ -35,10 +36,18 @@ export default function LaunchSequence({ session, slotId, themeId, themes, onCom
       tone: "warn",
     },
   ];
+  const countdownDurationMs = useMemo(
+    () => DEFAULT_COUNTDOWN_STEP_MS * COUNTDOWN_START,
+    []
+  );
+  const totalDurationMs = useMemo(
+    () => countdownDurationMs + DEFAULT_POST_COUNTDOWN_MS,
+    [countdownDurationMs]
+  );
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const duration = prefersReducedMotion ? REDUCED_MOTION_DURATION_MS : DEFAULT_DURATION_MS;
+    const duration = prefersReducedMotion ? REDUCED_MOTION_DURATION_MS : totalDurationMs;
     const timer = window.setTimeout(() => {
       setReadyToContinue(true);
     }, duration);
@@ -48,7 +57,6 @@ export default function LaunchSequence({ session, slotId, themeId, themes, onCom
       return () => window.clearTimeout(timer);
     }
 
-    const stepDuration = Math.max(520, Math.floor(duration / (COUNTDOWN_START + 1)));
     const countdownTimer = window.setInterval(() => {
       setCountdownValue((current) => {
         if (current <= 0) {
@@ -57,7 +65,7 @@ export default function LaunchSequence({ session, slotId, themeId, themes, onCom
         }
         return current - 1;
       });
-    }, stepDuration);
+    }, DEFAULT_COUNTDOWN_STEP_MS);
 
     return () => {
       window.clearTimeout(timer);
@@ -66,7 +74,15 @@ export default function LaunchSequence({ session, slotId, themeId, themes, onCom
   }, []);
 
   return (
-    <section className="launch-screen" aria-label="Mission launch sequence">
+    <section
+      className="launch-screen"
+      aria-label="Mission launch sequence"
+      style={
+        {
+          "--launch-start-delay": `${countdownDurationMs}ms`,
+        }
+      }
+    >
       <div className="launch-screen__sky" aria-hidden="true">
         <div className="launch-screen__stars launch-screen__stars--near" />
         <div className="launch-screen__stars launch-screen__stars--far" />

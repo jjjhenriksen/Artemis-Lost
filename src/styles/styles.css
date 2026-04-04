@@ -1670,6 +1670,7 @@ body::after {
 }
 
 .launch-screen {
+  --launch-start-delay: 0ms;
   min-height: 100vh;
   position: relative;
   overflow: hidden;
@@ -2074,6 +2075,7 @@ body::after {
   background: radial-gradient(circle, color-mix(in srgb, var(--launch-exhaust-core) 48%, transparent) 0%, transparent 68%);
   filter: blur(20px);
   animation: launchHaloPulse 1.2s ease-in-out infinite;
+  animation-delay: var(--launch-start-delay);
 }
 
 .launch-pad__shockwave {
@@ -2083,6 +2085,7 @@ body::after {
   border: 2px solid color-mix(in srgb, var(--launch-exhaust-core) 54%, transparent);
   opacity: 0;
   animation: launchShockwave 2.1s ease-out infinite;
+  animation-delay: var(--launch-start-delay);
 }
 
 .launch-pad__ground {
@@ -2175,6 +2178,8 @@ body::after {
   background: linear-gradient(90deg, color-mix(in srgb, var(--text-body) 68%, var(--surface-elevated)), color-mix(in srgb, var(--text-dim) 74%, var(--surface-elevated)));
   transform-origin: right center;
   animation: launchArmRetract 7.2s ease-in forwards;
+  animation-delay: calc(var(--launch-start-delay) - 520ms);
+  animation-fill-mode: backwards;
 }
 
 .launch-pad__smoke {
@@ -2191,20 +2196,23 @@ body::after {
   height: 120px;
   left: calc(50% - 160px);
   animation: launchSmokeLeft 7s ease-out infinite;
+  animation-delay: var(--launch-start-delay);
 }
 
 .launch-pad__smoke--two {
   width: 240px;
   height: 140px;
   left: calc(50% - 110px);
-  animation: launchSmokeRise 5.4s ease-out infinite 0.4s;
+  animation: launchSmokeRise 5.4s ease-out infinite;
+  animation-delay: calc(var(--launch-start-delay) + 0.4s);
 }
 
 .launch-pad__smoke--three {
   width: 220px;
   height: 130px;
   left: calc(50% - 20px);
-  animation: launchSmokeRight 6.3s ease-out infinite 0.7s;
+  animation: launchSmokeRight 6.3s ease-out infinite;
+  animation-delay: calc(var(--launch-start-delay) + 0.7s);
 }
 
 .rocket {
@@ -2215,6 +2223,8 @@ body::after {
   height: 520px;
   transform: translateX(-50%);
   animation: rocketLaunch 7.2s cubic-bezier(0.25, 0.58, 0.12, 1) forwards;
+  animation-delay: var(--launch-start-delay);
+  animation-fill-mode: backwards;
 }
 
 .rocket__contrail {
@@ -2230,6 +2240,8 @@ body::after {
   filter: blur(10px);
   opacity: 0;
   animation: rocketContrail 7.2s ease-out forwards;
+  animation-delay: var(--launch-start-delay);
+  animation-fill-mode: backwards;
 }
 
 .rocket__body {
@@ -2360,6 +2372,8 @@ body::after {
   background:
     radial-gradient(circle at 50% 16%, color-mix(in srgb, white 78%, var(--launch-exhaust-core)), var(--launch-exhaust-core) 18%, color-mix(in srgb, var(--launch-exhaust-edge) 68%, transparent) 54%, rgba(255, 76, 29, 0) 100%);
   animation: rocketFlameCore 0.18s ease-in-out infinite alternate;
+  animation-delay: var(--launch-start-delay);
+  animation-fill-mode: backwards;
 }
 
 .rocket__flame--glow {
@@ -2370,6 +2384,8 @@ body::after {
     radial-gradient(circle at 50% 12%, color-mix(in srgb, var(--launch-exhaust-core) 52%, transparent), color-mix(in srgb, var(--launch-exhaust-edge) 24%, transparent) 42%, rgba(255, 91, 25, 0) 100%);
   filter: blur(14px);
   animation: rocketFlameGlow 0.3s ease-in-out infinite alternate;
+  animation-delay: var(--launch-start-delay);
+  animation-fill-mode: backwards;
 }
 
 .launch-screen__manifest {
