@@ -18,6 +18,22 @@ const MISSION_MECHANICS = {
       "Science Officer":
         "Strip the Apollo-band noise down to the cleanest carrier trace and report whether the pattern is intentional.",
     },
+    effect: {
+      type: EVENT_LOG_TYPES.SENSOR,
+      systems: {
+        comms: 3,
+      },
+      crew: {
+        extra: {
+          default: 2,
+          byRole: {
+            "Science Officer": 4,
+          },
+        },
+      },
+      message:
+        "{name} exploits the Apollo-band lock and clears a cleaner signal picture through the relay noise.",
+    },
   },
   "cryovent-whisper": {
     label: "Cryovent thermal window",
@@ -30,6 +46,22 @@ const MISSION_MECHANICS = {
         "Cycle thermal load away from the vent-facing systems and buy the specialist a safer EVA margin.",
       "Mission Specialist":
         "Confirm a controlled route across the vent shelf before anyone commits deeper into the cold sink.",
+    },
+    effect: {
+      type: EVENT_LOG_TYPES.SYSTEM,
+      systems: {
+        thermal: 4,
+      },
+      crew: {
+        extra: {
+          default: 2,
+          byRole: {
+            "Mission Specialist": 4,
+          },
+        },
+      },
+      message:
+        "{name} catches the cryovent thermal window before the shelf strips away more margin.",
     },
   },
   "buried-array": {
@@ -46,6 +78,23 @@ const MISSION_MECHANICS = {
       "Mission Specialist":
         "Mark a debris-safe route that holds even if the next nav sweep lies.",
     },
+    effect: {
+      type: EVENT_LOG_TYPES.SYSTEM,
+      systems: {
+        nav: 4,
+        comms: 2,
+      },
+      crew: {
+        extra: {
+          default: 2,
+          byRole: {
+            "Science Officer": 4,
+          },
+        },
+      },
+      message:
+        "{name} turns the reflector field into a usable nav solution instead of another ghost return.",
+    },
   },
   "blackglass-breach": {
     label: "Shielding seam read",
@@ -58,6 +107,25 @@ const MISSION_MECHANICS = {
         "Separate the machine-band pulse from the thermal bloom so command knows whether the seam is reacting or signaling.",
       "Mission Specialist":
         "Re-anchor the fallback line and protect shielding margin before the seam throws another thermal spike.",
+    },
+    effect: {
+      type: EVENT_LOG_TYPES.RISK,
+      systems: {
+        thermal: 2,
+      },
+      crew: {
+        health: {
+          default: 1,
+          byRole: {
+            "Mission Specialist": 3,
+          },
+        },
+        extra: {
+          default: 4,
+        },
+      },
+      message:
+        "{name} works the blackglass seam on its own terms and preserves shielding margin through the flare.",
     },
   },
 };
@@ -73,109 +141,56 @@ function isMissionAligned(worldState, activeCrew, actionText = "") {
   return actionIncludesAny(actionText, mechanic.keywords);
 }
 
-function createApolloSignalEffect(worldState, activeCrew) {
-  const liveCrew = getCrewById(worldState, activeCrew.id) || activeCrew;
-  const commsBoost = 3;
-  const insightBoost = activeCrew.role === "Science Officer" ? 4 : 2;
-
-  return {
-    systems: {
-      comms: clampPercent((worldState?.systems?.comms || 0) + commsBoost),
-    },
-    crew: [
-      createCrewPatch(liveCrew, {
-        extra: {
-          value: clampPercent((liveCrew?.extra?.value || 0) + insightBoost),
-        },
-      }),
-    ].filter(Boolean),
-    eventLog: [
-      {
-        ts: worldState?.mission?.met || "T+00:00",
-        type: EVENT_LOG_TYPES.SENSOR,
-        msg: `${activeCrew.name} exploits the Apollo-band lock and clears a cleaner signal picture through the relay noise.`,
-      },
-    ],
-  };
+function resolveRoleValue(config, role) {
+  if (!config) return 0;
+  return config.byRole?.[role] ?? config.default ?? 0;
 }
 
-function createCryoventEffect(worldState, activeCrew) {
-  const liveCrew = getCrewById(worldState, activeCrew.id) || activeCrew;
-  const thermalBoost = 4;
-  const suitBoost = activeCrew.role === "Mission Specialist" ? 4 : 2;
+function createSystemsPatch(worldState, systemBoosts = {}) {
+  const entries = Object.entries(systemBoosts)
+    .map(([key, boost]) => [key, clampPercent((worldState?.systems?.[key] || 0) + boost)])
+    .filter(([, value]) => Number.isFinite(value));
 
-  return {
-    systems: {
-      thermal: clampPercent((worldState?.systems?.thermal || 0) + thermalBoost),
-    },
-    crew: [
-      createCrewPatch(liveCrew, {
-        extra: {
-          value: clampPercent((liveCrew?.extra?.value || 0) + suitBoost),
-        },
-      }),
-    ].filter(Boolean),
-    eventLog: [
-      {
-        ts: worldState?.mission?.met || "T+00:00",
-        type: EVENT_LOG_TYPES.SYSTEM,
-        msg: `${activeCrew.name} catches the cryovent thermal window before the shelf strips away more margin.`,
-      },
-    ],
-  };
+  if (entries.length === 0) return undefined;
+  return Object.fromEntries(entries);
 }
 
-function createBuriedArrayEffect(worldState, activeCrew) {
-  const liveCrew = getCrewById(worldState, activeCrew.id) || activeCrew;
-  const navBoost = 4;
-  const commsBoost = 2;
-  const extraBoost = activeCrew.role === "Science Officer" ? 4 : 2;
+function createCrewEffectPatch(liveCrew, activeCrew, crewConfig = {}) {
+  if (!liveCrew || !crewConfig) return null;
 
-  return {
-    systems: {
-      nav: clampPercent((worldState?.systems?.nav || 0) + navBoost),
-      comms: clampPercent((worldState?.systems?.comms || 0) + commsBoost),
-    },
-    crew: [
-      createCrewPatch(liveCrew, {
-        extra: {
-          value: clampPercent((liveCrew?.extra?.value || 0) + extraBoost),
-        },
-      }),
-    ].filter(Boolean),
-    eventLog: [
-      {
-        ts: worldState?.mission?.met || "T+00:00",
-        type: EVENT_LOG_TYPES.SYSTEM,
-        msg: `${activeCrew.name} turns the reflector field into a usable nav solution instead of another ghost return.`,
-      },
-    ],
-  };
+  const healthBoost = resolveRoleValue(crewConfig.health, activeCrew.role);
+  const extraBoost = resolveRoleValue(crewConfig.extra, activeCrew.role);
+  const patch = {};
+
+  if (healthBoost) {
+    patch.health = clampPercent((liveCrew?.health || 0) + healthBoost);
+  }
+
+  if (extraBoost) {
+    patch.extra = {
+      value: clampPercent((liveCrew?.extra?.value || 0) + extraBoost),
+    };
+  }
+
+  if (Object.keys(patch).length === 0) return null;
+  return createCrewPatch(liveCrew, patch);
 }
 
-function createBlackglassEffect(worldState, activeCrew) {
+function createMissionEffectDelta(worldState, activeCrew, mechanic) {
   const liveCrew = getCrewById(worldState, activeCrew.id) || activeCrew;
-  const healthBoost = activeCrew.role === "Mission Specialist" ? 3 : 1;
-  const extraBoost = 4;
-  const thermalBoost = 2;
+  const effect = mechanic?.effect;
+  if (!effect) return {};
+  const crewPatch = createCrewEffectPatch(liveCrew, activeCrew, effect.crew);
+  const systemsPatch = createSystemsPatch(worldState, effect.systems);
 
   return {
-    systems: {
-      thermal: clampPercent((worldState?.systems?.thermal || 0) + thermalBoost),
-    },
-    crew: [
-      createCrewPatch(liveCrew, {
-        health: clampPercent((liveCrew?.health || 0) + healthBoost),
-        extra: {
-          value: clampPercent((liveCrew?.extra?.value || 0) + extraBoost),
-        },
-      }),
-    ].filter(Boolean),
+    ...(systemsPatch ? { systems: systemsPatch } : {}),
+    crew: [crewPatch].filter(Boolean),
     eventLog: [
       {
         ts: worldState?.mission?.met || "T+00:00",
-        type: EVENT_LOG_TYPES.RISK,
-        msg: `${activeCrew.name} works the blackglass seam on its own terms and preserves shielding margin through the flare.`,
+        type: effect.type,
+        msg: effect.message.replace("{name}", activeCrew.name),
       },
     ],
   };
@@ -186,25 +201,8 @@ export function createMissionTurnEffect(worldState, activeCrew, actionText = "")
     return { delta: {} };
   }
 
-  let delta = {};
-  switch (worldState?.mission?.seedId) {
-    case "apollo-signal":
-      delta = createApolloSignalEffect(worldState, activeCrew);
-      break;
-    case "cryovent-whisper":
-      delta = createCryoventEffect(worldState, activeCrew);
-      break;
-    case "buried-array":
-      delta = createBuriedArrayEffect(worldState, activeCrew);
-      break;
-    case "blackglass-breach":
-      delta = createBlackglassEffect(worldState, activeCrew);
-      break;
-    default:
-      delta = {};
-  }
-
-  return { delta };
+  const mechanic = getMissionMechanic(worldState?.mission?.seedId);
+  return { delta: createMissionEffectDelta(worldState, activeCrew, mechanic) };
 }
 
 export function getMissionMechanicSummary(worldState, activeCrew) {
