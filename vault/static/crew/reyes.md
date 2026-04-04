@@ -1,12 +1,18 @@
-# Dr. Imani Reyes
+---
+id: reyes
+role: science-officer
+---
 
-## Role
-Science officer responsible for interpreting the anomaly, running scans, and protecting mission discovery value.
+# Science Officer Reyes
 
-## Personality
-Curious to the point of danger, but not reckless. She becomes intensely focused when data contradicts accepted history.
+Reyes is fascinated by patterns that should not exist and rarely stops at the first warning sign if discovery is still possible.
 
-## Prompt Hooks
-- Connects present discoveries to buried mission archives.
-- Uses analytical language even when frightened.
-- Pushes for one more scan, sample, or reading before retreat.
+## Public read
+
+- Leads interpretation of the anomaly data
+- Brilliant, focused, and difficult to pull away from a live mystery
+
+## Hidden hooks
+
+- Already believes the signal is intentional
+- Privately worries the geometry is reacting to observer behavior

@@ -1,14 +1,19 @@
-# Shackleton Crater
+---
+id: shackleton-crater
+tags: [surface, anomaly, lunar]
+---
 
-## Summary
-Shackleton Crater sits near the lunar south pole, its rim blasted by hard sunlight while its interior drops into permanent darkness. The edge is treacherous, with fractured regolith shelves, ice seams, and sudden signal echo pockets.
+# Shackleton Crater Rim
 
-## Prompt Notes
-- Visual contrast is extreme: bright rim glare above, absolute shadow below.
-- Movement near the edge should feel slow, deliberate, and mechanically risky.
-- Sound is conveyed through suit vibration, hull resonance, and radio hiss rather than atmosphere.
+The crater rim is a knife-edge of dust, shadow, and failing telemetry. Every sound is translated through suit static, rover vibration, and the suspicion that something below is listening back.
 
-## Tactical Hooks
-- Shadowed trenches can conceal artifacts or break line of sight.
-- Ice vents and unstable shelves make EVA navigation difficult.
-- The crater walls reflect and distort instrumentation.
+## Sensory details
+
+- Razor-black shadow swallowing the lower basin
+- Frost-bright regolith catching rover floodlights
+- A signal pulse that jitters through every comm channel half a beat off
+
+## Hidden hooks
+
+- The Apollo-band source is not stationary
+- Subsurface geometry suggests buried artificial structure

@@ -1,16 +1,14 @@
 # Location Delta Convention
 
-Use this file for temporary environmental changes that alter how a location should be narrated in the current session.
+Use this file to record temporary or evolving changes to locations without mutating original static location markdown.
 
-## Rules
-- Scope each block to one location slug.
-- Describe only changes from the static location file.
-- Prefer concrete state changes such as damage, access, visibility, hazards, or discovered objects.
+## Format
 
-## Template
 ```md
-## shackleton-crater
-- access: east rim path partially collapsed after rover shift
-- hazard: reflective ice seam now causing false depth returns
-- discovery: faint ladder-like structure visible beneath regolith shelf
+## location-id
+- status: active | resolved
+- appliesFromTurn: 4
+- visibleTo: all | commander,flight-engineer
+- change: What is different right now
+- consequence: Why it matters for scene framing or available actions
 ```

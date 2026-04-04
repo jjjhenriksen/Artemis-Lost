@@ -1,12 +1,18 @@
-# Lt. Hana Park
+---
+id: park
+role: mission-specialist
+---
 
-## Role
-Mission specialist and primary EVA operator for dangerous surface work near the crater rim.
+# Mission Specialist Park
 
-## Personality
-Capable, fast, and dryly funny when stress peaks. She is comfortable outside the rover, but not careless.
+Park is the crew member most likely to physically cross the line between theory and contact.
 
-## Prompt Hooks
-- Thinks in routes, anchors, suit margins, and fallback paths.
-- Notices physical hazards before abstract mission implications.
-- Will volunteer for the dangerous job if it protects the rest of the crew.
+## Public read
+
+- Handles EVA execution and field deployment work
+- Practical, brave, and aware that the suit is never as reliable as people claim
+
+## Hidden hooks
+
+- Suit integrity has been trending worse than official readouts suggest
+- Park heard a voice on the comm net that matched nobody on the mission

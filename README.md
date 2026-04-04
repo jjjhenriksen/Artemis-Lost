@@ -35,8 +35,13 @@ The current app is a React + Vite frontend with a small Express development serv
 │   ├── applyStateDelta.js
 │   ├── dmApi.js
 │   ├── roleFilters.js
+│   ├── sessionApi.js
+│   ├── styles.css
 │   ├── useTypewriter.js
 │   └── worldState.js
+├── vault/
+│   ├── dynamic/
+│   └── static/
 ├── index.html
 ├── package.json
 └── vite.config.js
@@ -104,12 +109,13 @@ with the DM API server running.
 
 1. The frontend renders a seeded mission state and a role-based UI.
 2. A player enters an action for the active crew member.
-3. The frontend posts the current world state, action, and active crew member to `/api/turn`.
+3. The frontend includes recent conversation history and the current turn index when posting to `/api/turn`.
 4. The Express server calls Anthropic with a structured system prompt.
-5. The model returns JSON containing:
+5. The server enriches the prompt with vault content and validates the model output.
+6. The model returns JSON containing:
    - `narration`
    - `stateDelta`
-6. The frontend merges `stateDelta` into the current world state and advances the turn.
+7. The frontend merges `stateDelta` into the current world state, advances the turn, and persists the updated session.
 
 ## Documentation
 
@@ -127,11 +133,15 @@ The prototype already includes:
 - event log updates
 - state-delta application
 - Anthropic-backed turn requests through a local server
+- conversation history passed through the DM loop
+- vault-backed session persistence in `vault/dynamic`
+- prompt context assembled from `vault/static`
+- centralized shared UI styling in `src/styles.css`
 
 The next natural improvements are:
-- adding persistence for session state and logs
-- hardening the model response validation path
-- moving shared styling out of inline component markup
+- adding a visible "reset session" control in the UI
+- surfacing session save/load status to the player
+- expanding vault-driven prompt assembly with more scene-aware file selection
 
 ## Notes
 

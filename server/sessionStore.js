@@ -1,0 +1,171 @@
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, "..");
+
+const vaultRoot = path.join(projectRoot, "vault");
+const dynamicRoot = path.join(vaultRoot, "dynamic");
+const overridesRoot = path.join(dynamicRoot, "overrides");
+const sessionJsonPath = path.join(dynamicRoot, "session.json");
+const sessionStateMdPath = path.join(dynamicRoot, "session-state.md");
+const logMdPath = path.join(dynamicRoot, "log.md");
+const npcOverridePath = path.join(overridesRoot, "npc-override.md");
+const locationDeltaPath = path.join(overridesRoot, "location-delta.md");
+
+function joinLines(lines) {
+  return lines.join("\n");
+}
+
+function formatCrewStatus(crew = []) {
+  return crew.map(
+    (member) =>
+      `- ${member.name} | ${member.role} | health ${member.health}, morale ${member.morale} | ${member.extra.label}: ${member.extra.value}`
+  );
+}
+
+function formatSystems(systems = {}) {
+  return Object.entries(systems).map(([key, value]) => {
+    const asText =
+      typeof value === "number" && ["o2", "power", "comms", "propulsion"].includes(key)
+        ? `${value}%`
+        : value;
+    return `- ${key} | nominal snapshot | ${asText} | no automated alert summary`;
+  });
+}
+
+function formatEvents(eventLog = []) {
+  return eventLog.map((event) => `- ${event.ts} | all | ${event.type} | ${event.msg}`);
+}
+
+function getDangerLevel(worldState) {
+  const warningCount = [
+    worldState?.systems?.o2 < 60,
+    worldState?.systems?.power < 70,
+    worldState?.systems?.comms < 40,
+    worldState?.crew?.some((member) => member.health < 60),
+  ].filter(Boolean).length;
+
+  if (warningCount >= 3) return "critical";
+  if (warningCount >= 1) return "elevated";
+  return "guarded";
+}
+
+function buildSessionStateMarkdown({ worldState, turn, narration, conversationHistory }) {
+  const currentLocationId = (worldState.environment.location || "unknown")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  return joinLines([
+    "# Session State",
+    "",
+    "## Meta",
+    `- turn: ${turn}`,
+    `- phase: ${worldState.mission.phase}`,
+    `- lastUpdatedIso: ${new Date().toISOString()}`,
+    "",
+    "## Snapshot",
+    `- currentLocationId: ${currentLocationId}`,
+    `- dangerLevel: ${getDangerLevel(worldState)}`,
+    `- activeObjectives: ${worldState.mission.objectives.join(" | ")}`,
+    `- openClocks: comms ${worldState.systems.comms}%, o2 ${worldState.systems.o2}%, power ${worldState.systems.power}%`,
+    "",
+    "## Crew Status",
+    ...formatCrewStatus(worldState.crew),
+    "",
+    "## Systems",
+    ...formatSystems(worldState.systems),
+    "",
+    "## New Events",
+    ...formatEvents(worldState.eventLog.slice(0, 12)),
+    "",
+    "## GM Notes",
+    `- latestNarration: ${narration ? narration.split("\n")[0] : "No narration yet."}`,
+    `- recentHistoryCount: ${conversationHistory.length}`,
+    `- anomaly: ${worldState.environment.anomaly}`,
+    `- unresolvedThreats: ${worldState.environment.hazards.join(", ")}`,
+    "",
+  ]);
+}
+
+function buildLogMarkdown(conversationHistory = []) {
+  return joinLines([
+    "# Session Log",
+    "",
+    ...conversationHistory.flatMap((entry, index) => [
+      `## Entry ${index + 1}`,
+      `- role: ${entry.role}`,
+      `- turn: ${entry.turn ?? "n/a"}`,
+      `- crew: ${entry.crewName ?? "n/a"}`,
+      `- content: ${entry.content}`,
+      "",
+    ]),
+  ]);
+}
+
+async function writeIfMissing(targetPath, content) {
+  try {
+    await readFile(targetPath, "utf8");
+  } catch {
+    await writeFile(targetPath, content, "utf8");
+  }
+}
+
+export async function ensureSessionPaths() {
+  await mkdir(dynamicRoot, { recursive: true });
+  await mkdir(overridesRoot, { recursive: true });
+
+  await Promise.all([
+    writeIfMissing(
+      npcOverridePath,
+      "# NPC Override Convention\n\nUse this file to record active NPC behavior overrides.\n"
+    ),
+    writeIfMissing(
+      locationDeltaPath,
+      "# Location Delta Convention\n\nUse this file to record evolving location changes.\n"
+    ),
+  ]);
+}
+
+export async function loadSession() {
+  await ensureSessionPaths();
+
+  try {
+    const raw = await readFile(sessionJsonPath, "utf8");
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export async function saveSession(session) {
+  await ensureSessionPaths();
+
+  const payload = {
+    worldState: session.worldState,
+    narration: session.narration,
+    turn: session.turn,
+    conversationHistory: session.conversationHistory ?? [],
+    lastUpdatedIso: new Date().toISOString(),
+  };
+
+  await Promise.all([
+    writeFile(sessionJsonPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8"),
+    writeFile(
+      sessionStateMdPath,
+      buildSessionStateMarkdown({
+        worldState: payload.worldState,
+        turn: payload.turn,
+        narration: payload.narration,
+        conversationHistory: payload.conversationHistory,
+      }),
+      "utf8"
+    ),
+    writeFile(logMdPath, buildLogMarkdown(payload.conversationHistory), "utf8"),
+  ]);
+
+  return payload;
+}

@@ -1,14 +1,20 @@
-# Mission Brief
+---
+type: mission-brief
+---
 
-Artemis-07 was conducting a south-pole survey transit when it intercepted a structured radio pulse on an Apollo-era band that should have been silent for fifty years. The signal originates from inside Shackleton Crater and repeats with deliberate timing that resists natural explanations.
+# Artemis Lost Mission Brief
 
-Mission priorities:
-- Identify the source of the signal.
-- Preserve crew survival and return capability.
-- Recover enough evidence to justify continued mission support.
+## Public brief
 
-Current complications:
-- Long-range comms are degraded.
-- The rover propulsion envelope is reduced.
-- The scrubber patch is stable for now, but not trusted.
-- Park's EVA suit has known integrity loss.
+The crew has been dispatched to investigate a dormant Apollo-band transmission emerging from the Shackleton Crater region. Their mission is to classify the source, preserve crew safety, and maintain a viable route back to Lunar Base Artemis.
+
+## Strategic pressure
+
+- Comms are already degraded before contact
+- EVA capability is limited and fragile
+- Mission control wants answers faster than conditions justify
+
+## DM secrets
+
+- The signal may predate the current mission by decades, but it is active now
+- Parts of the crew briefing were redacted before launch

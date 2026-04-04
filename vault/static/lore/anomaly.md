@@ -1,13 +1,19 @@
-# The Anomaly
+---
+type: anomaly
+---
 
-The signal is not merely old. It behaves as if it understands the shape of the crater around it, shifting harmonics with environmental changes and reasserting a geometric carrier wave every time Reyes filters away the noise.
+# Shackleton Signal Anomaly
 
-Working theories:
-- A dormant relay predating the current mission profile
-- A buried installation using Apollo-band hardware as camouflage
-- A feedback phenomenon created by ice, regolith, and forgotten machinery
+The anomaly transmits on an impossible legacy band, presents geometric regularity in geological scans, and appears to disturb both navigation confidence and human decision-making tempo.
 
-Narrative guidance:
-- Keep the anomaly eerie, but material.
-- Favor implications, signal behavior, and environmental reaction over supernatural claims.
-- Let each new clue feel consequential and slightly more impossible than the last.
+## Observed traits
+
+- Broadcasts in pulses that resemble intentional sequencing
+- Degrades comms and introduces timing drift across nearby systems
+- Produces structures that look designed rather than natural
+
+## Working theories
+
+- Buried relay or artifact of unknown origin
+- Feedback loop between sensor systems and the local terrain
+- Deliberate lure, beacon, or dormant machine intelligence

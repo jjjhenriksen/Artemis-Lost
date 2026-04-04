@@ -1,91 +1,13 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { extractTurnResult } from "../src/deltaParser.js";
 import { createDmSystemPrompt, createDmUserPrompt } from "./prompts.js";
+import { formatVaultContext, loadVaultContext } from "./vault.js";
 
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514";
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
-
-function sliceJsonObject(text) {
-  const trimmed = text.trim();
-  const unfenced = trimmed
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "")
-    .trim();
-  const start = unfenced.indexOf("{");
-  const end = unfenced.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) {
-    throw new Error("No JSON object in model response");
-  }
-  return unfenced.slice(start, end + 1);
-}
-
-function extractStateDeltaBlock(text) {
-  if (!text || typeof text !== "string") {
-    return null;
-  }
-
-  const stateDeltaMatch = text.match(/STATE_DELTA:\s*({[\s\S]*})/i);
-  if (stateDeltaMatch) {
-    return stateDeltaMatch[1].trim();
-  }
-
-  const fencedMatch = text.match(/```STATE_DELTA\s*([\s\S]*?)```/i);
-  if (fencedMatch) {
-    return fencedMatch[1].trim();
-  }
-
-  const tagMatch = text.match(/<STATE_DELTA>([\s\S]*?)<\/STATE_DELTA>/i);
-  if (tagMatch) {
-    return tagMatch[1].trim();
-  }
-
-  return null;
-}
-
-function parseStateDeltaBlock(text) {
-  const block = extractStateDeltaBlock(text);
-  if (!block) return {};
-  return JSON.parse(block);
-}
-
-export function extractTurnResult(text) {
-  const narrationMatch = text.match(/^(.*?)STATE_DELTA:/is);
-  const taggedNarration = narrationMatch?.[1]?.trim();
-  const taggedDelta = parseStateDeltaBlock(text);
-
-  if (taggedNarration) {
-    return {
-      narration: taggedNarration,
-      stateDelta: taggedDelta,
-    };
-  }
-
-  const raw = sliceJsonObject(text);
-
-  try {
-    const parsed = JSON.parse(raw);
-    const narration = typeof parsed.narration === "string" ? parsed.narration.trim() : "";
-    const stateDelta =
-      parsed.stateDelta && typeof parsed.stateDelta === "object" ? parsed.stateDelta : {};
-
-    if (!narration) {
-      throw new Error("Model returned empty narration");
-    }
-
-    return { narration, stateDelta };
-  } catch (jsonError) {
-    const narration = taggedNarration;
-    const stateDelta = taggedDelta;
-
-    if (!narration) {
-      throw jsonError;
-    }
-
-    return { narration, stateDelta };
-  }
-}
 
 export async function requestDmTurn({
   worldState,
@@ -94,6 +16,8 @@ export async function requestDmTurn({
   conversationHistory = [],
   currentTurn = 0,
 }) {
+  const vaultContext = formatVaultContext(await loadVaultContext());
+
   const message = await client.messages.create({
     model: MODEL,
     max_tokens: 4096,
@@ -107,6 +31,7 @@ export async function requestDmTurn({
           activeCrew,
           conversationHistory,
           currentTurn,
+          vaultContext,
         }),
       },
     ],

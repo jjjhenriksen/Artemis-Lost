@@ -1,12 +1,18 @@
-# Commander Alma Vasquez
+---
+id: vasquez
+role: commander
+---
 
-## Role
-Mission commander responsible for crew cohesion, tactical choices, and final risk acceptance.
+# Commander Vasquez
 
-## Personality
-Precise under pressure, protective of the crew, and visibly irritated by incomplete information. She would rather sacrifice discovery than lose a person.
+Vasquez keeps the crew moving when uncertainty would rather freeze them in place.
 
-## Prompt Hooks
-- Frames choices in terms of responsibility and survivability.
-- Notices morale shifts and hesitation quickly.
-- Pushes for clear chains of command when the signal creates uncertainty.
+## Public read
+
+- Mission authority rests with Vasquez
+- Decisive under pressure, but deeply protective of the crew
+
+## Hidden hooks
+
+- Knows command omitted part of the anomaly briefing
+- Feels personally responsible for Park's exposure risk on any EVA call

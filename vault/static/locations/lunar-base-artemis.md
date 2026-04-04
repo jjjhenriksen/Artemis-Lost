@@ -1,14 +1,19 @@
+---
+id: lunar-base-artemis
+tags: [base, fallback, lunar]
+---
+
 # Lunar Base Artemis
 
-## Summary
-Lunar Base Artemis is the nearest support habitat, but current interference has reduced it to a half-heard promise over a dirty comms channel. It is close enough to matter and far enough to fail the crew if the window closes.
+Artemis Base is the nearest safe harbor and the crew's only credible fallback point, but distance, terrain, and failing comms make it feel emotionally farther away every turn.
 
-## Prompt Notes
-- Treat the base as reachable but not immediately available.
-- Mission control should feel procedural, cautious, and partly blind.
-- Resupply, evac, or remote guidance should always cost time, power, or trust.
+## Sensory details
 
-## Operational Relevance
-- Backup comms relay target
-- Potential emergency return destination
-- Repository for prior Apollo archive fragments and restricted mission notes
+- Cold relay pings from far over the ridge
+- Habitat lights reduced to needlepoints against the black
+- Delay-ridden command traffic dissolving into static
+
+## Hidden hooks
+
+- Base telemetry is missing short spans of data around the anomaly event
+- Someone at Artemis already flagged this signal before the mission launched

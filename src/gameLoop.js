@@ -15,3 +15,7 @@ export function prependCappedEntries(entries, newEntries, limit = 12) {
   const normalizedNewEntries = Array.isArray(newEntries) ? newEntries : [newEntries];
   return [...normalizedNewEntries, ...entries].slice(0, limit);
 }
+
+export function appendConversationEntry(history, entry, limit = 24) {
+  return [...history, entry].slice(-limit);
+}

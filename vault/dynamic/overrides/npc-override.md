@@ -1,16 +1,14 @@
 # NPC Override Convention
 
-Use this file only for temporary, high-priority changes that should supersede static crew or NPC markdown during the current session.
+Use this file when a single NPC's behavior, condition, or revealed information needs to override baseline vault seed data without rewriting a source profile.
 
-## Rules
-- One section per affected character using their stable `id`.
-- Record only deltas from the static file, not full rewrites.
-- Remove stale overrides once the change is folded into the canonical session state.
+## Format
 
-## Template
 ```md
-## reyes
-- mood: shaken but focused
-- private_knowledge: believes the carrier wave reacted to the crew by design
-- directive: keep this hidden from the rest of the crew until confirmed
+## npc-id
+- status: active | resolved
+- appliesFromTurn: 3
+- summary: Short replacement or additive note
+- behavior: How the DM should portray them now
+- secretsRevealed: Any secret now considered public or role-visible
 ```

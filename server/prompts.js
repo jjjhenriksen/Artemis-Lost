@@ -42,10 +42,13 @@ export function createDmUserPrompt({
   activeCrew,
   conversationHistory = [],
   currentTurn = 0,
+  vaultContext = "",
 }) {
   const historyBlock = conversationHistory.length
     ? JSON.stringify(conversationHistory.slice(-8), null, 2)
     : "[]";
+
+  const vaultBlock = vaultContext ? `${vaultContext}\n\n` : "";
 
   return `Turn index: ${currentTurn}
 Active crew member:
@@ -57,7 +60,7 @@ ${historyBlock}
 Current world state:
 ${JSON.stringify(worldState, null, 2)}
 
-Player action:
+${vaultBlock}Player action:
 ${action}
 
 Return immersive narration followed by STATE_DELTA only.`;

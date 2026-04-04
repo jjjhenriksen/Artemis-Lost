@@ -1,12 +1,18 @@
-# Chief Engineer Tunde Okafor
+---
+id: okafor
+role: flight-engineer
+---
 
-## Role
-Flight engineer managing life support, power flow, rover stability, and emergency repairs.
+# Flight Engineer Okafor
 
-## Personality
-Pragmatic, dry, and deeply uncomfortable with systems that are merely "holding." He narrates problems in concrete failure terms.
+Okafor treats every failing system like a promise they can still keep if they work fast enough.
 
-## Prompt Hooks
-- Calls out hidden maintenance debt.
-- Treats every delay as a systems-cost calculation.
-- Becomes more forceful when others underrate engineering constraints.
+## Public read
+
+- Closest thing the mission has to a life-support oracle
+- Dry humor gets sharper as system integrity drops
+
+## Hidden hooks
+
+- The scrubber patch is stable but not trustworthy
+- Suspects the anomaly can induce transient instrument lies

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ActionInput from "./ActionInput";
 import CrewCard from "./CrewCard";
 import CrewStatusBar from "./CrewStatusBar";
@@ -7,11 +7,13 @@ import RoleView from "./RoleView";
 import { applyStateDelta } from "./applyStateDelta";
 import { requestDmTurn } from "./dmApi";
 import {
+  appendConversationEntry,
   createActionLogEntry,
   getNextTurnIndex,
   prependCappedEntries,
 } from "./gameLoop";
 import { getViewForRole } from "./roleFilters";
+import { loadSession, saveSession as persistSession } from "./sessionApi";
 import { INITIAL_WORLD_STATE, OPENING_NARRATION } from "./worldState";
 
 export default function ArtemisLost() {
@@ -20,10 +22,47 @@ export default function ArtemisLost() {
   const [narration, setNarration] = useState(OPENING_NARRATION);
   const [input, setInput] = useState("");
   const [waiting, setWaiting] = useState(false);
+  const [conversationHistory, setConversationHistory] = useState([]);
+  const [sessionReady, setSessionReady] = useState(false);
   const inputRef = useRef(null);
 
   const activeCrew = ws.crew[turn];
   const roleView = getViewForRole(ws, turn);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrateSession() {
+      const session = await loadSession();
+      if (cancelled) return;
+
+      if (session && session.worldState) {
+        setWs(session.worldState);
+        setNarration(session.narration || OPENING_NARRATION);
+        setTurn(typeof session.turn === "number" ? session.turn : 0);
+        setConversationHistory(session.conversationHistory || []);
+      }
+
+      setSessionReady(true);
+    }
+
+    hydrateSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!sessionReady) return;
+
+    persistSession({
+      worldState: ws,
+      narration,
+      turn,
+      conversationHistory,
+    }).catch(() => {});
+  }, [conversationHistory, narration, sessionReady, turn, ws]);
 
   function completeTurn() {
     setWaiting(false);
@@ -39,11 +78,20 @@ export default function ArtemisLost() {
     setWaiting(true);
 
     const newLog = createActionLogEntry(ws, activeCrew, action);
+    const nextConversationHistory = appendConversationEntry(conversationHistory, {
+      role: "user",
+      turn,
+      crewName: activeCrew.name,
+      content: action,
+    });
+    setConversationHistory(nextConversationHistory);
 
     const result = await requestDmTurn({
       worldState: ws,
       action,
       activeCrew,
+      conversationHistory: nextConversationHistory,
+      currentTurn: turn,
     });
 
     if (result.error) {
@@ -67,6 +115,14 @@ export default function ArtemisLost() {
       return applyStateDelta(withAction, stateDelta);
     });
     setNarration(nextText);
+    setConversationHistory((prev) =>
+      appendConversationEntry(prev, {
+        role: "assistant",
+        turn,
+        crewName: activeCrew.name,
+        content: nextText,
+      })
+    );
     completeTurn();
   }
 

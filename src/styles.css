@@ -342,7 +342,8 @@ body {
 
 .event-log {
   max-height: 120px;
-  overflow: hidden;
+  overflow: auto;
+  padding-right: 4px;
 }
 
 .event-log__row {
