@@ -118,9 +118,16 @@
   --button-inset: rgba(217, 242, 255, 0.12);
   --button-hover-ring: rgba(140, 221, 255, 0.18);
   --scrollbar-thumb: rgba(104, 195, 255, 0.34);
+  --ambient-orb-primary: rgba(104, 195, 255, 0.22);
+  --ambient-orb-secondary: rgba(242, 178, 80, 0.12);
+  --ambient-scan: rgba(104, 195, 255, 0.08);
+  --ambient-grid-glow: rgba(104, 195, 255, 0.04);
+  --ambient-noise: rgba(217, 242, 255, 0.03);
+  --ambient-duration-a: 24s;
+  --ambient-duration-b: 34s;
 }
 
-:root[data-theme="sh2025"] {
+:root[data-theme="canopy"] {
   color-scheme: dark;
   --bg-root: #07100b;
   --bg-panel: #0b1510;
@@ -232,9 +239,16 @@
   --button-inset: rgba(222, 251, 232, 0.12);
   --button-hover-ring: rgba(155, 245, 191, 0.18);
   --scrollbar-thumb: rgba(130, 239, 177, 0.34);
+  --ambient-orb-primary: rgba(130, 239, 177, 0.2);
+  --ambient-orb-secondary: rgba(230, 193, 120, 0.12);
+  --ambient-scan: rgba(155, 245, 191, 0.08);
+  --ambient-grid-glow: rgba(130, 239, 177, 0.04);
+  --ambient-noise: rgba(244, 255, 246, 0.025);
+  --ambient-duration-a: 28s;
+  --ambient-duration-b: 40s;
 }
 
-:root[data-theme="sh1991"] {
+:root[data-theme="nocturne"] {
   color-scheme: dark;
   --bg-root: #0d0910;
   --bg-panel: #140d16;
@@ -346,6 +360,13 @@
   --button-inset: rgba(255, 212, 222, 0.12);
   --button-hover-ring: rgba(240, 180, 196, 0.18);
   --scrollbar-thumb: rgba(240, 164, 186, 0.34);
+  --ambient-orb-primary: rgba(240, 164, 186, 0.2);
+  --ambient-orb-secondary: rgba(233, 187, 130, 0.12);
+  --ambient-scan: rgba(240, 180, 196, 0.08);
+  --ambient-grid-glow: rgba(240, 164, 186, 0.04);
+  --ambient-noise: rgba(255, 240, 234, 0.028);
+  --ambient-duration-a: 26s;
+  --ambient-duration-b: 38s;
 }
 
 * {
@@ -372,8 +393,38 @@ body {
   letter-spacing: 0.02em;
 }
 
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::before {
+  background:
+    radial-gradient(circle at 18% 20%, var(--ambient-orb-primary), transparent 28%),
+    radial-gradient(circle at 82% 72%, var(--ambient-orb-secondary), transparent 26%),
+    radial-gradient(circle at 52% 45%, var(--ambient-grid-glow), transparent 34%);
+  transform: translate3d(0, 0, 0) scale(1.02);
+  animation: ambientDrift var(--ambient-duration-a) ease-in-out infinite alternate;
+}
+
+body::after {
+  background:
+    linear-gradient(115deg, transparent 0%, var(--ambient-scan) 48%, transparent 52%),
+    radial-gradient(circle at center, var(--ambient-noise) 0%, transparent 62%);
+  mix-blend-mode: screen;
+  opacity: 0.7;
+  transform: translate3d(0, 0, 0);
+  animation: ambientSweep var(--ambient-duration-b) linear infinite;
+}
+
 #root {
   min-height: 100vh;
+  position: relative;
+  z-index: 1;
 }
 
 /* Main app shell and framing. */
@@ -392,6 +443,20 @@ body {
   margin: 0 auto;
   padding: 20px;
   overflow: hidden;
+}
+
+.app-shell::before,
+.menu-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 18%, var(--ambient-orb-primary), transparent 20%),
+    radial-gradient(circle at 80% 78%, var(--ambient-orb-secondary), transparent 18%);
+  opacity: 0.6;
+  filter: blur(40px);
+  animation: ambientPulse calc(var(--ambient-duration-a) * 0.7) ease-in-out infinite;
 }
 
 .app-shell__glow {
@@ -902,6 +967,8 @@ body {
   display: grid;
   place-items: center;
   padding: 24px;
+  position: relative;
+  overflow: hidden;
   background:
     radial-gradient(circle at top, var(--menu-radial) 0%, transparent 38%),
     linear-gradient(180deg, var(--menu-gradient-start) 0%, var(--menu-gradient-end) 100%);
@@ -1423,6 +1490,45 @@ body {
   }
   50% {
     opacity: 0;
+  }
+}
+
+@keyframes ambientDrift {
+  0% {
+    transform: translate3d(-1.5%, -1%, 0) scale(1.02);
+  }
+  100% {
+    transform: translate3d(1.5%, 1%, 0) scale(1.06);
+  }
+}
+
+@keyframes ambientSweep {
+  0% {
+    transform: translate3d(-16%, 0, 0);
+  }
+  100% {
+    transform: translate3d(16%, 0, 0);
+  }
+}
+
+@keyframes ambientPulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  body::after,
+  .app-shell::before,
+  .menu-shell::before {
+    animation: none;
   }
 }
 

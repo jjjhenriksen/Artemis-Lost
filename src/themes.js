@@ -1,5 +1,9 @@
 export const DEFAULT_THEME_ID = "artemis";
 export const THEME_STORAGE_KEY = "dungeonmaister-theme";
+const LEGACY_THEME_IDS = {
+  sh2025: "canopy",
+  sh1991: "nocturne",
+};
 
 export const THEMES = [
   {
@@ -9,16 +13,16 @@ export const THEMES = [
     description: "Cold command-console blues with a sharper editorial sci-fi finish.",
   },
   {
-    id: "sh2025",
-    label: "SH2025",
+    id: "canopy",
+    label: "Canopy",
     accent: "#2d6a4f",
-    description: "A modern sage-and-carbon reinterpretation of the SH2025 palette.",
+    description: "High-contrast sage, carbon, and gold with a clean signal-room edge.",
   },
   {
-    id: "sh1991",
-    label: "SH1991",
+    id: "nocturne",
+    label: "Nocturne",
     accent: "#8c3d4f",
-    description: "A cleaner late-night noir take on SH1991 with rose, smoke, and brass.",
+    description: "Rose, smoke, and brass tuned into a sharper late-night noir interface.",
   },
 ];
 
@@ -30,5 +34,6 @@ export function getStoredTheme() {
   if (typeof window === "undefined") return DEFAULT_THEME_ID;
 
   const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-  return isValidTheme(storedTheme) ? storedTheme : DEFAULT_THEME_ID;
+  const resolvedTheme = LEGACY_THEME_IDS[storedTheme] ?? storedTheme;
+  return isValidTheme(resolvedTheme) ? resolvedTheme : DEFAULT_THEME_ID;
 }
