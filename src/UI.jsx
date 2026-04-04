@@ -18,6 +18,7 @@ import {
 } from "./gameLoop";
 import { getViewForRole } from "./roleFilters";
 import { saveSession as persistSession } from "./sessionApi";
+import { getUiState } from "./uiState";
 import { INITIAL_WORLD_STATE, OPENING_NARRATION } from "./worldState";
 
 function createFallbackSession() {
@@ -62,6 +63,7 @@ export default function ArtemisLost({
 
   const activeCrew = ws.crew[turn];
   const roleView = useMemo(() => getViewForRole(ws, turn), [ws, turn]);
+  const uiState = useMemo(() => getUiState(ws), [ws]);
   const isBotTurn = activeCrew?.character?.controller === "bot";
 
   function buildSessionPayload(overrides = {}) {
@@ -212,7 +214,9 @@ export default function ArtemisLost({
   }
 
   return (
-    <div className="app-shell">
+    <div
+      className={`app-shell app-shell--${uiState.dangerLevel} app-shell--failure-${uiState.dominantFailure} app-shell--anomaly-${uiState.anomalyIntensity}`}
+    >
       <div className="app-shell__glow app-shell__glow--left" aria-hidden="true" />
       <div className="app-shell__glow app-shell__glow--right" aria-hidden="true" />
       <div className="app-header">
@@ -230,7 +234,7 @@ export default function ArtemisLost({
         </div>
 
         <div className="app-header__controls">
-          <CrewStatusBar mission={ws.mission} systems={ws.systems} />
+          <CrewStatusBar mission={ws.mission} systems={ws.systems} uiState={uiState} />
           <ThemePicker
             compact
             themeId={themeId}
@@ -260,7 +264,7 @@ export default function ArtemisLost({
 
       <div className="app-grid">
         <div className="app-grid__main">
-          <NarrationPanel text={narration} eventLog={ws.eventLog} />
+          <NarrationPanel text={narration} eventLog={ws.eventLog} uiState={uiState} />
 
           <ActionInput
             activeCrew={activeCrew}
@@ -281,7 +285,12 @@ export default function ArtemisLost({
           </div>
           <div className="crew-grid">
             {ws.crew.map((member, index) => (
-              <CrewCard key={member.id} member={member} isActive={index === turn} />
+              <CrewCard
+                key={member.id}
+                member={member}
+                isActive={index === turn}
+                uiState={uiState}
+              />
             ))}
           </div>
 
@@ -290,6 +299,7 @@ export default function ArtemisLost({
             roleView={roleView}
             worldState={ws}
             activeTurn={turn}
+            uiState={uiState}
           />
           <RosterSummary crew={ws.crew} />
         </div>

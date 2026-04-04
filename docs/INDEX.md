@@ -7,6 +7,7 @@ This folder holds the current technical and product documentation for DungeonMAI
 - [FEATURES.md](/Users/jacquelinehenriksen/DungeonMAIster/docs/FEATURES.md): feature inventory for the current prototype
 - [ARCHITECTURE.md](/Users/jacquelinehenriksen/DungeonMAIster/docs/ARCHITECTURE.md): runtime structure, major modules, and state contracts
 - [GAMEPLAY_LOOP.md](/Users/jacquelinehenriksen/DungeonMAIster/docs/GAMEPLAY_LOOP.md): end-to-end turn flow, DM contract, and save behavior
+- [PROJECT_JOURNAL.md](/Users/jacquelinehenriksen/DungeonMAIster/docs/PROJECT_JOURNAL.md): readable repository history with full chronological commit list
 
 ## Team Docs
 

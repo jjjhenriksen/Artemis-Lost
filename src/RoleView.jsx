@@ -11,9 +11,9 @@ const ROLE_FLAVOR = {
     "You operate where the risk becomes physical. Every tool choice is a bet against the environment.",
 };
 
-function RoleView({ activeCrew, roleView, worldState, activeTurn }) {
+function RoleView({ activeCrew, roleView, worldState, activeTurn, uiState }) {
   return (
-    <div className="role-view">
+    <div className={`role-view role-view--${uiState?.dangerLevel || "guarded"}`}>
       <div className="section-title section-title--mb-10">
         {activeCrew.role.toUpperCase()} VIEW
       </div>

@@ -1,6 +1,6 @@
 import { memo } from "react";
 
-function CrewStatusBar({ mission, systems }) {
+function CrewStatusBar({ mission, systems, uiState }) {
   const statusItems = [
     { label: "MET", val: mission.met, warn: false },
     { label: "O2", val: `${systems.o2}%`, warn: systems.o2 < 80 },
@@ -14,10 +14,11 @@ function CrewStatusBar({ mission, systems }) {
       val: systems.comms < 50 ? "DEGRADED" : "NOMINAL",
       warn: systems.comms < 50,
     },
+    { label: "STATE", val: uiState?.dangerLevel?.toUpperCase() || "GUARDED", warn: uiState?.dangerLevel !== "guarded" },
   ];
 
   return (
-    <div className="status-strip">
+    <div className={`status-strip status-strip--${uiState?.dangerLevel || "guarded"}`}>
       {statusItems.map((item) => (
         <div key={item.label} className="status-strip__item">
           {item.label}{" "}

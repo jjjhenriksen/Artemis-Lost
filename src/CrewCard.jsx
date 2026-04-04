@@ -23,14 +23,24 @@ function StatBar({ label, value, tone }) {
   );
 }
 
-function CrewCard({ member, isActive }) {
+function CrewCard({ member, isActive, uiState }) {
   const accent = isActive ? "var(--stat-accent-active)" : "var(--stat-accent-idle)";
   // The third bar stays schema-light so Teammate 2 can keep driving it from `extra`.
   const extraLabel = member.extra.label.toUpperCase();
   const controllerLabel = member.character?.controller === "bot" ? "AUTONOMOUS" : "HUMAN";
+  const stressLevel =
+    member.health < 55 || member.morale < 50
+      ? "critical"
+      : member.health < 70 || member.morale < 65
+        ? "warn"
+        : "stable";
 
   return (
-    <div className={`crew-card${isActive ? " crew-card--active" : ""}`}>
+    <div
+      className={`crew-card crew-card--${stressLevel} crew-card--scene-${uiState?.dangerLevel || "guarded"}${
+        isActive ? " crew-card--active" : ""
+      }`}
+    >
       <div className="crew-card__header">
         <div>
           <div className="crew-card__name">{member.name}</div>
