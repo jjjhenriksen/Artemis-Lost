@@ -1,40 +1,86 @@
+import {
+  buildThemeId,
+  getThemeById,
+  getThemeFamilyId,
+  getThemeMode,
+  THEME_FAMILIES,
+  THEME_MODES,
+} from "./themes";
+
 export default function ThemePicker({
   themeId,
-  themes,
   onThemeChange,
   title = "VISUAL THEME",
   compact = false,
 }) {
+  const activeTheme = getThemeById(themeId);
+  const activeMode = getThemeMode(themeId);
+  const activeFamilyId = getThemeFamilyId(themeId);
+  const isLightMode = activeMode === "light";
+
   return (
     <section className={`theme-picker${compact ? " theme-picker--compact" : ""}`}>
       <div className="theme-picker__label">{title}</div>
-      <div className="theme-picker__options">
-        {themes.map((theme) => {
-          const isActive = theme.id === themeId;
+      <div className="theme-picker__controls">
+        <div className="theme-picker__field">
+          <span className="theme-picker__field-label">Mode</span>
+          <button
+            type="button"
+            className={`theme-picker__mode-switch${isLightMode ? " theme-picker__mode-switch--light" : ""}`}
+            onClick={() =>
+              onThemeChange(buildThemeId(activeFamilyId, isLightMode ? "dark" : "light"))
+            }
+            aria-pressed={isLightMode}
+            aria-label={`Switch to ${isLightMode ? "dark" : "light"} mode`}
+          >
+            <span className="theme-picker__mode-icon" aria-hidden="true">
+              {isLightMode ? "☀" : "☾"}
+            </span>
+            <span className="theme-picker__mode-track">
+              <span className="theme-picker__mode-thumb" />
+            </span>
+            <span className="theme-picker__mode-copy">
+              {THEME_MODES.find((mode) => mode.id === activeMode)?.description}
+            </span>
+          </button>
+        </div>
 
-          return (
-            <button
-              key={theme.id}
-              type="button"
-              className={`theme-option${isActive ? " theme-option--active" : ""}`}
-              onClick={() => onThemeChange(theme.id)}
-              aria-pressed={isActive}
-              title={theme.description}
-            >
-              <span
-                className="theme-option__swatch"
-                style={{ "--theme-accent": theme.accent }}
-                aria-hidden="true"
-              />
-              <span className="theme-option__copy">
-                <span className="theme-option__name">{theme.label}</span>
-                {!compact ? (
-                  <span className="theme-option__description">{theme.description}</span>
-                ) : null}
-              </span>
-            </button>
-          );
-        })}
+        <label className="theme-picker__field">
+          <span className="theme-picker__field-label">Theme</span>
+          <select
+            className="theme-picker__select"
+            value={activeFamilyId}
+            onChange={(event) => onThemeChange(buildThemeId(event.target.value, activeMode))}
+          >
+            {THEME_FAMILIES.map((theme) => (
+              <option key={theme.id} value={theme.id}>
+                {theme.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="theme-picker__summary" title={activeTheme.description}>
+        <span
+          className="theme-picker__summary-swatch"
+          style={{ "--theme-accent": activeTheme.accent }}
+          aria-hidden="true"
+        />
+        <span className="theme-picker__summary-copy">
+          <span className="theme-picker__summary-title">
+            {activeTheme.label} / {activeTheme.modeLabel}
+          </span>
+          {!compact ? (
+            <span className="theme-picker__summary-description">{activeTheme.description}</span>
+          ) : null}
+        </span>
+      </div>
+
+      <div className="theme-picker__preview" aria-hidden="true">
+        <span className="theme-picker__preview-swatch theme-picker__preview-swatch--surface" />
+        <span className="theme-picker__preview-swatch theme-picker__preview-swatch--panel" />
+        <span className="theme-picker__preview-swatch theme-picker__preview-swatch--accent" />
       </div>
     </section>
   );

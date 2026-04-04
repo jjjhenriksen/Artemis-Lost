@@ -1,11 +1,30 @@
-export const DEFAULT_THEME_ID = "artemis";
+export const DEFAULT_THEME_FAMILY_ID = "artemis";
+export const DEFAULT_THEME_MODE = "dark";
+export const DEFAULT_THEME_ID = `${DEFAULT_THEME_FAMILY_ID}-${DEFAULT_THEME_MODE}`;
 export const THEME_STORAGE_KEY = "dungeonmaister-theme";
+
 const LEGACY_THEME_IDS = {
-  sh2025: "canopy",
-  sh1991: "nocturne",
+  sh2025: "canopy-dark",
+  sh1991: "nocturne-dark",
+  artemis: "artemis-dark",
+  canopy: "canopy-dark",
+  nocturne: "nocturne-dark",
 };
 
-export const THEMES = [
+export const THEME_MODES = [
+  {
+    id: "dark",
+    label: "Dark",
+    description: "Low-light command deck contrast.",
+  },
+  {
+    id: "light",
+    label: "Light",
+    description: "Day-shift control room brightness.",
+  },
+];
+
+export const THEME_FAMILIES = [
   {
     id: "artemis",
     label: "Artemis",
@@ -25,6 +44,38 @@ export const THEMES = [
     description: "Rose, smoke, and brass tuned into a sharper late-night noir interface.",
   },
 ];
+
+export const THEMES = THEME_FAMILIES.flatMap((family) =>
+  THEME_MODES.map((mode) => ({
+    ...family,
+    id: buildThemeId(family.id, mode.id),
+    familyId: family.id,
+    mode: mode.id,
+    modeLabel: mode.label,
+  }))
+);
+
+export function buildThemeId(familyId = DEFAULT_THEME_FAMILY_ID, mode = DEFAULT_THEME_MODE) {
+  return `${familyId}-${mode}`;
+}
+
+export function getThemeFamilyId(themeId = DEFAULT_THEME_ID) {
+  const normalized = LEGACY_THEME_IDS[themeId] ?? themeId;
+  const [familyId] = String(normalized).split("-");
+  return THEME_FAMILIES.some((theme) => theme.id === familyId)
+    ? familyId
+    : DEFAULT_THEME_FAMILY_ID;
+}
+
+export function getThemeMode(themeId = DEFAULT_THEME_ID) {
+  const normalized = LEGACY_THEME_IDS[themeId] ?? themeId;
+  const [, mode] = String(normalized).split("-");
+  return THEME_MODES.some((entry) => entry.id === mode) ? mode : DEFAULT_THEME_MODE;
+}
+
+export function getThemeById(themeId = DEFAULT_THEME_ID) {
+  return THEMES.find((theme) => theme.id === themeId) || THEMES[0];
+}
 
 export function isValidTheme(themeId) {
   return THEMES.some((theme) => theme.id === themeId);

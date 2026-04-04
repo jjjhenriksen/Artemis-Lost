@@ -3,7 +3,13 @@ import CharacterCreation from "./CharacterCreation";
 import LaunchSequence from "./LaunchSequence";
 import MainMenu from "./MainMenu";
 import { deleteSession, listSessions, loadSession, saveSession } from "./sessionApi";
-import { getStoredTheme, THEMES, THEME_STORAGE_KEY } from "./themes";
+import {
+  getStoredTheme,
+  getThemeFamilyId,
+  getThemeMode,
+  THEMES,
+  THEME_STORAGE_KEY,
+} from "./themes";
 import ArtemisLost from "./UI.jsx";
 import { createMissionSession } from "./worldState";
 
@@ -47,8 +53,14 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const themeFamily = getThemeFamilyId(themeId);
+    const themeMode = getThemeMode(themeId);
     document.documentElement.dataset.theme = themeId;
+    document.documentElement.dataset.themeFamily = themeFamily;
+    document.documentElement.dataset.themeMode = themeMode;
     document.body.dataset.theme = themeId;
+    document.body.dataset.themeFamily = themeFamily;
+    document.body.dataset.themeMode = themeMode;
     window.localStorage.setItem(THEME_STORAGE_KEY, themeId);
   }, [themeId]);
 
