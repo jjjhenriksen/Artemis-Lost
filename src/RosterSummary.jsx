@@ -11,6 +11,9 @@ function RosterSummary({ crew }) {
               {member.name} <span>{member.character?.callSign || member.role}</span>
             </div>
             <div className="roster-summary__line">
+              Controller: {member.character?.controller === "bot" ? "Autonomous" : "Human"}
+            </div>
+            <div className="roster-summary__line">
               Trait: {member.character?.trait || "Unavailable"}
             </div>
             <div className="roster-summary__line">

@@ -1,117 +1,194 @@
 # Architecture
 
-This project is currently a small full-stack prototype with one frontend app and one local DM server.
+DungeonMAIster is a small full-stack app with a React frontend, a local Express DM server, and a vault-backed session layer.
 
-## High-Level Layout
+## High-Level Modules
 
-- [src/App.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/App.jsx): minimal app entry that renders the main UI
-- [src/UI.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/UI.jsx): primary gameplay container and turn orchestration
-- [src/worldState.js](/Users/jacquelinehenriksen/DungeonMAIster/src/worldState.js): seeded mission state and opening narration
-- [src/roleFilters.js](/Users/jacquelinehenriksen/DungeonMAIster/src/roleFilters.js): role-specific dashboard data selection
-- [src/NarrationPanel.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/NarrationPanel.jsx): DM narration display and event-log shell
-- [src/EventLog.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/EventLog.jsx): recent mission history display
-- [src/CrewCard.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/CrewCard.jsx): crew summary cards and stat bars
-- [src/RoleView.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/RoleView.jsx): active role telemetry panel
-- [src/ActionInput.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/ActionInput.jsx): player input form and waiting-state handling
-- [src/TurnIndicator.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/TurnIndicator.jsx): active-turn status line
-- [src/CrewStatusBar.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/CrewStatusBar.jsx): mission header metrics
-- [src/useTypewriter.js](/Users/jacquelinehenriksen/DungeonMAIster/src/useTypewriter.js): narration typing effect hook
-- [src/dmApi.js](/Users/jacquelinehenriksen/DungeonMAIster/src/dmApi.js): browser-side helper for posting turn requests to the local API
-- [src/sessionApi.js](/Users/jacquelinehenriksen/DungeonMAIster/src/sessionApi.js): browser-side helpers for loading and saving the current session
-- [src/applyStateDelta.js](/Users/jacquelinehenriksen/DungeonMAIster/src/applyStateDelta.js): merges model-generated state changes into the current world state
-- [src/deltaParser.js](/Users/jacquelinehenriksen/DungeonMAIster/src/deltaParser.js): canonical state-delta parsing, normalization, and merge rules
-- [src/styles.css](/Users/jacquelinehenriksen/DungeonMAIster/src/styles.css): shared UI theme tokens and component classes
-- [server/api.js](/Users/jacquelinehenriksen/DungeonMAIster/server/api.js): OpenAI wrapper plus DM response extraction and validation
-- [server/dmServer.mjs](/Users/jacquelinehenriksen/DungeonMAIster/server/dmServer.mjs): Express server that validates input, calls OpenAI, and returns structured narration plus state updates
-- [server/sessionStore.js](/Users/jacquelinehenriksen/DungeonMAIster/server/sessionStore.js): persists gameplay state into `vault/dynamic`
-- [server/vault.js](/Users/jacquelinehenriksen/DungeonMAIster/server/vault.js): loads static and dynamic vault markdown into prompt context
+### App Shell And Navigation
+
+- [src/App.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/App.jsx): app entry, screen routing, theme persistence, save-slot hydration
+- [src/MainMenu.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/MainMenu.jsx): front-door flow for new mission, continue, load, and delete
+- [src/CharacterCreation.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/CharacterCreation.jsx): crew editing, lock/reroll controls, human-vs-autonomous role assignment, mission-seed preview
+- [src/UI.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/UI.jsx): in-mission turn orchestration, autosave, autonomous-turn auto-play, and DM integration
+
+### World-State And Scenario Layer
+
+- [src/worldState.js](/Users/jacquelinehenriksen/DungeonMAIster/src/worldState.js): crew blueprints, mission-session creation, seed resolution, opening narration, and world-state creation
+- [src/missionSeeds.js](/Users/jacquelinehenriksen/DungeonMAIster/src/missionSeeds.js): scenario-seed definitions and mission-seed helpers
+- [src/characterBanks.js](/Users/jacquelinehenriksen/DungeonMAIster/src/characterBanks.js): names, call signs, traits, flaws, specialties, stakes, and tension patterns
+- [src/botTurns.js](/Users/jacquelinehenriksen/DungeonMAIster/src/botTurns.js): autonomous-action generation for underfilled crews
+- [src/gameLoop.js](/Users/jacquelinehenriksen/DungeonMAIster/src/gameLoop.js): turn helpers, MET advancement, conversation helpers, and log-entry creation
+
+### Presentation Layer
+
+- [src/NarrationPanel.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/NarrationPanel.jsx): DM narration plus event-log panel
+- [src/EventLog.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/EventLog.jsx): instrumented log rendering
+- [src/ActionInput.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/ActionInput.jsx): human-turn controls and autonomous-turn status
+- [src/CrewCard.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/CrewCard.jsx): crew cards, status bars, and controller badges
+- [src/RosterSummary.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/RosterSummary.jsx): crew dossier with trait, flaw, and controller mode
+- [src/RoleView.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/RoleView.jsx): active-role console and operational context
+- [src/CrewStatusBar.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/CrewStatusBar.jsx): mission/system header strip
+- [src/ThemePicker.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/ThemePicker.jsx): shared theme-switching control
+- [src/roleFilters.js](/Users/jacquelinehenriksen/DungeonMAIster/src/roleFilters.js): role-specific view selection and console brief generation
+- [src/styles.css](/Users/jacquelinehenriksen/DungeonMAIster/src/styles.css): shared tokens, themes, component styles, and ambient background treatment
+- [src/themes.js](/Users/jacquelinehenriksen/DungeonMAIster/src/themes.js): theme registry and storage helpers
+
+### DM Integration Layer
+
+- [src/dmApi.js](/Users/jacquelinehenriksen/DungeonMAIster/src/dmApi.js): browser request helper for `/api/turn`
+- [server/dmServer.mjs](/Users/jacquelinehenriksen/DungeonMAIster/server/dmServer.mjs): Express API for DM turns and sessions
+- [server/api.js](/Users/jacquelinehenriksen/DungeonMAIster/server/api.js): OpenAI Responses API call path and response extraction
+- [server/prompts.js](/Users/jacquelinehenriksen/DungeonMAIster/server/prompts.js): system and user prompt assembly rules
+- [src/deltaParser.js](/Users/jacquelinehenriksen/DungeonMAIster/src/deltaParser.js): normalizes model output into safe state deltas
+- [src/applyStateDelta.js](/Users/jacquelinehenriksen/DungeonMAIster/src/applyStateDelta.js): merges validated deltas into local state
+
+### Session And Vault Layer
+
+- [src/sessionApi.js](/Users/jacquelinehenriksen/DungeonMAIster/src/sessionApi.js): load/save/delete/list session helpers
+- [server/sessionStore.js](/Users/jacquelinehenriksen/DungeonMAIster/server/sessionStore.js): slot persistence and vault markdown mirrors
+- [server/vault.js](/Users/jacquelinehenriksen/DungeonMAIster/server/vault.js): static/dynamic vault loading and prompt-context assembly
 
 ## Runtime Responsibilities
 
 ### Frontend
 
-The React app currently owns:
-- the current world state in memory
-- active-turn selection
-- composition of presentational gameplay components
-- local action submission flow
-- conversation history tracking
-- loading and saving session snapshots through the local API
-- application of returned `stateDelta` objects
-
-The refactor now separates seeded data, role filtering, and major UI surfaces into their own modules, while keeping the game loop orchestration in one place.
+The frontend owns:
+- menu and character-creation flow
+- selected theme
+- current `worldState`
+- active `turn`
+- current narration
+- local conversation history
+- autosave coordination
+- autonomous-turn auto-play
+- event-log and role-view rendering
 
 ### Backend
 
-The local Express server currently owns:
-- reading environment variables
-- constructing the OpenAI system prompt
-- loading vault markdown context for prompt assembly
-- sending the current world state and player action to the model
-- extracting JSON from the model response
-- validating and sanitizing returned state deltas
-- persisting session files under `vault/dynamic`
-- returning normalized `narration` and `stateDelta` data to the UI
+The backend owns:
+- environment validation
+- session loading and saving
+- vault-context assembly
+- OpenAI request execution
+- DM response parsing and normalization
+- safe `STATE_DELTA` extraction
 
-## Current World State Contract
+## World-State Contract
 
-The app centers around a shared `worldState` object with these top-level areas:
+The current `worldState` shape is centered around:
 
 ```js
 {
-  mission:     { id, name, phase, met, objectives },
-  environment: { location, hazards, anomaly },
-  systems:     { o2, power, comms, propulsion, scrubber },
-  crew:        [{ id, name, role, health, morale, extra }],
-  eventLog:    [{ ts, msg, type }],
+  mission: {
+    id,
+    name,
+    phase,
+    met,
+    objectives,
+    seedId,
+    seedLabel,
+    seedSummary,
+    seedTone,
+    decisionPressure,
+    suggestedOpening,
+  },
+  environment: {
+    location,
+    hazards,
+    anomaly,
+    visibility,
+    pressure,
+  },
+  systems: {
+    o2,
+    power,
+    comms,
+    propulsion,
+    scrubber,
+    thermal,
+    nav,
+  },
+  crew: [
+    {
+      id,
+      name,
+      role,
+      health,
+      morale,
+      extra,
+      notes,
+      character: {
+        callSign,
+        trait,
+        specialty,
+        flaw,
+        personalStake,
+        tensionNote,
+        controller,
+      },
+    },
+  ],
+  eventLog: [{ ts, msg, type }],
 }
 ```
 
-## State Update Model
+## Mission Seed Contract
 
-The backend asks the model to return JSON in this shape:
+Mission seeds are data-first scenario packets. Each seed includes:
 
-```json
+```js
 {
-  "narration": "string",
-  "stateDelta": {}
+  id,
+  label,
+  summary,
+  tone,
+  decisionPressure,
+  suggestedOpening,
+  mission,
+  environment,
+  systems,
+  eventLog,
 }
 ```
 
-`stateDelta` is partial. Only changed fields should be returned. The frontend then merges those changes into the previous state using [src/applyStateDelta.js](/Users/jacquelinehenriksen/DungeonMAIster/src/applyStateDelta.js).
+Before launch, a seed is resolved against the selected crew so placeholder text like `{engineerShort}` becomes the actual launched roster name.
 
-Merge behavior today:
-- `mission`, `environment`, and `systems` are shallow-merged
-- `crew` entries are matched and patched by `id`, with nested `extra` merged safely
-- `eventLog` entries are prepended, deduplicated, normalized, and capped to 12 items
+## Turn And Control Model
 
-## Vault Contract
+- turn order is still round-robin across the four crew seats
+- each role can be `human` or `autonomous`
+- human seats expose the text action input
+- autonomous roles generate a role-aware action automatically and submit it through the same DM path
+- the session must contain at least one human-controlled role
 
-Artemis prompt content is organized under `vault/static/` and `vault/dynamic/`.
+## Event Log Model
 
-- `vault/static/locations/`: durable location descriptions
-- `vault/static/crew/`: durable crew reference profiles
-- `vault/static/lore/`: durable mission and anomaly lore
-- `vault/dynamic/session-state.md`: markdown mirror of the active world state
-- `vault/dynamic/log.md`: concise turn history
-- `vault/dynamic/overrides/`: narrow session-only overrides such as NPC or location deltas
+The event log is now typed and instrumented. Supported types are:
+- `command`
+- `system`
+- `sensor`
+- `trait`
+- `risk`
 
-## Implemented Support Systems
+These types are normalized in the delta parser and rendered as badges in the UI.
 
-- session snapshots are stored in `vault/dynamic/session.json`
-- human-readable session handoff files are written to `vault/dynamic/session-state.md` and `vault/dynamic/log.md`
-- the DM prompt is enriched with static lore, crew, location, and dynamic override content from the vault
-- shared styling now lives in [src/styles.css](/Users/jacquelinehenriksen/DungeonMAIster/src/styles.css)
+## Save And Vault Model
 
-## Known Structural Gaps
+Persistent state is stored in slot JSON files and mirrored into vault markdown:
 
-- the session system does not yet expose reset, import, or save-status controls in the UI
-- vault prompt assembly currently loads broad context rather than selecting only the most relevant files
-- there is still no formal test coverage around the DM response validation path
+- slot JSON keeps the canonical session payload
+- `vault/dynamic/session-state.md` keeps a handoff-friendly state snapshot
+- `vault/dynamic/log.md` keeps recent conversation history
+- `vault/dynamic/slots/` stores multi-slot save files
 
-## Recommended Refactor Path
+The prompt layer also loads relevant static lore from `vault/static/`.
 
-1. Add visible session-management controls in the frontend.
-2. Narrow vault prompt assembly to location-, role-, or event-relevant files.
-3. Add tests around DM response parsing and session serialization.
-4. Separate more domain logic such as turn progression and event-log capping into dedicated helpers if gameplay rules grow.
+## Prompt Contract
+
+The DM prompt now explicitly encodes:
+- structured `STATE_DELTA` output
+- mission-seed pressure and atmosphere
+- crew traits, flaws, stakes, and tension
+- typed event-log expectations
+
+Trait-driven outcomes are expected to produce `trait` log entries when personality materially affects the turn result.

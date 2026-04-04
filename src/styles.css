@@ -822,6 +822,13 @@ body::after {
   color: var(--accent-cyan);
 }
 
+.crew-card__controller {
+  margin-top: 4px;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+}
+
 .crew-card__pill {
   font-size: 9px;
   border-radius: 999px;
@@ -1522,6 +1529,17 @@ body::after {
 
 .action-input__hint--waiting {
   color: var(--text-warn-strong);
+}
+
+.action-input__bot-preview {
+  margin-bottom: 10px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-elevated);
+  color: var(--text-good-strong);
+  font-size: 11px;
+  line-height: 1.6;
 }
 
 .action-input__row {

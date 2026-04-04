@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ActionInput from "./ActionInput";
+import { createBotAction } from "./botTurns";
 import CrewCard from "./CrewCard";
 import CrewStatusBar from "./CrewStatusBar";
 import NarrationPanel from "./NarrationPanel";
@@ -56,10 +57,12 @@ export default function ArtemisLost({
     session.conversationHistory || []
   );
   const [saveState, setSaveState] = useState("idle");
+  const [botPreview, setBotPreview] = useState("");
   const inputRef = useRef(null);
 
   const activeCrew = ws.crew[turn];
   const roleView = useMemo(() => getViewForRole(ws, turn), [ws, turn]);
+  const isBotTurn = activeCrew?.character?.controller === "bot";
 
   function buildSessionPayload(overrides = {}) {
     return {
@@ -91,25 +94,24 @@ export default function ArtemisLost({
     setTimeout(() => inputRef.current?.focus(), 100);
   }
 
-  async function handleSubmit() {
-    if (!input.trim() || waiting) return;
+  async function resolveTurn(action) {
+    if (!action.trim() || waiting) return;
+    const actionText = action.trim();
 
-    const action = input.trim();
-    setInput("");
     setWaiting(true);
 
-    const newLog = createActionLogEntry(ws, activeCrew, action);
+    const newLog = createActionLogEntry(ws, activeCrew, actionText);
     const nextConversationHistory = appendConversationEntry(conversationHistory, {
       role: "user",
       turn,
       crewName: activeCrew.name,
-      content: action,
+      content: actionText,
     });
     setConversationHistory(nextConversationHistory);
 
     const result = await requestDmTurn({
       worldState: ws,
-      action,
+      action: actionText,
       activeCrew,
       conversationHistory: nextConversationHistory,
       currentTurn: turn,
@@ -179,6 +181,29 @@ export default function ArtemisLost({
     completeTurn(nextTurn);
   }
 
+  async function handleSubmit() {
+    if (!input.trim() || waiting || isBotTurn) return;
+    const action = input.trim();
+    setInput("");
+    await resolveTurn(action);
+  }
+
+  useEffect(() => {
+    if (!isBotTurn || waiting || !activeCrew) {
+      setBotPreview("");
+      return;
+    }
+
+    const plannedAction = createBotAction(ws, activeCrew);
+    setBotPreview(plannedAction);
+
+    const timer = window.setTimeout(() => {
+      resolveTurn(plannedAction);
+    }, 650);
+
+    return () => window.clearTimeout(timer);
+  }, [activeCrew, isBotTurn, waiting, ws]);
+
   function handleKeyDown(event) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -245,6 +270,8 @@ export default function ArtemisLost({
             onKeyDown={handleKeyDown}
             onSubmit={handleSubmit}
             waiting={waiting}
+            isBotTurn={isBotTurn}
+            botPreview={botPreview}
           />
         </div>
 

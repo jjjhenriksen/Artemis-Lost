@@ -1,79 +1,122 @@
 # Gameplay Loop
 
-This document describes the current end-to-end turn flow in the prototype.
+This document describes the current end-to-end runtime flow for a mission turn.
+
+## Mission Boot Flow
+
+1. The app opens to the main menu.
+2. The player creates or loads a mission from a save slot.
+3. Character creation produces one selected profile per crew role.
+4. Each profile can be assigned `Human` or `Autonomous`.
+5. A mission seed is selected or rerolled.
+6. The selected crew and mission seed are combined into a mission session.
+7. The session is saved and the in-mission UI boots from that state.
 
 ## Turn Flow
 
-1. The frontend loads with a seeded `INITIAL_WORLD_STATE`.
-2. The active crew member is selected from the current `turn` index.
-3. The UI renders a role-specific dashboard using `getViewForRole(ws, turn)`.
-4. The player types an action and submits it.
-5. The frontend adds the player action to the local event log.
-6. The frontend appends the move to recent conversation history.
-7. The frontend sends `worldState`, `action`, `activeCrew`, `conversationHistory`, and `currentTurn` to the DM API.
-8. The backend adds vault context and sends that prompt to OpenAI using a strict JSON contract.
-9. The model returns:
-   - `narration`
-   - `stateDelta`
-10. The backend validates and sanitizes the returned delta shape.
-11. The frontend merges the delta into local state.
-12. The UI updates the narration panel, system data, and event log.
-13. The turn advances to the next crew member.
-14. The current session is written to `vault/dynamic`.
+1. The current crew seat is selected from the active `turn` index.
+2. The UI reads whether that role is human- or autonomously controlled.
+3. On a human turn, the player enters an action manually.
+4. On an autonomous turn, the client generates a role-aware action.
+5. The action is immediately recorded as a `command` event-log entry.
+6. The action is appended to recent conversation history.
+7. The frontend sends this payload to `/api/turn`:
+   - `worldState`
+   - `action`
+   - `activeCrew`
+   - `conversationHistory`
+   - `currentTurn`
+8. The backend assembles the DM prompt with:
+   - the selected crew and current world state
+   - mission-seed context already embedded into `worldState`
+   - vault static context
+   - vault dynamic session context
+9. OpenAI returns narration plus a `STATE_DELTA` block.
+10. The backend extracts and normalizes the delta.
+11. The frontend:
+   - advances mission elapsed time
+   - prepends the local command log entry
+   - merges the returned delta
+   - updates narration
+   - appends the assistant response to conversation history
+   - advances the turn index
+   - autosaves the session
 
 ## Data Sent To The Model
 
-The request payload includes:
-- the full current world state
-- the active crew member
-- the player action for the current turn
+The model receives:
+- the full live `worldState`
+- the active crew member for the current turn
 - recent conversation history
 - the current turn index
+- vault context assembled by the backend
+- the current player or autonomous action
 
-This gives the model enough context to narrate the result and suggest structured updates.
+That means the model sees:
+- the selected mission seed inside `worldState.mission`
+- actual launched crew names and traits
+- controller mode in crew character metadata
+- current system pressure
+- recent typed event-log history
 
 ## Data Returned By The Model
 
-The server expects the model to return JSON with:
+The server expects plain narration followed by a partial `STATE_DELTA`.
+
+Typical delta shape:
 
 ```json
 {
-  "narration": "Narrative text shown to the players",
-  "stateDelta": {
-    "systems": { "o2": 68 },
-    "crew": [{ "id": "park", "health": 70 }],
-    "eventLog": [
-      {
-        "ts": "T+14:30",
-        "msg": "Park suited up for EVA",
-        "type": "action"
-      }
-    ]
-  }
+  "mission": { "phase": "Array intercept - unstable" },
+  "systems": { "nav": 24, "comms": 41 },
+  "crew": [{ "id": "reyes", "morale": 76 }],
+  "eventLog": [
+    {
+      "ts": "T+18:08",
+      "msg": "The reflector field rebounded the sweep into the rover's own nav stack.",
+      "type": "risk"
+    }
+  ]
 }
 ```
 
-## Error Handling
+## Event Log Contract
+
+Recent event-log entries are treated as a lightweight system trace.
+
+Allowed event types:
+- `command`
+- `system`
+- `sensor`
+- `trait`
+- `risk`
+
+The frontend shows each entry with a typed badge. The backend prompt explicitly encourages:
+- `trait` entries when personality changes the result
+- `risk` entries when instability or downside increases
+
+## Mission Clock
+
+- mission elapsed time lives in `worldState.mission.met`
+- the frontend advances it once per resolved turn
+- this applies to both successful turns and failed DM requests
+
+## Error Path
 
 If the DM request fails:
-- the frontend shows an error message in the narration area
-- the player's action is still added to the event log
+- the human or bot action is still recorded
+- mission elapsed time still advances
 - the turn still advances
-- the session still persists so the failed turn is visible after refresh
+- the session still saves
+- the narration panel shows the error state
 
-That behavior keeps the prototype moving, though later you may want a retry path or a failed-turn state instead.
+This keeps the prototype playable even when the DM service is temporarily unavailable.
 
-## Current Strengths
+## Persistence Flow
 
-- Fast to iterate on during prototyping
-- Clear action to response loop
-- Structured delta updates make state changes easier to reason about
-- Works well for incremental polishing of narration and atmosphere
-- Session state survives reloads through the local session store
-- Vault markdown can now influence the DM prompt
+After each resolved turn, the session is written to:
+- the active slot save file
+- `vault/dynamic/session-state.md`
+- `vault/dynamic/log.md`
 
-## Current Risks
-
-- The model still controls a meaningful amount of update structure
-- Failed responses currently advance the turn, which may or may not be desired long term
-- Prompt assembly currently loads broad vault context rather than selecting only the most relevant documents
+This supports reload recovery and gives the backend a dynamic session summary for future prompts.

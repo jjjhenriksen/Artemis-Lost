@@ -27,6 +27,7 @@ function CrewCard({ member, isActive }) {
   const accent = isActive ? "var(--stat-accent-active)" : "var(--stat-accent-idle)";
   // The third bar stays schema-light so Teammate 2 can keep driving it from `extra`.
   const extraLabel = member.extra.label.toUpperCase();
+  const controllerLabel = member.character?.controller === "bot" ? "AUTONOMOUS" : "HUMAN";
 
   return (
     <div className={`crew-card${isActive ? " crew-card--active" : ""}`}>
@@ -36,6 +37,7 @@ function CrewCard({ member, isActive }) {
           <div className={`crew-card__role${isActive ? " crew-card__role--active" : ""}`}>
             {member.role.toUpperCase()}
           </div>
+          <div className="crew-card__controller">{controllerLabel} CONTROL</div>
         </div>
 
         <div className={`crew-card__pill${isActive ? " crew-card__pill--active" : ""}`}>

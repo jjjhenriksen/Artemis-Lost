@@ -149,6 +149,7 @@ function createProfileFromBlueprint(blueprint, overrides = {}) {
     flaw: overrides.flaw || blueprint.defaultFlaw,
     personalStake: overrides.personalStake || blueprint.defaultStake,
     tensionNote: overrides.tensionNote || "",
+    controller: overrides.controller || "human",
   };
 }
 
@@ -298,6 +299,7 @@ export function rerollCharacterProfiles(
   CREW_BLUEPRINTS.forEach((blueprint) => {
     if (selectedProfiles.has(blueprint.id)) return;
     const roleBank = CHARACTER_BANKS[blueprint.bankKey] || {};
+    const currentProfile = existingProfilesById.get(blueprint.id);
     const availableNames = (roleBank.names || [blueprint.defaultName]).filter(
       (name) => !usedNames.has(name)
     );
@@ -317,6 +319,7 @@ export function rerollCharacterProfiles(
       specialty: pickRandom(roleBank.specialties || [blueprint.defaultSpecialty]),
       flaw: flawEntry.text,
       personalStake: pickRandom(roleBank.stakes || [blueprint.defaultStake]),
+      controller: currentProfile?.controller === "bot" ? "bot" : "human",
     };
 
     usedNames.add(selected.name);
@@ -352,12 +355,14 @@ function withDerivedCrewDynamics(profiles = DEFAULT_CHARACTER_PROFILES) {
     specialty: profile.specialty?.trim() || "",
     flaw: profile.flaw?.trim() || "",
     personalStake: profile.personalStake?.trim() || "",
+    controller: profile.controller === "bot" ? "bot" : "human",
   }));
   const { notesById } = deriveCrewDynamics(normalizedProfiles);
 
   return normalizedProfiles.map((profile) => ({
     ...profile,
     tensionNote: profile.tensionNote?.trim() || notesById[profile.id] || "",
+    controller: profile.controller === "bot" ? "bot" : "human",
   }));
 }
 
@@ -462,6 +467,7 @@ export function createInitialWorldStateForSeed(
       const flaw = profile.flaw?.trim() || blueprint.defaultFlaw;
       const personalStake = profile.personalStake?.trim() || blueprint.defaultStake;
       const tensionNote = profile.tensionNote?.trim();
+      const controller = profile.controller === "bot" ? "bot" : "human";
 
       return createCrewMember({
         ...blueprint,
@@ -478,6 +484,7 @@ export function createInitialWorldStateForSeed(
           flaw,
           personalStake,
           tensionNote,
+          controller,
         },
       });
     }),

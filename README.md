@@ -1,15 +1,75 @@
 # DungeonMAIster
 
-DungeonMAIster is a lightweight prototype for "Artemis Lost," a turn-based sci-fi roleplaying experience where a language model acts as the dungeon master for a stranded lunar mission.
+DungeonMAIster is a full-stack prototype for "Artemis Lost," a turn-based sci-fi mission simulator where an OpenAI model acts as the dungeon master for a stranded lunar crew.
 
-The current app is a React + Vite frontend with a small Express development server that proxies requests to OpenAI. A player submits an action, the DM responds with narration plus a structured state delta, and the UI applies those changes to the shared mission state.
+The app now includes:
+- a main menu with save-slot support
+- full character creation for a four-role crew
+- human or autonomous control per crew role
+- mission seed variation
+- theme switching
+- vault-backed prompt context
+- structured state-delta updates from the DM
 
-## Current Stack
+## Stack
 
 - Frontend: React + Vite
 - Backend: Express dev server
-- Model provider: OpenAI API
-- State model: in-memory world state with delta-based updates
+- Model provider: OpenAI Responses API
+- Persistence: slot saves plus vault-backed session mirrors
+
+## Run
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create `.env`:
+
+```bash
+OPENAI_API_KEY=your_key_here
+OPENAI_MODEL=gpt-4.1-mini
+DM_API_PORT=8787
+```
+
+Start development:
+
+```bash
+npm run dev
+```
+
+Build and preview:
+
+```bash
+npm run build
+npm run preview
+```
+
+Opening `dist/index.html` directly is fine for checking the built UI shell, but interactive DM turns still require the local API server.
+
+## Current Gameplay Flow
+
+1. Choose a save slot from the main menu.
+2. Create or load a mission.
+3. Configure the crew, including `Human` or `Autonomous` per role.
+4. Pick or reroll a mission seed.
+5. Launch the mission.
+6. Submit actions on human turns while autonomous roles auto-play theirs.
+7. The DM returns narration plus a partial `STATE_DELTA`.
+8. The UI merges the update, advances MET and turn order, updates the instrumented log, and autosaves.
+
+## Major Systems
+
+- Character creation with reroll, lock, and crew-dynamic inference
+- Bank-driven crew generation with authored defaults
+- Mission seeds with scenario-specific mission, environment, systems, and opening event logs
+- Autonomous crew roles for underfilled games
+- Instrumented event log with `command`, `system`, `sensor`, `trait`, and `risk` tags
+- OpenAI-backed DM turn resolution
+- Save slots and vault-backed session mirrors
+- Theme system with persistent selection and themed UI tokens
 
 ## Project Structure
 
@@ -17,6 +77,7 @@ The current app is a React + Vite frontend with a small Express development serv
 .
 ├── docs/
 │   ├── ARCHITECTURE.md
+│   ├── FEATURES.md
 │   ├── GAMEPLAY_LOOP.md
 │   ├── INDEX.md
 │   └── team/
@@ -29,126 +90,30 @@ The current app is a React + Vite frontend with a small Express development serv
 ├── src/
 │   ├── App.jsx
 │   ├── ActionInput.jsx
+│   ├── CharacterCreation.jsx
 │   ├── CrewCard.jsx
-│   ├── CrewStatusBar.jsx
-│   ├── deltaParser.js
 │   ├── EventLog.jsx
+│   ├── MainMenu.jsx
 │   ├── NarrationPanel.jsx
 │   ├── RoleView.jsx
-│   ├── TurnIndicator.jsx
+│   ├── ThemePicker.jsx
 │   ├── UI.jsx
-│   ├── applyStateDelta.js
-│   ├── dmApi.js
-│   ├── roleFilters.js
-│   ├── sessionApi.js
-│   ├── styles.css
-│   ├── useTypewriter.js
+│   ├── botTurns.js
+│   ├── characterBanks.js
+│   ├── gameLoop.js
+│   ├── missionSeeds.js
+│   ├── themes.js
 │   └── worldState.js
 ├── vault/
 │   ├── dynamic/
 │   └── static/
-├── index.html
-├── package.json
-└── vite.config.js
+└── README.md
 ```
 
-## Getting Started
+## Docs
 
-### Development
-
-1. Install dependencies:
-
-```bash
-npm install
-```
-
-2. Create a `.env` file with your OpenAI credentials:
-
-```bash
-OPENAI_API_KEY=your_key_here
-OPENAI_MODEL=gpt-4.1-mini
-DM_API_PORT=8787
-```
-
-3. Start the app:
-
-```bash
-npm run dev
-```
-
-What this does:
-- starts the Vite frontend
-- starts the local DM API server at `localhost:8787`
-- proxies frontend `/api` requests to the local DM server
-
-### Build And Preview
-
-To test the production build locally:
-
-```bash
-npm run build
-npm run preview
-```
-
-Then open the preview URL printed by Vite in your terminal.
-
-### Opening The Built HTML Directly
-
-The build now uses relative asset paths, so [dist/index.html](/Users/jacquelinehenriksen/DungeonMAIster/dist/index.html) can be opened directly to inspect the UI shell.
-
-However, direct file opening is only suitable for static UI viewing. DM turn requests to `/api/turn` still require a running server setup, so interactive gameplay should be tested with:
-
-```bash
-npm run dev
-```
-
-or:
-
-```bash
-npm run preview
-```
-
-with the DM API server running.
-
-## How It Works
-
-1. The frontend renders a seeded mission state and a role-based UI.
-2. A player enters an action for the active crew member.
-3. The frontend includes recent conversation history and the current turn index when posting to `/api/turn`.
-4. The Express server calls OpenAI with a structured system prompt.
-5. The server enriches the prompt with vault content and validates the model output.
-6. The model returns narration followed by a `STATE_DELTA:` block.
-7. The server parses that response into:
-   - `narration`
-   - `stateDelta`
-8. The frontend merges `stateDelta` into the current world state, advances the turn, and persists the updated session.
-
-## Documentation
-
-- Overview and navigation: [docs/INDEX.md](/Users/jacquelinehenriksen/DungeonMAIster/docs/INDEX.md)
-- Architecture notes: [docs/ARCHITECTURE.md](/Users/jacquelinehenriksen/DungeonMAIster/docs/ARCHITECTURE.md)
-- Turn loop and data flow: [docs/GAMEPLAY_LOOP.md](/Users/jacquelinehenriksen/DungeonMAIster/docs/GAMEPLAY_LOOP.md)
-- Team planning docs: [docs/team/TEAM_RESPONSIBILITIES.md](/Users/jacquelinehenriksen/DungeonMAIster/docs/team/TEAM_RESPONSIBILITIES.md)
-
-## Current Status
-
-The prototype already includes:
-- a seeded mission world state
-- role-specific UI panels
-- DM narration rendering
-- event log updates
-- state-delta application
-- OpenAI-backed turn requests through a local server
-- conversation history passed through the DM loop
-- vault-backed session persistence in `vault/dynamic`
-- prompt context assembled from `vault/static`
-- centralized shared UI styling in `src/styles.css`
-
-The next natural improvements are:
-- adding a visible "reset session" control in the UI
-- surfacing session save/load status to the player
-- expanding vault-driven prompt assembly with more scene-aware file selection
-
-## Notes
-
-The current implementation keeps most gameplay logic in [src/UI.jsx](/Users/jacquelinehenriksen/DungeonMAIster/src/UI.jsx), which makes iteration fast but leaves room for cleanup as the prototype grows.
+- Overview: [docs/INDEX.md](/Users/jacquelinehenriksen/DungeonMAIster/docs/INDEX.md)
+- Features: [docs/FEATURES.md](/Users/jacquelinehenriksen/DungeonMAIster/docs/FEATURES.md)
+- Architecture: [docs/ARCHITECTURE.md](/Users/jacquelinehenriksen/DungeonMAIster/docs/ARCHITECTURE.md)
+- Gameplay loop: [docs/GAMEPLAY_LOOP.md](/Users/jacquelinehenriksen/DungeonMAIster/docs/GAMEPLAY_LOOP.md)
+- Team docs: [docs/team/TEAM_RESPONSIBILITIES.md](/Users/jacquelinehenriksen/DungeonMAIster/docs/team/TEAM_RESPONSIBILITIES.md)

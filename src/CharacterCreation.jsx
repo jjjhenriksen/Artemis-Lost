@@ -30,6 +30,7 @@ export default function CharacterCreation({
     [missionSeed, profiles]
   );
   const lockedCount = lockedProfileIds.size;
+  const humanCount = profiles.filter((profile) => profile.controller !== "bot").length;
 
   function toggleLockedProfile(id) {
     setLockedProfileIds((current) => {
@@ -60,6 +61,7 @@ export default function CharacterCreation({
         specialty: profile.specialty.trim(),
         flaw: profile.flaw.trim(),
         personalStake: profile.personalStake.trim(),
+        controller: profile.controller === "bot" ? "bot" : "human",
       })),
       missionSeed
     );
@@ -75,6 +77,7 @@ export default function CharacterCreation({
           carried into the save file, vault context, and DM prompt.
         </p>
         <div className="creator-slot">Target save slot: {slotId}</div>
+        <div className="creator-slot">Human-controlled roles: {humanCount} / {profiles.length}</div>
 
         <ThemePicker
           themeId={themeId}
@@ -123,6 +126,20 @@ export default function CharacterCreation({
               <div className="creator-card__header">
                 <div className="creator-card__title">{profile.role}</div>
                 <div className="creator-card__controls">
+                  <button
+                    type="button"
+                    className={`creator-pill ${profile.controller !== "bot" ? "creator-pill--active" : ""}`}
+                    onClick={() => updateProfile(profile.id, "controller", "human")}
+                  >
+                    Human
+                  </button>
+                  <button
+                    type="button"
+                    className={`creator-pill ${profile.controller === "bot" ? "creator-pill--active" : ""}`}
+                    onClick={() => updateProfile(profile.id, "controller", "bot")}
+                  >
+                    Autonomous
+                  </button>
                   <button
                     type="button"
                     className={`creator-pill ${lockedProfileIds.has(profile.id) ? "creator-pill--active" : ""}`}
@@ -234,7 +251,11 @@ export default function CharacterCreation({
           >
             Reroll Crew{lockedCount ? ` (${lockedCount} locked)` : ""}
           </button>
-          <button type="submit" className="menu-button menu-button--primary">
+          <button
+            type="submit"
+            className="menu-button menu-button--primary"
+            disabled={humanCount === 0}
+          >
             Launch Mission
           </button>
         </div>

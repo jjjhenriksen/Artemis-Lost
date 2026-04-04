@@ -43,7 +43,7 @@ function withSlotMetadata(slotId, session) {
 function formatCrewStatus(crew = []) {
   return crew.map(
     (member) =>
-      `- ${member.name} | ${member.role} | health ${member.health}, morale ${member.morale} | ${member.extra.label}: ${member.extra.value}`
+      `- ${member.name} | ${member.role} | controller ${member.character?.controller === "bot" ? "bot" : "human"} | health ${member.health}, morale ${member.morale} | ${member.extra.label}: ${member.extra.value}`
   );
 }
 
