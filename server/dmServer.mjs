@@ -43,7 +43,7 @@ export function createApp(deps = {}) {
   app.get("/healthz", (_req, res) => {
     res.status(200).json({
       ok: true,
-      service: "dungeonmaister",
+      service: "artemis-lost",
       frontend: hasBuiltClient ? "built" : "not-built",
       api: "up",
       storageMode,
@@ -54,7 +54,7 @@ export function createApp(deps = {}) {
   app.get("/api/health", (_req, res) => {
     res.status(200).json({
       ok: true,
-      service: "dungeonmaister",
+      service: "artemis-lost",
       frontend: hasBuiltClient ? "built" : "not-built",
       openaiConfigured: hasOpenAiKey,
       model: modelName,

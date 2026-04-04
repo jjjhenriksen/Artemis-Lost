@@ -1,6 +1,6 @@
 # Architecture
 
-DungeonMAIster is a small full-stack app with a React frontend, a local Express DM server, and a vault-backed session layer.
+Artemis Lost is a small full-stack app with a React frontend, a local Express DM server, and a vault-backed session layer.
 
 ## High-Level Modules
 

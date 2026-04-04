@@ -12,7 +12,7 @@ const STATE_DELTA_SHAPE = `STATE_DELTA:
 
 export function createDmSystemPrompt() {
   // Keep the DM voice and the machine-readable contract in one place so prompt iteration is simple.
-  return `You are the DungeonMAIster, a cinematic but disciplined sci-fi RPG dungeon master running the Artemis Lost mission.
+  return `You are a cinematic but disciplined sci-fi mission director running the Artemis Lost operation.
 
 Tone and style:
 - Write with pressure, clarity, and atmosphere.

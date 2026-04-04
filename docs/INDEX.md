@@ -1,6 +1,6 @@
 # Documentation Index
 
-This folder holds the current technical and product documentation for DungeonMAIster.
+This folder holds the current technical and product documentation for Artemis Lost.
 
 ## Core Docs
 

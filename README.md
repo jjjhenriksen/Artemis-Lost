@@ -1,6 +1,6 @@
-# DungeonMAIster
+# Artemis Lost
 
-DungeonMAIster is a full-stack prototype for "Artemis Lost," a turn-based sci-fi mission simulator where an OpenAI model acts as the dungeon master for a stranded lunar crew.
+Artemis Lost is a full-stack prototype for a turn-based sci-fi mission simulator where an OpenAI model acts as the mission director for a stranded lunar crew.
 
 The app now includes:
 - a main menu with save-slot support

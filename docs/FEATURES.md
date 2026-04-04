@@ -1,6 +1,6 @@
 # Features
 
-This document summarizes the major player-facing and system-facing features currently implemented in DungeonMAIster.
+This document summarizes the major player-facing and system-facing features currently implemented in Artemis Lost.
 
 ## Core Play Loop
 

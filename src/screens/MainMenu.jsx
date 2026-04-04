@@ -30,7 +30,7 @@ export default function MainMenu({
     <div className="menu-shell">
       <div className="menu-panel">
         <div className="menu-panel__eyebrow">LUNAR INCIDENT COMMAND</div>
-        <h1 className="menu-panel__title">DungeonMAIster</h1>
+        <h1 className="menu-panel__title">Artemis Lost</h1>
         <p className="menu-panel__copy">
           Build a crew, manage multiple save slots, and re-enter Artemis Lost from the
           exact point where the pressure was highest.
