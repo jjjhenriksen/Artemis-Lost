@@ -507,12 +507,24 @@ body {
   border-color: #2f648d;
 }
 
+.menu-button--danger {
+  background: #2a1616;
+  border-color: #6f2d2d;
+}
+
 .save-card {
   margin-top: 28px;
   background: #0b1016;
   border: 1px solid var(--border-soft);
   border-radius: 14px;
   padding: 18px;
+}
+
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 28px;
 }
 
 .save-card__label {
@@ -540,11 +552,25 @@ body {
   color: var(--text-dim);
 }
 
+.slot-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
 .creator-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   margin-top: 24px;
+}
+
+.creator-slot {
+  margin-top: 16px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--text-good);
 }
 
 .creator-card {
@@ -582,6 +608,43 @@ body {
 .creator-input--textarea {
   resize: vertical;
   min-height: 84px;
+}
+
+.roster-summary {
+  border-top: 1px solid var(--border-main);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.roster-summary__list {
+  display: grid;
+  gap: 8px;
+}
+
+.roster-summary__item {
+  background: #0b1016;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.roster-summary__name {
+  font-size: 12px;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.roster-summary__name span {
+  color: var(--text-info);
+  margin-left: 6px;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.roster-summary__line {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-muted);
 }
 
 .turn-indicator {
@@ -748,6 +811,10 @@ body {
   }
 
   .creator-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .slot-grid {
     grid-template-columns: 1fr;
   }
 }

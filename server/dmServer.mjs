@@ -1,16 +1,26 @@
 import "dotenv/config";
 import express from "express";
 import { assertDmConfig, requestDmTurn } from "./api.js";
-import { loadSession, saveSession } from "./sessionStore.js";
+import { deleteSession, listSessions, loadSession, saveSession } from "./sessionStore.js";
 
 const PORT = Number(process.env.DM_API_PORT || 8787);
 
 const app = express();
 app.use(express.json({ limit: "512kb" }));
 
-app.get("/api/session", async (_req, res) => {
+app.get("/api/sessions", async (_req, res) => {
   try {
-    const session = await loadSession();
+    const sessions = await listSessions();
+    res.json(sessions);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
+app.get("/api/session/:slotId", async (req, res) => {
+  try {
+    const session = await loadSession(req.params.slotId);
     res.json({ session });
   } catch (err) {
     console.error(err);
@@ -18,7 +28,7 @@ app.get("/api/session", async (_req, res) => {
   }
 });
 
-app.put("/api/session", async (req, res) => {
+app.put("/api/session/:slotId", async (req, res) => {
   try {
     const {
       worldState,
@@ -27,12 +37,13 @@ app.put("/api/session", async (req, res) => {
       conversationHistory = [],
       createdFromCharacterCreation = false,
     } = req.body || {};
+
     if (!worldState || typeof turn !== "number") {
       res.status(400).json({ error: "Missing worldState or turn" });
       return;
     }
 
-    const session = await saveSession({
+    const session = await saveSession(req.params.slotId, {
       worldState,
       narration: narration || "",
       turn,
@@ -41,6 +52,16 @@ app.put("/api/session", async (req, res) => {
     });
 
     res.json({ session });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
+app.delete("/api/session/:slotId", async (req, res) => {
+  try {
+    const result = await deleteSession(req.params.slotId);
+    res.json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || String(err) });

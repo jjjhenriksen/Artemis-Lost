@@ -3,5 +3,5 @@
 ## Entry 1
 - role: system
 - turn: 0
-- crew: n/a
-- content: Session initialized for Artemis Lost.
+- crew: Commander Alma Vasquez
+- content: Mission initialized from character roster.

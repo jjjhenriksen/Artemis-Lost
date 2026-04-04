@@ -1,27 +1,38 @@
 import { useEffect, useState } from "react";
 import CharacterCreation from "./CharacterCreation";
 import MainMenu from "./MainMenu";
-import { loadSession, saveSession } from "./sessionApi";
+import { deleteSession, listSessions, loadSession, saveSession } from "./sessionApi";
 import ArtemisLost from "./UI.jsx";
 import { createMissionSession } from "./worldState";
 
 export default function App() {
   const [screen, setScreen] = useState("loading");
-  const [savedSession, setSavedSession] = useState(null);
+  const [slots, setSlots] = useState([]);
   const [activeSession, setActiveSession] = useState(null);
+  const [activeSlotId, setActiveSlotId] = useState(null);
+  const [pendingSlotId, setPendingSlotId] = useState("slot-1");
   const [gameInstanceKey, setGameInstanceKey] = useState(0);
+
+  async function refreshSlots() {
+    const response = await listSessions();
+    if (!response?.error) {
+      setSlots(response.slots || []);
+      setActiveSlotId(response.activeSlotId || null);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
 
     async function hydrateMenu() {
-      const session = await loadSession();
-      if (cancelled) return;
-
-      if (session?.worldState) {
-        setSavedSession(session);
+      const response = await listSessions();
+      if (cancelled || response?.error) {
+        setScreen("menu");
+        return;
       }
 
+      setSlots(response.slots || []);
+      setActiveSlotId(response.activeSlotId || null);
       setScreen("menu");
     }
 
@@ -32,24 +43,35 @@ export default function App() {
     };
   }, []);
 
-  function launchSession(session) {
+  function launchSession(slotId, session) {
     setActiveSession(session);
+    setActiveSlotId(slotId);
     setGameInstanceKey((current) => current + 1);
     setScreen("game");
   }
 
-  async function handleStartMission(profiles) {
+  async function handleStartMission(slotId, profiles) {
     const session = createMissionSession(profiles);
-    await saveSession(session);
-    setSavedSession(session);
-    launchSession(session);
+    const saved = await saveSession(slotId, session);
+    if (saved?.error) return;
+    await refreshSlots();
+    launchSession(slotId, saved);
   }
 
-  async function handleLoadSave() {
-    const session = await loadSession();
+  async function handleLoadSlot(slotId) {
+    const session = await loadSession(slotId);
     if (!session?.worldState) return;
-    setSavedSession(session);
-    launchSession(session);
+    await refreshSlots();
+    launchSession(slotId, session);
+  }
+
+  async function handleDeleteSlot(slotId) {
+    await deleteSession(slotId);
+    if (activeSlotId === slotId) {
+      setActiveSession(null);
+      setActiveSlotId(null);
+    }
+    await refreshSlots();
   }
 
   function handleResumeMission() {
@@ -57,9 +79,10 @@ export default function App() {
     setScreen("game");
   }
 
-  function handleSessionPersisted(session) {
-    setSavedSession(session);
+  async function handleSessionPersisted(session) {
     setActiveSession(session);
+    setActiveSlotId(session.slotId);
+    await refreshSlots();
   }
 
   if (screen === "loading") {
@@ -69,6 +92,7 @@ export default function App() {
   if (screen === "create") {
     return (
       <CharacterCreation
+        slotId={pendingSlotId}
         onBack={() => setScreen("menu")}
         onStartMission={handleStartMission}
       />
@@ -80,6 +104,7 @@ export default function App() {
       <ArtemisLost
         key={gameInstanceKey}
         initialSession={activeSession}
+        slotId={activeSlotId}
         onExitToMenu={() => setScreen("menu")}
         onSessionPersisted={handleSessionPersisted}
       />
@@ -89,9 +114,13 @@ export default function App() {
   return (
     <MainMenu
       activeSession={activeSession}
-      savedSession={savedSession}
-      onLoadSave={handleLoadSave}
-      onNewMission={() => setScreen("create")}
+      slots={slots}
+      onDeleteSlot={handleDeleteSlot}
+      onLoadSlot={handleLoadSlot}
+      onNewMission={(slotId) => {
+        setPendingSlotId(slotId);
+        setScreen("create");
+      }}
       onResumeMission={handleResumeMission}
     />
   );

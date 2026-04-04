@@ -5,7 +5,7 @@ function cloneProfiles(profiles) {
   return profiles.map((profile) => ({ ...profile }));
 }
 
-export default function CharacterCreation({ onBack, onStartMission }) {
+export default function CharacterCreation({ onBack, onStartMission, slotId }) {
   const [profiles, setProfiles] = useState(() => cloneProfiles(DEFAULT_CHARACTER_PROFILES));
 
   function updateProfile(id, field, value) {
@@ -19,6 +19,7 @@ export default function CharacterCreation({ onBack, onStartMission }) {
   function handleSubmit(event) {
     event.preventDefault();
     onStartMission(
+      slotId,
       profiles.map((profile) => ({
         ...profile,
         name: profile.name.trim(),
@@ -40,6 +41,7 @@ export default function CharacterCreation({ onBack, onStartMission }) {
           Tune the four rover specialists before the mission starts. These identities are
           carried into the save file, vault context, and DM prompt.
         </p>
+        <div className="creator-slot">Target save slot: {slotId}</div>
 
         <div className="creator-grid">
           {profiles.map((profile) => (
@@ -119,6 +121,13 @@ export default function CharacterCreation({ onBack, onStartMission }) {
         <div className="creator-actions">
           <button type="button" className="menu-button" onClick={onBack}>
             Back To Menu
+          </button>
+          <button
+            type="button"
+            className="menu-button"
+            onClick={() => setProfiles(cloneProfiles(DEFAULT_CHARACTER_PROFILES))}
+          >
+            Reset Defaults
           </button>
           <button type="submit" className="menu-button menu-button--primary">
             Launch Mission

@@ -3,6 +3,7 @@ import ActionInput from "./ActionInput";
 import CrewCard from "./CrewCard";
 import CrewStatusBar from "./CrewStatusBar";
 import NarrationPanel from "./NarrationPanel";
+import RosterSummary from "./RosterSummary";
 import RoleView from "./RoleView";
 import { applyStateDelta } from "./applyStateDelta";
 import { requestDmTurn } from "./dmApi";
@@ -28,6 +29,7 @@ function createFallbackSession() {
 
 export default function ArtemisLost({
   initialSession,
+  slotId,
   onExitToMenu,
   onSessionPersisted,
 }) {
@@ -61,7 +63,7 @@ export default function ArtemisLost({
   async function saveCurrentSession(overrides = {}) {
     const payload = buildSessionPayload(overrides);
     setSaveState("saving");
-    const persisted = await persistSession(payload);
+    const persisted = await persistSession(slotId, payload);
     if (!persisted?.error) {
       setSaveState("saved");
       onSessionPersisted?.(persisted);
@@ -195,7 +197,7 @@ export default function ArtemisLost({
 
         <div className="sidebar-panel">
           <div>
-            <div className="section-title section-title--with-divider">CREW STATUS</div>
+          <div className="section-title section-title--with-divider">CREW STATUS</div>
           </div>
           <div className="crew-grid">
             {ws.crew.map((member, index) => (
@@ -204,6 +206,7 @@ export default function ArtemisLost({
           </div>
 
           <RoleView activeCrew={activeCrew} roleView={roleView} />
+          <RosterSummary crew={ws.crew} />
         </div>
 
         <ActionInput

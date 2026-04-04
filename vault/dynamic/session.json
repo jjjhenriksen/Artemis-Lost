@@ -1,0 +1,190 @@
+{
+  "worldState": {
+    "mission": {
+      "id": "ARTEMIS-07",
+      "name": "Lost Signal",
+      "phase": "Crater approach - active",
+      "met": "T+14:22:07",
+      "objectives": [
+        "Trace the dormant Apollo-band signal source.",
+        "Keep the rover crew alive until a stable comms link is restored.",
+        "Recover enough anomaly data to justify a return window."
+      ],
+      "briefing": "Artemis-07 diverted after receiving a structured radio pulse from Shackleton Crater. Mission control lost clean contact twelve minutes later."
+    },
+    "environment": {
+      "location": "Shackleton Crater Rim",
+      "hazards": [
+        "Signal interference",
+        "Knife-edge crater terrain",
+        "Shadowed ice vents"
+      ],
+      "anomaly": "Apollo-band signal with repeating geometric carrier modulation",
+      "visibility": "Low-angle glare on the rim, deep shadow inside the crater",
+      "pressure": "EVA only"
+    },
+    "systems": {
+      "o2": 71,
+      "power": 82,
+      "comms": 35,
+      "propulsion": 64,
+      "scrubber": "patched",
+      "thermal": 76,
+      "nav": 58
+    },
+    "crew": [
+      {
+        "id": "vasquez",
+        "name": "Commander Alma Vasquez",
+        "role": "Commander",
+        "health": 92,
+        "morale": 78,
+        "extra": {
+          "label": "Authority",
+          "value": 88,
+          "detail": "Command tempo and crisis triage",
+          "unit": "%"
+        },
+        "location": "Command seat, rover cabin",
+        "status": "Coordinating the crater hold and crew assignments",
+        "inventory": [
+          "Command slate",
+          "Mission uplink keys",
+          "Emergency flare tags"
+        ],
+        "notes": "Prioritizes crew survival over mission prestige. Keeping anxiety contained after the signal spike. Trait: Calm under cascading pressure. Flaw: Carries too much alone before delegating. Stake: Will not lose another mission under their command. Call sign: Aegis.",
+        "character": {
+          "callSign": "Aegis",
+          "trait": "Calm under cascading pressure",
+          "specialty": "Command tempo and crisis triage",
+          "flaw": "Carries too much alone before delegating",
+          "personalStake": "Will not lose another mission under their command"
+        }
+      },
+      {
+        "id": "okafor",
+        "name": "Chief Engineer Tunde Okafor",
+        "role": "Flight Engineer",
+        "health": 86,
+        "morale": 73,
+        "extra": {
+          "label": "O2 Sys",
+          "value": 71,
+          "detail": "Life support stabilization and field repair",
+          "unit": "%"
+        },
+        "location": "Life-support maintenance alcove",
+        "status": "Monitoring scrubber leaks and power routing",
+        "inventory": [
+          "Patch kit",
+          "Diagnostic wafer",
+          "Portable sealant gun"
+        ],
+        "notes": "Knows the patched scrubber can fail if dust clogs the bypass a second time. Trait: Turns panic into procedure. Flaw: Pushes damaged systems long past the safe window. Stake: Knows the rover only gets one real failure before people start dying. Call sign: Patchbay.",
+        "character": {
+          "callSign": "Patchbay",
+          "trait": "Turns panic into procedure",
+          "specialty": "Life support stabilization and field repair",
+          "flaw": "Pushes damaged systems long past the safe window",
+          "personalStake": "Knows the rover only gets one real failure before people start dying"
+        }
+      },
+      {
+        "id": "reyes",
+        "name": "Dr. Imani Reyes",
+        "role": "Science Officer",
+        "health": 95,
+        "morale": 81,
+        "extra": {
+          "label": "Scan Rng",
+          "value": 62,
+          "detail": "Signal analysis and anomaly interpretation",
+          "unit": "%"
+        },
+        "location": "Sensor mast station",
+        "status": "Filtering anomaly harmonics from terrain reflections",
+        "inventory": [
+          "Spectral tablet",
+          "Core sampler",
+          "Signal library"
+        ],
+        "notes": "Convinced the source is artificial and older than the current mission profile suggests. Trait: Curiosity sharp enough to feel dangerous. Flaw: Can chase understanding past the point of safety. Stake: Believes this signal could redefine humanity's place on the moon. Call sign: Spectra.",
+        "character": {
+          "callSign": "Spectra",
+          "trait": "Curiosity sharp enough to feel dangerous",
+          "specialty": "Signal analysis and anomaly interpretation",
+          "flaw": "Can chase understanding past the point of safety",
+          "personalStake": "Believes this signal could redefine humanity's place on the moon"
+        }
+      },
+      {
+        "id": "park",
+        "name": "Lt. Hana Park",
+        "role": "Mission Specialist",
+        "health": 79,
+        "morale": 69,
+        "extra": {
+          "label": "EVA Suit",
+          "value": 34,
+          "detail": "EVA deployment and field improvisation",
+          "unit": "%"
+        },
+        "location": "Airlock prep bench",
+        "status": "Prepping for a risky surface check near the rim beacon",
+        "inventory": [
+          "Beacon spool",
+          "Drill",
+          "Backup relay",
+          "Patch foam"
+        ],
+        "notes": "Most capable EVA operator on site, but the suit breach margin is uncomfortably thin. Trait: Most comfortable at the edge of the risk envelope. Flaw: Understates injuries if the mission still has momentum. Stake: Needs this mission to prove the last surface accident was not a career-ending failure. Call sign: Waypoint.",
+        "character": {
+          "callSign": "Waypoint",
+          "trait": "Most comfortable at the edge of the risk envelope",
+          "specialty": "EVA deployment and field improvisation",
+          "flaw": "Understates injuries if the mission still has momentum",
+          "personalStake": "Needs this mission to prove the last surface accident was not a career-ending failure"
+        }
+      }
+    ],
+    "eventLog": [
+      {
+        "ts": "T+14:22",
+        "msg": "Anomaly signal detected from Shackleton Crater interior.",
+        "type": "alert"
+      },
+      {
+        "ts": "T+14:19",
+        "msg": "Telemetry confirms the signal is repeating in deliberate geometric bursts.",
+        "type": "info"
+      },
+      {
+        "ts": "T+14:18",
+        "msg": "Long-range comms degraded after the rover crossed the rim shadow line.",
+        "type": "warn"
+      },
+      {
+        "ts": "T+14:11",
+        "msg": "Okafor patched the primary scrubber bypass after a dust-line leak.",
+        "type": "info"
+      },
+      {
+        "ts": "T+13:55",
+        "msg": "Artemis-07 rover reached the crater rim with all crew nominal.",
+        "type": "info"
+      }
+    ]
+  },
+  "narration": "The rover eases to a halt on the knife-edge rim of Shackleton Crater, and every speaker in the cabin hisses with an impossible transmission. The signal is old Apollo-band hardware, dead for decades, yet it is pulsing from the darkness below with machine-perfect rhythm.\n\nDr. Imani Reyes has already stripped the noise away once and the pattern only became stranger. Chief Engineer Tunde Okafor warns the scrubber patch may not survive a long delay. Lt. Hana Park is halfway into a damaged EVA suit. Commander Alma Vasquez, the crew is looking to you.",
+  "turn": 0,
+  "conversationHistory": [
+    {
+      "role": "system",
+      "turn": 0,
+      "crewName": "Commander Alma Vasquez",
+      "content": "Mission initialized from character roster."
+    }
+  ],
+  "createdFromCharacterCreation": true,
+  "lastUpdatedIso": "2026-04-04T00:59:15.446Z"
+}
