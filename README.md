@@ -165,35 +165,47 @@ Deployment note:
 │   ├── api.js
 │   ├── dmServer.mjs
 │   ├── prompts.js
+│   ├── sessionMirrors.js
+│   ├── sessionStorageAdapter.js
 │   ├── sessionStore.js
+│   ├── storagePaths.js
 │   └── vault.js
 ├── src/
-│   ├── App.jsx
-│   ├── ActionInput.jsx
-│   ├── CharacterCreation.jsx
-│   ├── CrewCard.jsx
-│   ├── crewCoordination.js
-│   ├── EventLog.jsx
-│   ├── LaunchSequence.jsx
-│   ├── MainMenu.jsx
-│   ├── NarrationPanel.jsx
-│   ├── RoleView.jsx
-│   ├── ThemePicker.jsx
-│   ├── UI.jsx
-│   ├── missionMechanics.js
-│   ├── botTurns.js
-│   ├── characterBanks.js
-│   ├── gameLoop.js
-│   ├── missionSeeds.js
-│   ├── roleGuidance.js
-│   ├── roleMechanics.js
-│   ├── roleSemantics.js
-│   ├── stateUtils.js
-│   ├── themes.js
-│   └── worldState.js
+│   ├── app/
+│   │   └── App.jsx
+│   ├── components/
+│   │   ├── ActionInput.jsx
+│   │   ├── CrewCard.jsx
+│   │   ├── CrewStatusBar.jsx
+│   │   ├── EventLog.jsx
+│   │   ├── NarrationPanel.jsx
+│   │   ├── RoleView.jsx
+│   │   ├── RosterSummary.jsx
+│   │   ├── ThemePicker.jsx
+│   │   └── TurnIndicator.jsx
+│   ├── game/
+│   │   ├── crewCoordination.js
+│   │   ├── missionMechanics.js
+│   │   ├── roleMechanics.js
+│   │   ├── themes.js
+│   │   └── worldState.js
+│   ├── hooks/
+│   │   └── useTypewriter.js
+│   ├── screens/
+│   │   ├── CharacterCreation.jsx
+│   │   ├── LaunchSequence.jsx
+│   │   ├── MainMenu.jsx
+│   │   └── UI.jsx
+│   ├── services/
+│   │   ├── dmApi.js
+│   │   └── sessionApi.js
+│   ├── styles/
+│   │   └── styles.css
+│   └── main.jsx
 ├── vault/
 │   ├── dynamic/
 │   └── static/
+├── tests/
 └── README.md
 ```
 

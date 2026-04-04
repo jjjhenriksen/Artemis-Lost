@@ -6,57 +6,59 @@ DungeonMAIster is a small full-stack app with a React frontend, a local Express 
 
 ### App Shell And Navigation
 
-- [src/App.jsx](../src/App.jsx): app entry, screen routing, theme persistence, save-slot hydration
-- [src/MainMenu.jsx](../src/MainMenu.jsx): front-door flow for new mission, continue, load, and delete
-- [src/CharacterCreation.jsx](../src/CharacterCreation.jsx): crew editing, lock/reroll controls, human-vs-autonomous role assignment, mission-seed preview
-- [src/LaunchSequence.jsx](../src/LaunchSequence.jsx): cinematic transition between setup and live mission
-- [src/UI.jsx](../src/UI.jsx): in-mission turn orchestration, autosave, autonomous-turn auto-play, and DM integration
+- [src/app/App.jsx](../src/app/App.jsx): app entry, screen routing, theme persistence, and save-slot hydration
+- [src/screens/MainMenu.jsx](../src/screens/MainMenu.jsx): front-door flow for new mission, continue, load, and delete
+- [src/screens/CharacterCreation.jsx](../src/screens/CharacterCreation.jsx): crew editing, lock/reroll controls, human-vs-autonomous role assignment, and mission-seed preview
+- [src/screens/LaunchSequence.jsx](../src/screens/LaunchSequence.jsx): cinematic transition between setup and live mission
+- [src/screens/UI.jsx](../src/screens/UI.jsx): in-mission turn orchestration, autosave, autonomous-turn auto-play, and DM integration
 
 ### World-State And Scenario Layer
 
-- [src/worldState.js](../src/worldState.js): crew blueprints, mission-session creation, seed resolution, opening narration, and world-state creation
-- [src/missionSeeds.js](../src/missionSeeds.js): scenario-seed definitions and mission-seed helpers
-- [src/missionMechanics.js](../src/missionMechanics.js): seed-specific leverage windows and local mission effects
-- [src/characterBanks.js](../src/characterBanks.js): names, call signs, traits, flaws, specialties, stakes, and tension patterns
-- [src/botTurns.js](../src/botTurns.js): autonomous-action generation for underfilled crews
-- [src/gameLoop.js](../src/gameLoop.js): turn helpers, MET advancement, conversation helpers, and log-entry creation
-- [src/stateUtils.js](../src/stateUtils.js): shared state selectors and numeric clamping helpers
+- [src/game/worldState.js](../src/game/worldState.js): crew blueprints, mission-session creation, seed resolution, opening narration, and world-state creation
+- [src/game/missionSeeds.js](../src/game/missionSeeds.js): scenario-seed definitions and mission-seed helpers
+- [src/game/missionMechanics.js](../src/game/missionMechanics.js): seed-specific leverage windows and local mission effects
+- [src/game/characterBanks.js](../src/game/characterBanks.js): names, call signs, traits, flaws, specialties, stakes, and tension patterns
+- [src/game/botTurns.js](../src/game/botTurns.js): autonomous-action generation for underfilled crews
+- [src/game/gameLoop.js](../src/game/gameLoop.js): turn helpers, MET advancement, conversation helpers, and log-entry creation
+- [src/game/stateUtils.js](../src/game/stateUtils.js): shared state selectors and numeric clamping helpers
 
 ### Presentation Layer
 
-- [src/NarrationPanel.jsx](../src/NarrationPanel.jsx): DM narration plus event-log panel
-- [src/EventLog.jsx](../src/EventLog.jsx): instrumented log rendering
-- [src/ActionInput.jsx](../src/ActionInput.jsx): human-turn controls and autonomous-turn status
-- [src/CrewCard.jsx](../src/CrewCard.jsx): crew cards, status bars, and controller badges
-- [src/RosterSummary.jsx](../src/RosterSummary.jsx): crew dossier with trait, flaw, and controller mode
-- [src/RoleView.jsx](../src/RoleView.jsx): active-role console and operational context
-- [src/CrewStatusBar.jsx](../src/CrewStatusBar.jsx): mission/system header strip
-- [src/ThemePicker.jsx](../src/ThemePicker.jsx): shared theme-switching control
-- [src/roleFilters.js](../src/roleFilters.js): role-specific view selection and console brief generation
-- [src/uiState.js](../src/uiState.js): derived UI-facing state for headers, alerts, and action-panel previews
-- [src/styles.css](../src/styles.css): shared tokens, themes, component styles, and ambient background treatment
-- [src/themes.js](../src/themes.js): theme registry and storage helpers
+- [src/components/NarrationPanel.jsx](../src/components/NarrationPanel.jsx): DM narration plus event-log panel
+- [src/components/EventLog.jsx](../src/components/EventLog.jsx): instrumented log rendering
+- [src/components/ActionInput.jsx](../src/components/ActionInput.jsx): human-turn controls and autonomous-turn status
+- [src/components/CrewCard.jsx](../src/components/CrewCard.jsx): crew cards, status bars, and controller badges
+- [src/components/RosterSummary.jsx](../src/components/RosterSummary.jsx): crew dossier with trait, flaw, and controller mode
+- [src/components/RoleView.jsx](../src/components/RoleView.jsx): active-role console and operational context
+- [src/components/CrewStatusBar.jsx](../src/components/CrewStatusBar.jsx): mission/system header strip
+- [src/components/ThemePicker.jsx](../src/components/ThemePicker.jsx): shared theme-switching control
+- [src/game/roleFilters.js](../src/game/roleFilters.js): role-specific view selection and console brief generation
+- [src/game/uiState.js](../src/game/uiState.js): derived UI-facing state for headers, alerts, and action-panel previews
+- [src/styles/styles.css](../src/styles/styles.css): shared tokens, themes, component styles, and ambient background treatment
+- [src/game/themes.js](../src/game/themes.js): theme registry and storage helpers
 
 ### Role And Coordination Systems
 
-- [src/roleSemantics.js](../src/roleSemantics.js): role-alignment keywords and follow-through targeting rules
-- [src/roleGuidance.js](../src/roleGuidance.js): tactical focus generation and suggested commands
-- [src/crewCoordination.js](../src/crewCoordination.js): delegation profiles, crew-fit scoring, handoff windows, and coordination alerts
-- [src/roleMechanics.js](../src/roleMechanics.js): local per-role effects and public role/coordination selectors
+- [src/game/roleSemantics.js](../src/game/roleSemantics.js): role-alignment keywords and follow-through targeting rules
+- [src/game/roleGuidance.js](../src/game/roleGuidance.js): tactical focus generation and suggested commands
+- [src/game/crewCoordination.js](../src/game/crewCoordination.js): delegation profiles, crew-fit scoring, handoff windows, and coordination alerts
+- [src/game/roleMechanics.js](../src/game/roleMechanics.js): local per-role effects and public role/coordination selectors
 
 ### DM Integration Layer
 
-- [src/dmApi.js](../src/dmApi.js): browser request helper for `/api/turn`
+- [src/services/dmApi.js](../src/services/dmApi.js): browser request helper for `/api/turn`
 - [server/dmServer.mjs](../server/dmServer.mjs): Express API for DM turns and sessions
 - [server/api.js](../server/api.js): OpenAI Responses API call path and response extraction
 - [server/prompts.js](../server/prompts.js): system and user prompt assembly rules
-- [src/deltaParser.js](../src/deltaParser.js): normalizes model output into safe state deltas
-- [src/applyStateDelta.js](../src/applyStateDelta.js): merges validated deltas into local state
+- [src/game/deltaParser.js](../src/game/deltaParser.js): normalizes model output into safe state deltas
+- [src/game/applyStateDelta.js](../src/game/applyStateDelta.js): merges validated deltas into local state
 
 ### Session And Vault Layer
 
-- [src/sessionApi.js](../src/sessionApi.js): load/save/delete/list session helpers
-- [server/sessionStore.js](../server/sessionStore.js): slot persistence and vault markdown mirrors
+- [src/services/sessionApi.js](../src/services/sessionApi.js): load/save/delete/list session helpers
+- [server/sessionStore.js](../server/sessionStore.js): public slot persistence orchestration and payload normalization
+- [server/sessionStorageAdapter.js](../server/sessionStorageAdapter.js): storage backend adapter for filesystem vs database session persistence
+- [server/sessionMirrors.js](../server/sessionMirrors.js): active-session markdown and JSON mirrors for prompt context
 - [server/vault.js](../server/vault.js): static/dynamic vault loading and prompt-context assembly
 
 ## Runtime Responsibilities
@@ -195,12 +197,14 @@ These types are normalized in the delta parser and rendered as badges in the UI.
 
 ## Save And Vault Model
 
-Persistent state is stored in slot JSON files and mirrored into vault markdown:
+Persistent state now has separate concerns:
 
-- slot JSON keeps the canonical session payload
+- the session store orchestrates slot-level save/load/delete behavior
+- the storage adapter decides whether canonical saves live in local JSON files or the configured database backend
+- the mirror layer writes active prompt-context artifacts into `vault/dynamic/`
 - `vault/dynamic/session-state.md` keeps a handoff-friendly state snapshot
 - `vault/dynamic/log.md` keeps recent conversation history
-- `vault/dynamic/slots/` stores multi-slot save files
+- `vault/dynamic/session.json` keeps the currently active structured session mirror
 
 The prompt layer also loads relevant static lore from `vault/static/`.
 
