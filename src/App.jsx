@@ -127,6 +127,8 @@ export default function App() {
       <LaunchSequence
         session={activeSession}
         slotId={activeSlotId}
+        themeId={themeId}
+        themes={THEMES}
         onComplete={() => launchSession(activeSlotId, activeSession)}
       />
     );

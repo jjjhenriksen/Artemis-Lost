@@ -1,17 +1,36 @@
 import { useEffect } from "react";
 
-const DEFAULT_DURATION_MS = 7200;
+const DEFAULT_DURATION_MS = 9600;
 const REDUCED_MOTION_DURATION_MS = 1200;
 
-export default function LaunchSequence({ session, slotId, onComplete }) {
+const LAUNCH_STAGES = [
+  { time: "T-06", label: "Fuel lines pressurized" },
+  { time: "T-03", label: "Crew harnesses locked" },
+  { time: "T-00", label: "Main engines commit" },
+  { time: "T+04", label: "Tower clear" },
+  { time: "T+11", label: "Orbital burn alignment" },
+];
+
+export default function LaunchSequence({ session, slotId, themeId, themes, onComplete }) {
   const mission = session?.worldState?.mission || {};
   const crew = session?.worldState?.crew || [];
+  const activeTheme = themes?.find((theme) => theme.id === themeId) || themes?.[0] || null;
   const roster = crew.map((member) => ({
     id: member.id,
     role: member.role,
     name: member.name,
     callSign: member.character?.callSign || "n/a",
   }));
+  const telemetry = [
+    { label: "Flight theme", value: activeTheme?.label || "Artemis", tone: "info" },
+    { label: "Crew loaded", value: `${roster.length} specialists`, tone: "good" },
+    { label: "Mission phase", value: mission.phase || "Launch window", tone: "info" },
+    {
+      label: "Risk pressure",
+      value: mission.decisionPressure || "Window tightening across all systems.",
+      tone: "warn",
+    },
+  ];
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -40,36 +59,83 @@ export default function LaunchSequence({ session, slotId, onComplete }) {
         <p className="launch-screen__copy">
           {mission.briefing || "Crew locked. Mission vectors aligned. Light the engines."}
         </p>
+        <div className="launch-screen__theme">
+          <span
+            className="launch-screen__theme-swatch"
+            style={{ "--launch-theme-accent": activeTheme?.accent || "#6fd3ff" }}
+          />
+          <div>
+            <div className="launch-screen__theme-label">
+              Interface theme: {activeTheme?.label || "Artemis"}
+            </div>
+            <div className="launch-screen__theme-copy">
+              {activeTheme?.description || "Mission control visuals calibrated for ascent."}
+            </div>
+          </div>
+        </div>
         <div className="launch-screen__meta">
           <span>{mission.id || "ARTEMIS-07"}</span>
           <span>{mission.seedLabel || "Mission profile armed"}</span>
           <span>Save slot {slotId}</span>
         </div>
+        <div className="launch-screen__timeline">
+          {LAUNCH_STAGES.map((stage) => (
+            <div key={stage.time} className="launch-screen__timeline-item">
+              <span>{stage.time}</span>
+              <span>{stage.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="launch-pad" aria-hidden="true">
-        <div className="launch-pad__tower launch-pad__tower--left" />
-        <div className="launch-pad__tower launch-pad__tower--right" />
-        <div className="launch-pad__service-arm" />
-        <div className="launch-pad__smoke launch-pad__smoke--one" />
-        <div className="launch-pad__smoke launch-pad__smoke--two" />
-        <div className="launch-pad__smoke launch-pad__smoke--three" />
-
-        <div className="rocket">
-          <div className="rocket__contrail" />
-          <div className="rocket__body">
-            <div className="rocket__tip" />
-            <div className="rocket__window rocket__window--top" />
-            <div className="rocket__window rocket__window--mid" />
-            <div className="rocket__fin rocket__fin--left" />
-            <div className="rocket__fin rocket__fin--right" />
-            <div className="rocket__engine" />
-          </div>
-          <div className="rocket__flame rocket__flame--core" />
-          <div className="rocket__flame rocket__flame--glow" />
+      <div className="launch-screen__viewport">
+        <div className="launch-screen__viewport-header">
+          <span>Launch feed // pad camera 02</span>
+          <span>Theme sync {activeTheme?.label || "Artemis"}</span>
         </div>
+        <div className="launch-screen__viewport-frame" aria-hidden="true">
+          <span className="launch-screen__viewport-corner launch-screen__viewport-corner--tl" />
+          <span className="launch-screen__viewport-corner launch-screen__viewport-corner--tr" />
+          <span className="launch-screen__viewport-corner launch-screen__viewport-corner--bl" />
+          <span className="launch-screen__viewport-corner launch-screen__viewport-corner--br" />
+          <div className="launch-screen__viewport-grid" />
+        </div>
+        <div className="launch-pad" aria-hidden="true">
+          <div className="launch-pad__halo" />
+          <div className="launch-pad__shockwave" />
+          <div className="launch-pad__tower launch-pad__tower--left" />
+          <div className="launch-pad__tower launch-pad__tower--right" />
+          <div className="launch-pad__service-arm" />
+          <div className="launch-pad__smoke launch-pad__smoke--one" />
+          <div className="launch-pad__smoke launch-pad__smoke--two" />
+          <div className="launch-pad__smoke launch-pad__smoke--three" />
 
-        <div className="launch-pad__ground" />
+          <div className="rocket">
+            <div className="rocket__contrail" />
+            <div className="rocket__body">
+              <div className="rocket__tip" />
+              <div className="rocket__spine" />
+              <div className="rocket__band rocket__band--top" />
+              <div className="rocket__band rocket__band--mid" />
+              <div className="rocket__band rocket__band--low" />
+              <div className="rocket__wing rocket__wing--left" />
+              <div className="rocket__wing rocket__wing--right" />
+              <div className="rocket__engine" />
+            </div>
+            <div className="rocket__flame rocket__flame--core" />
+            <div className="rocket__flame rocket__flame--glow" />
+          </div>
+
+          <div className="launch-pad__ground" />
+          <div className="launch-pad__readout launch-pad__readout--left">
+            <span>Altitude</span>
+            <strong>19.4 km</strong>
+          </div>
+          <div className="launch-pad__readout launch-pad__readout--right">
+            <span>Velocity</span>
+            <strong>2.3 km/s</strong>
+          </div>
+        </div>
       </div>
 
       <div className="launch-screen__manifest">
@@ -83,6 +149,25 @@ export default function LaunchSequence({ session, slotId, onComplete }) {
               </span>
             </div>
           ))}
+        </div>
+        <div className="launch-screen__telemetry">
+          {telemetry.map((item) => (
+            <div
+              key={item.label}
+              className={`launch-screen__telemetry-item launch-screen__telemetry-item--${item.tone}`}
+            >
+              <div className="launch-screen__telemetry-label">{item.label}</div>
+              <div className="launch-screen__telemetry-value">{item.value}</div>
+            </div>
+          ))}
+        </div>
+        <div className="launch-screen__progress">
+          <div className="launch-screen__progress-label">
+            Ascent profile synchronizing with theme palette and mission seed
+          </div>
+          <div className="launch-screen__progress-bar">
+            <span />
+          </div>
         </div>
       </div>
 
