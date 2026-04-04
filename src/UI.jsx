@@ -160,12 +160,17 @@ export default function ArtemisLost({
 
   return (
     <div className="app-shell">
+      <div className="app-shell__glow app-shell__glow--left" aria-hidden="true" />
+      <div className="app-shell__glow app-shell__glow--right" aria-hidden="true" />
       <div className="app-header">
         <div>
           <div className="app-header__eyebrow">
             {ws.mission.id} // {ws.mission.name.toUpperCase()}
           </div>
           <div className="app-header__title">Artemis Lost</div>
+          <div className="app-header__subtitle">
+            Lunar anomaly command interface
+          </div>
         </div>
 
         <div className="app-header__controls">

@@ -23,6 +23,7 @@ export default function RoleView({ activeCrew, roleView }) {
       </div>
 
       <div className="role-view__list">
+        {/* Render the filter output generically so upstream role logic can evolve safely. */}
         {roleView.map(({ key, val, warn }) => (
           <div
             key={key}

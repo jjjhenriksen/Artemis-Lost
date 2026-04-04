@@ -7,6 +7,7 @@ export default function NarrationPanel({ text, eventLog }) {
   const logRef = useRef(null);
 
   useEffect(() => {
+    // New log entries are prepended, so keep the viewport pinned to the top.
     if (logRef.current) {
       logRef.current.scrollTop = 0;
     }
