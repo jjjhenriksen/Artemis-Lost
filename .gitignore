@@ -4,3 +4,9 @@ dist
 .env.local
 *.log
 .DS_Store
+
+# Runtime save artifacts
+vault/dynamic/session-state.md
+vault/dynamic/log.md
+vault/dynamic/session.json
+vault/dynamic/slots/
