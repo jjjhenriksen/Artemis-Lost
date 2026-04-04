@@ -1,6 +1,6 @@
 import { useState } from "react";
 import ThemePicker from "./ThemePicker";
-import { DEFAULT_CHARACTER_PROFILES } from "./worldState";
+import { createRandomCharacterProfiles, DEFAULT_CHARACTER_PROFILES } from "./worldState";
 
 function cloneProfiles(profiles) {
   return profiles.map((profile) => ({ ...profile }));
@@ -143,6 +143,13 @@ export default function CharacterCreation({
             onClick={() => setProfiles(cloneProfiles(DEFAULT_CHARACTER_PROFILES))}
           >
             Reset Defaults
+          </button>
+          <button
+            type="button"
+            className="menu-button"
+            onClick={() => setProfiles(createRandomCharacterProfiles())}
+          >
+            Reroll Crew
           </button>
           <button type="submit" className="menu-button menu-button--primary">
             Launch Mission

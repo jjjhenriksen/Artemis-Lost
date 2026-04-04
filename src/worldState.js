@@ -1,4 +1,5 @@
 import { EVENT_LOG_TYPES } from "./eventLogTypes";
+import { CHARACTER_BANKS } from "./characterBanks";
 
 function clampPercent(value) {
   const num = Number(value);
@@ -121,6 +122,7 @@ const CREW_BLUEPRINTS = [
     inventory: ["Command slate", "Mission uplink keys", "Emergency flare tags"],
     notes:
       "Prioritizes crew survival over mission prestige. Keeping anxiety contained after the signal spike.",
+    bankKey: "commander",
   },
   {
     id: "okafor",
@@ -143,6 +145,7 @@ const CREW_BLUEPRINTS = [
     inventory: ["Patch kit", "Diagnostic wafer", "Portable sealant gun"],
     notes:
       "Knows the patched scrubber can fail if dust clogs the bypass a second time.",
+    bankKey: "flight_engineer",
   },
   {
     id: "reyes",
@@ -165,6 +168,7 @@ const CREW_BLUEPRINTS = [
     inventory: ["Spectral tablet", "Core sampler", "Signal library"],
     notes:
       "Convinced the source is artificial and older than the current mission profile suggests.",
+    bankKey: "science_officer",
   },
   {
     id: "park",
@@ -187,19 +191,46 @@ const CREW_BLUEPRINTS = [
     inventory: ["Beacon spool", "Drill", "Backup relay", "Patch foam"],
     notes:
       "Most capable EVA operator on site, but the suit breach margin is uncomfortably thin.",
+    bankKey: "mission_specialist",
   },
 ];
 
-export const DEFAULT_CHARACTER_PROFILES = CREW_BLUEPRINTS.map((blueprint) => ({
-  id: blueprint.id,
-  role: blueprint.role,
-  name: blueprint.defaultName,
-  callSign: blueprint.defaultCallSign,
-  trait: blueprint.defaultTrait,
-  specialty: blueprint.defaultSpecialty,
-  flaw: blueprint.defaultFlaw,
-  personalStake: blueprint.defaultStake,
-}));
+function createProfileFromBlueprint(blueprint, overrides = {}) {
+  return {
+    id: blueprint.id,
+    role: blueprint.role,
+    name: overrides.name || blueprint.defaultName,
+    callSign: overrides.callSign || blueprint.defaultCallSign,
+    trait: overrides.trait || blueprint.defaultTrait,
+    specialty: overrides.specialty || blueprint.defaultSpecialty,
+    flaw: overrides.flaw || blueprint.defaultFlaw,
+    personalStake: overrides.personalStake || blueprint.defaultStake,
+  };
+}
+
+export const DEFAULT_CHARACTER_PROFILES = CREW_BLUEPRINTS.map((blueprint) =>
+  createProfileFromBlueprint(blueprint)
+);
+
+function pickRandom(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+export function createRandomCharacterProfiles() {
+  return CREW_BLUEPRINTS.map((blueprint) => {
+    const roleBank = CHARACTER_BANKS[blueprint.bankKey] || {};
+    const selected = {
+      name: pickRandom(roleBank.names || [blueprint.defaultName]),
+      callSign: pickRandom(roleBank.callSigns || [blueprint.defaultCallSign]),
+      trait: pickRandom(CHARACTER_BANKS.global.traits || [blueprint.defaultTrait]),
+      specialty: pickRandom(roleBank.specialties || [blueprint.defaultSpecialty]),
+      flaw: pickRandom(CHARACTER_BANKS.global.flaws || [blueprint.defaultFlaw]),
+      personalStake: pickRandom(roleBank.stakes || [blueprint.defaultStake]),
+    };
+
+    return createProfileFromBlueprint(blueprint, selected);
+  });
+}
 
 function getCharacterProfileMap(profiles = DEFAULT_CHARACTER_PROFILES) {
   return new Map(profiles.map((profile) => [profile.id, profile]));
