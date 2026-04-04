@@ -1,0 +1,25 @@
+{
+  "name": "dungeonmaister",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k \"npm run dev:api\" \"npm run dev:vite\"",
+    "dev:vite": "vite",
+    "dev:api": "node server/dmServer.mjs",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "vite": "^6.0.3"
+  }
+}
