@@ -1,12 +1,10 @@
-const RESPONSE_SHAPE = `{
-  "narration": "string",
-  "stateDelta": {
-    "mission": {},
-    "environment": {},
-    "systems": {},
-    "crew": [{ "id": "crew-id" }],
-    "eventLog": [{ "ts": "T+00:00", "msg": "log entry", "type": "info" }]
-  }
+const STATE_DELTA_SHAPE = `STATE_DELTA:
+{
+  "mission": {},
+  "environment": {},
+  "systems": {},
+  "crew": [{ "id": "crew-id" }],
+  "eventLog": [{ "ts": "T+00:00", "msg": "log entry", "type": "info" }]
 }`;
 
 export function createDmSystemPrompt() {
@@ -25,13 +23,17 @@ State rules:
 - Do not overwrite unchanged data.
 
 Output rules:
-- Respond with ONLY valid JSON and no markdown fences.
-- Use exactly this top-level shape:
-${RESPONSE_SHAPE}
-- "stateDelta" must include only changed keys.
+- Respond as plain text narration followed by a literal STATE_DELTA block.
+- Do not use markdown fences, XML tags, or extra headings.
+- Use exactly this ending format:
+${STATE_DELTA_SHAPE}
+- The narration comes first.
+- "STATE_DELTA" must include only changed keys.
 - "crew" patches must include "id" and only changed fields.
 - "eventLog" entries must be NEW entries only, most recent first.
-- If nothing changes structurally, return an empty object for "stateDelta".`;
+- If nothing changes structurally, return:
+STATE_DELTA:
+{}`;
 }
 
 export function createDmUserPrompt({
@@ -58,5 +60,5 @@ ${JSON.stringify(worldState, null, 2)}
 Player action:
 ${action}
 
-Return JSON only.`;
+Return immersive narration followed by STATE_DELTA only.`;
 }
