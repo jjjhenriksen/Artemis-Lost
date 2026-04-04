@@ -1,4 +1,4 @@
-import { EVENT_LOG_TYPES } from "./eventLogTypes";
+import { EVENT_LOG_TYPES } from "./eventLogTypes.js";
 
 function parseMet(met) {
   const match = typeof met === "string" ? met.match(/^T\+(\d+):(\d{2})(?::(\d{2}))?$/) : null;

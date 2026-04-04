@@ -2,7 +2,7 @@ import { memo, useEffect, useRef } from "react";
 import EventLog from "./EventLog";
 import { useTypewriter } from "./useTypewriter";
 
-function NarrationPanel({ text, eventLog, uiState }) {
+function NarrationPanel({ text, eventLog, uiState, onTypewriterDone }) {
   const { displayed, done } = useTypewriter(text);
   const logRef = useRef(null);
 
@@ -12,6 +12,10 @@ function NarrationPanel({ text, eventLog, uiState }) {
       logRef.current.scrollTop = 0;
     }
   }, [eventLog]);
+
+  useEffect(() => {
+    onTypewriterDone?.(done);
+  }, [done, onTypewriterDone]);
 
   return (
     <div className={`narration-panel narration-panel--${uiState?.dangerLevel || "guarded"}`}>

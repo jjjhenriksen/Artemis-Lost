@@ -1,6 +1,6 @@
-import { EVENT_LOG_TYPES } from "./eventLogTypes";
-import { CHARACTER_BANKS, CREW_TENSION_PATTERNS } from "./characterBanks";
-import { getMissionSeedById, MISSION_SEEDS } from "./missionSeeds";
+import { EVENT_LOG_TYPES } from "./eventLogTypes.js";
+import { CHARACTER_BANKS, CREW_TENSION_PATTERNS } from "./characterBanks.js";
+import { getMissionSeedById, MISSION_SEEDS } from "./missionSeeds.js";
 
 function clampPercent(value) {
   const num = Number(value);

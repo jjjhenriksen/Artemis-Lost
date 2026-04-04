@@ -10,6 +10,8 @@ export default function ActionInput({
   waiting,
   isBotTurn,
   botPreview,
+  botPreviewLoading,
+  narrationReady,
 }) {
   return (
     <div className="action-input">
@@ -24,12 +26,18 @@ export default function ActionInput({
           {waiting
             ? "The DM is resolving the last move. Controls are temporarily locked."
             : isBotTurn
-              ? `${activeCrew.name} is running in autonomous mode and will act automatically this turn.`
+              ? botPreviewLoading
+                ? `${activeCrew.name} is in autonomous mode and drafting a response from mission context.`
+                : narrationReady
+                ? `${activeCrew.name} is in autonomous mode. Advance when you're ready for the next turn.`
+                : `${activeCrew.name} is in autonomous mode and waiting for the DM channel to finish transmitting.`
               : `Queue a concise action for ${activeCrew.name}. Short, decisive commands read best.`}
         </div>
 
         {isBotTurn && botPreview ? (
-          <div className="action-input__bot-preview">Autonomous action: {botPreview}</div>
+          <div className="action-input__bot-preview">
+            {botPreviewLoading ? "Drafting autonomous action..." : "Autonomous action:"} {botPreview}
+          </div>
         ) : null}
 
         <div className="action-input__row">
@@ -40,7 +48,11 @@ export default function ActionInput({
               waiting
                 ? "Command link locked while the DM responds..."
                 : isBotTurn
-                  ? `${activeCrew.name} is preparing an autonomous response...`
+                  ? botPreviewLoading
+                    ? "Autonomous planner is drafting the next action..."
+                    : narrationReady
+                    ? `${activeCrew.name} is preparing an autonomous response...`
+                    : "Autonomous handoff is waiting on the current narration..."
                   : `What does ${activeCrew.name} do?`
             }
             value={input}
@@ -52,9 +64,17 @@ export default function ActionInput({
           <button
             className="al-btn"
             onClick={onSubmit}
-            disabled={waiting || isBotTurn}
+            disabled={waiting || (isBotTurn && (!narrationReady || botPreviewLoading))}
           >
-            {waiting ? "AWAITING DM" : isBotTurn ? "AUTONOMOUS TURN" : "TRANSMIT"}
+            {waiting
+              ? "AWAITING DM"
+              : isBotTurn
+                ? botPreviewLoading
+                  ? "DRAFTING TURN"
+                  : narrationReady
+                  ? "CONTINUE AUTONOMOUS TURN"
+                  : "READING CHANNEL"
+                : "TRANSMIT"}
           </button>
         </div>
       </div>

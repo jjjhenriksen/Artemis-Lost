@@ -8,7 +8,7 @@ import RosterSummary from "./RosterSummary";
 import RoleView from "./RoleView";
 import ThemePicker from "./ThemePicker";
 import { applyStateDelta } from "./applyStateDelta";
-import { requestDmTurn } from "./dmApi";
+import { requestAutonomousAction, requestDmTurn } from "./dmApi";
 import {
   advanceMissionMet,
   appendConversationEntry,
@@ -59,6 +59,8 @@ export default function ArtemisLost({
   );
   const [saveState, setSaveState] = useState("idle");
   const [botPreview, setBotPreview] = useState("");
+  const [narrationReady, setNarrationReady] = useState(false);
+  const [botPreviewLoading, setBotPreviewLoading] = useState(false);
   const inputRef = useRef(null);
 
   const activeCrew = ws.crew[turn];
@@ -193,18 +195,42 @@ export default function ArtemisLost({
   useEffect(() => {
     if (!isBotTurn || waiting || !activeCrew) {
       setBotPreview("");
+      setBotPreviewLoading(false);
       return;
     }
 
-    const plannedAction = createBotAction(ws, activeCrew);
-    setBotPreview(plannedAction);
+    let cancelled = false;
+    const fallbackAction = createBotAction(ws, activeCrew);
+    setBotPreview(fallbackAction);
+    setBotPreviewLoading(true);
 
-    const timer = window.setTimeout(() => {
-      resolveTurn(plannedAction);
-    }, 650);
+    async function hydrateAutonomousAction() {
+      const result = await requestAutonomousAction({
+        worldState: ws,
+        activeCrew,
+        conversationHistory,
+        currentTurn: turn,
+      });
 
-    return () => window.clearTimeout(timer);
-  }, [activeCrew, isBotTurn, waiting, ws]);
+      if (cancelled) return;
+
+      if (!result?.error && typeof result?.action === "string" && result.action.trim()) {
+        setBotPreview(result.action.trim());
+      }
+      setBotPreviewLoading(false);
+    }
+
+    hydrateAutonomousAction();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeCrew, conversationHistory, isBotTurn, turn, waiting, ws]);
+
+  async function handleAdvanceAutonomousTurn() {
+    if (!isBotTurn || !botPreview || waiting || !narrationReady) return;
+    await resolveTurn(botPreview);
+  }
 
   function handleKeyDown(event) {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -264,7 +290,12 @@ export default function ArtemisLost({
 
       <div className="app-grid">
         <div className="app-grid__main">
-          <NarrationPanel text={narration} eventLog={ws.eventLog} uiState={uiState} />
+          <NarrationPanel
+            text={narration}
+            eventLog={ws.eventLog}
+            uiState={uiState}
+            onTypewriterDone={setNarrationReady}
+          />
 
           <ActionInput
             activeCrew={activeCrew}
@@ -272,10 +303,12 @@ export default function ArtemisLost({
             inputRef={inputRef}
             onChange={setInput}
             onKeyDown={handleKeyDown}
-            onSubmit={handleSubmit}
+            onSubmit={isBotTurn ? handleAdvanceAutonomousTurn : handleSubmit}
             waiting={waiting}
             isBotTurn={isBotTurn}
             botPreview={botPreview}
+            botPreviewLoading={botPreviewLoading}
+            narrationReady={narrationReady}
           />
         </div>
 

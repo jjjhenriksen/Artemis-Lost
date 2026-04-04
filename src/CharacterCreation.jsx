@@ -6,8 +6,8 @@ import {
   rerollCharacterProfile,
   rerollCharacterProfiles,
   resolveMissionSeed,
-} from "./worldState";
-import { MISSION_SEEDS, pickMissionSeed, getMissionSeedById } from "./missionSeeds";
+} from "./worldState.js";
+import { MISSION_SEEDS, pickMissionSeed, getMissionSeedById } from "./missionSeeds.js";
 
 function cloneProfiles(profiles) {
   return profiles.map((profile) => ({ ...profile }));

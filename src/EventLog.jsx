@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { getEventTypeLabel, normalizeEventType } from "./eventLogTypes";
+import { getEventTypeLabel, normalizeEventType } from "./eventLogTypes.js";
 
 function EventLog({ eventLog, logRef }) {
   return (

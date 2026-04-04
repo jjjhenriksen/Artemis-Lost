@@ -1,6 +1,6 @@
 import "dotenv/config";
 import express from "express";
-import { assertDmConfig, requestDmTurn } from "./api.js";
+import { assertDmConfig, requestAutonomousCrewAction, requestDmTurn } from "./api.js";
 import { deleteSession, listSessions, loadSession, saveSession } from "./sessionStore.js";
 
 const PORT = Number(process.env.DM_API_PORT || 8787);
@@ -94,6 +94,37 @@ app.post("/api/turn", async (req, res) => {
     });
 
     res.json({ narration, stateDelta });
+  } catch (err) {
+    console.error(err);
+    const status = /OPENAI_API_KEY/.test(err.message || "") ? 503 : 500;
+    res.status(status).json({ error: err.message || String(err) });
+  }
+});
+
+app.post("/api/autonomous-action", async (req, res) => {
+  try {
+    assertDmConfig();
+
+    const {
+      worldState,
+      activeCrew,
+      conversationHistory = [],
+      currentTurn = 0,
+    } = req.body || {};
+
+    if (!worldState || !activeCrew) {
+      res.status(400).json({ error: "Missing worldState or activeCrew" });
+      return;
+    }
+
+    const action = await requestAutonomousCrewAction({
+      worldState,
+      activeCrew,
+      conversationHistory,
+      currentTurn,
+    });
+
+    res.json({ action });
   } catch (err) {
     console.error(err);
     const status = /OPENAI_API_KEY/.test(err.message || "") ? 503 : 500;

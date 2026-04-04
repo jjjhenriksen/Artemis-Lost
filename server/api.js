@@ -1,5 +1,10 @@
 import { extractTurnResult } from "../src/deltaParser.js";
-import { createDmSystemPrompt, createDmUserPrompt } from "./prompts.js";
+import {
+  createAutonomousCrewSystemPrompt,
+  createAutonomousCrewUserPrompt,
+  createDmSystemPrompt,
+  createDmUserPrompt,
+} from "./prompts.js";
 import { formatVaultContext, loadVaultContext } from "./vault.js";
 
 const MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
@@ -74,6 +79,55 @@ export async function requestDmTurn({
   }
 
   return extractTurnResult(text);
+}
+
+export async function requestAutonomousCrewAction({
+  worldState,
+  activeCrew,
+  conversationHistory = [],
+  currentTurn = 0,
+}) {
+  const vaultContext = formatVaultContext(
+    await loadVaultContext({
+      worldState,
+      activeCrew,
+    })
+  );
+
+  const res = await fetch(OPENAI_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      instructions: createAutonomousCrewSystemPrompt(),
+      input: createAutonomousCrewUserPrompt({
+        worldState,
+        activeCrew,
+        conversationHistory,
+        currentTurn,
+        vaultContext,
+      }),
+    }),
+  });
+
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message =
+      payload?.error?.message ||
+      payload?.message ||
+      `OpenAI request failed (${res.status})`;
+    throw new Error(message);
+  }
+
+  const text = extractResponseText(payload);
+  if (!text) {
+    throw new Error("OpenAI returned an empty autonomous action");
+  }
+
+  return text.replace(/\s+/g, " ").trim();
 }
 
 export function assertDmConfig() {

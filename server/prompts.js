@@ -41,6 +41,24 @@ STATE_DELTA:
 {}`;
 }
 
+export function createAutonomousCrewSystemPrompt() {
+  return `You are generating the next action for an autonomous crew role in a sci-fi lunar mission simulation.
+
+Goal:
+- Produce exactly one concise in-character action for the active crew member.
+- The action should respond to the current world state, mission pressure, recent conversation, and that crew member's role, trait, flaw, specialty, and personal stake.
+- The action should be useful, specific, and operationally grounded.
+
+Rules:
+- Write only the action text. No headings, no markdown, no quotes, no explanation.
+- Keep it to one sentence or two very short sentences.
+- Do not narrate outcomes.
+- Do not mention game systems, prompts, JSON, or state deltas.
+- Make the action feel like something this crew member would actually choose right now.
+- If the crew member is autonomous, they should still act with initiative, but remain consistent with the command situation and recent events.
+`;
+}
+
 export function createDmUserPrompt({
   worldState,
   action,
@@ -71,4 +89,30 @@ ${vaultBlock}Player action:
 ${action}
 
 Return immersive narration followed by STATE_DELTA only. Make the mission seed, environment pressure, and crew dynamics materially felt in the outcome.`;
+}
+
+export function createAutonomousCrewUserPrompt({
+  worldState,
+  activeCrew,
+  conversationHistory = [],
+  currentTurn = 0,
+  vaultContext = "",
+}) {
+  const historyBlock = conversationHistory.length
+    ? JSON.stringify(conversationHistory.slice(-8), null, 2)
+    : "[]";
+
+  const vaultBlock = vaultContext ? `${vaultContext}\n\n` : "";
+
+  return `Turn index: ${currentTurn}
+Active autonomous crew member:
+${JSON.stringify(activeCrew, null, 2)}
+
+Recent conversation history:
+${historyBlock}
+
+Current world state:
+${JSON.stringify(worldState, null, 2)}
+
+${vaultBlock}Return only the action this crew member should take next.`;
 }

@@ -1,4 +1,4 @@
-import { EVENT_LOG_TYPES, normalizeEventType } from "./eventLogTypes";
+import { EVENT_LOG_TYPES, normalizeEventType } from "./eventLogTypes.js";
 
 function getDangerLevel(worldState) {
   const warningCount = [

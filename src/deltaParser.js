@@ -1,4 +1,4 @@
-import { normalizeEventType } from "./eventLogTypes";
+import { normalizeEventType } from "./eventLogTypes.js";
 
 const MAX_EVENT_LOG_ENTRIES = 12;
 const NUMERIC_SYSTEM_FIELDS = new Set(["o2", "power", "comms", "propulsion", "thermal", "nav"]);
