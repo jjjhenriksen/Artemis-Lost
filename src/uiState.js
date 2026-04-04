@@ -1,5 +1,12 @@
 import { EVENT_LOG_TYPES, normalizeEventType } from "./eventLogTypes.js";
+import { getMissionMechanicSummary, getMissionOpportunityPreview } from "./missionMechanics";
+import { getRoleGuidance } from "./roleGuidance";
 import { getTopCoordinationAlert } from "./roleMechanics";
+import {
+  getRoleAlignmentPreview,
+  getRoleMechanicSummary,
+  getRoleSupportPreview,
+} from "./roleMechanics";
 
 function getDangerLevel(worldState) {
   const warningCount = [
@@ -120,7 +127,46 @@ function getFailureCopy(dominantFailure, dangerLevel) {
   );
 }
 
-export function getUiState(worldState) {
+function getActionPanelState(worldState, activeCrew, input = "") {
+  if (!activeCrew) {
+    return {
+      roleGuidance: {
+        focus: "Stabilize the mission state and create one safe, decisive next move.",
+        suggestions: [],
+      },
+      roleMechanicSummary: "Role-aligned actions create a small mechanical edge each turn.",
+      roleAlignmentPreview: {
+        level: "neutral",
+        label: "Awaiting vector",
+        detail: "Role-aligned wording will usually resolve cleaner than a stretch play.",
+      },
+      roleSupportPreview: {
+        incoming: null,
+        delegationProfile: null,
+        relationshipProfile: null,
+        outgoing: null,
+      },
+      missionMechanicSummary: "Mission pressure is shaping what counts as the highest-leverage move.",
+      missionOpportunityPreview: {
+        level: "neutral",
+        label: "Mission pressure",
+        detail: "This mission still has distinct constraints, but no bespoke trigger is in focus for this role.",
+      },
+    };
+  }
+
+  return {
+    roleGuidance: getRoleGuidance(worldState, activeCrew),
+    roleMechanicSummary: getRoleMechanicSummary(activeCrew),
+    roleAlignmentPreview: getRoleAlignmentPreview(activeCrew, input),
+    roleSupportPreview: getRoleSupportPreview(worldState, activeCrew, input),
+    missionMechanicSummary: getMissionMechanicSummary(worldState, activeCrew),
+    missionOpportunityPreview: getMissionOpportunityPreview(worldState, activeCrew, input),
+  };
+}
+
+export function getUiState(worldState, options = {}) {
+  const { activeCrew = null, input = "" } = options;
   const dangerLevel = getDangerLevel(worldState);
   const dominantFailure = getDominantFailure(worldState);
   const failureCopy = getFailureCopy(dominantFailure, dangerLevel);
@@ -133,5 +179,6 @@ export function getUiState(worldState) {
     coordinationAlert: getTopCoordinationAlert(worldState),
     headerSubtitle: failureCopy.subtitle,
     consolePrefix: failureCopy.consolePrefix,
+    actionPanel: getActionPanelState(worldState, activeCrew, input),
   };
 }
