@@ -1,5 +1,5 @@
 import { EVENT_LOG_TYPES } from "./eventLogTypes.js";
-import { CHARACTER_BANKS, CREW_TENSION_PATTERNS } from "./characterBanks.js";
+import { CHARACTER_BANKS, CREW_TENSION_PATTERNS, SPECIAL_CREW_OVERRIDES } from "./characterBanks.js";
 import { getMissionSeedById, MISSION_SEEDS } from "./missionSeeds.js";
 import { clampPercent } from "./stateUtils.js";
 
@@ -317,6 +317,15 @@ export function rerollCharacterProfiles(
       personalStake: pickRandom(roleBank.stakes || [blueprint.defaultStake]),
       controller: currentProfile?.controller === "bot" ? "bot" : "human",
     };
+    const specialOverride = SPECIAL_CREW_OVERRIDES[selected.name];
+    if (specialOverride?.callSigns?.length) {
+      const specialCallSigns = specialOverride.callSigns.filter(
+        (callSign) => !usedCallSigns.has(callSign)
+      );
+      if (specialCallSigns.length > 0) {
+        selected.callSign = pickRandom(specialCallSigns);
+      }
+    }
 
     usedNames.add(selected.name);
     usedCallSigns.add(selected.callSign);
