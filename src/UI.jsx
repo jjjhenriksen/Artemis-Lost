@@ -226,7 +226,7 @@ export default function ArtemisLost({
           </div>
           <div className="app-header__title">Artemis Lost</div>
           <div className="app-header__subtitle">
-            Lunar anomaly command interface
+            {uiState.headerSubtitle}
           </div>
           <div className="app-header__slot">
             Active save slot: {initialSession?.slotLabel || slotId}

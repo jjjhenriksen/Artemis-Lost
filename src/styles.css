@@ -1028,6 +1028,11 @@ body::after {
   color: var(--text-good-strong);
 }
 
+.role-view__console-copy--prefix {
+  margin-bottom: 8px;
+  color: var(--text-info);
+}
+
 .role-view__console-copy--flavor {
   margin-top: 8px;
   color: var(--text-muted);

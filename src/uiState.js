@@ -57,11 +57,79 @@ function getLatestAlert(eventLog = []) {
   };
 }
 
+function getFailureCopy(dominantFailure, dangerLevel) {
+  const byFailure = {
+    comms: {
+      subtitle:
+        dangerLevel === "critical"
+          ? "Signal discipline under blackout pressure"
+          : "Comms degradation shaping command tempo",
+      consolePrefix:
+        dangerLevel === "critical"
+          ? "Signal integrity is collapsing. Keep instructions short and verifiable."
+          : "Relay noise is shaping the decision space.",
+    },
+    thermal: {
+      subtitle:
+        dangerLevel === "critical"
+          ? "Thermal margin is becoming the mission clock"
+          : "Heat load is constraining every move",
+      consolePrefix:
+        dangerLevel === "critical"
+          ? "Thermal containment is the first priority. Everything else is secondary."
+          : "Thermal behavior is eating into safe operating margin.",
+    },
+    o2: {
+      subtitle:
+        dangerLevel === "critical"
+          ? "Life-support clock is overriding mission ambition"
+          : "Oxygen reserve is narrowing the action envelope",
+      consolePrefix:
+        dangerLevel === "critical"
+          ? "Life-support conservation now governs every decision."
+          : "Oxygen reserve is reducing how long the crew can stay aggressive.",
+    },
+    power: {
+      subtitle:
+        dangerLevel === "critical"
+          ? "Power loss is forcing triage across the stack"
+          : "Power budgeting is driving command decisions",
+      consolePrefix:
+        dangerLevel === "critical"
+          ? "Power scarcity is dictating what stays alive in the stack."
+          : "Power routing is now part of every tactical call.",
+    },
+    nav: {
+      subtitle:
+        dangerLevel === "critical"
+          ? "Navigation confidence is breaking down"
+          : "Navigation drift is destabilizing movement planning",
+      consolePrefix:
+        dangerLevel === "critical"
+          ? "Positional trust is compromised. Confirm every movement assumption."
+          : "Navigation drift is making each move less reliable.",
+    },
+  };
+
+  return (
+    byFailure[dominantFailure] || {
+      subtitle: "Mission pressure is shifting the command picture",
+      consolePrefix: "Operational conditions are changing faster than the crew can ignore.",
+    }
+  );
+}
+
 export function getUiState(worldState) {
+  const dangerLevel = getDangerLevel(worldState);
+  const dominantFailure = getDominantFailure(worldState);
+  const failureCopy = getFailureCopy(dominantFailure, dangerLevel);
+
   return {
-    dangerLevel: getDangerLevel(worldState),
-    dominantFailure: getDominantFailure(worldState),
+    dangerLevel,
+    dominantFailure,
     anomalyIntensity: getAnomalyIntensity(worldState),
     latestAlert: getLatestAlert(worldState?.eventLog || []),
+    headerSubtitle: failureCopy.subtitle,
+    consolePrefix: failureCopy.consolePrefix,
   };
 }

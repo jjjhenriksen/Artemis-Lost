@@ -20,6 +20,9 @@ function RoleView({ activeCrew, roleView, worldState, activeTurn, uiState }) {
 
       <div className="role-view__console">
         <div className="role-view__console-title">{activeCrew.name} console</div>
+        <div className="role-view__console-copy role-view__console-copy--prefix">
+          {uiState?.consolePrefix}
+        </div>
         <div className="role-view__console-copy">
           {getConsoleBrief(worldState, activeTurn)}
         </div>
