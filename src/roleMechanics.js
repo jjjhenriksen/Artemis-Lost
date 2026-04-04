@@ -763,13 +763,25 @@ export function getRoleSupportPreview(worldState, activeCrew, actionText = "") {
   };
 }
 
-export function getPriorityHandoffTarget(worldState) {
+export function getFollowThroughTurnTarget(worldState) {
   const supportWindow = worldState?.mission?.supportWindow;
-  if (!supportWindow?.priorityHandoff || !supportWindow?.targetCrewId) {
+  if (!supportWindow?.targetCrewId) {
     return null;
   }
 
-  return worldState?.crew?.find((member) => member.id === supportWindow.targetCrewId) || null;
+  if (supportWindow.priorityHandoff) {
+    return worldState?.crew?.find((member) => member.id === supportWindow.targetCrewId) || null;
+  }
+
+  if (supportWindow.strength === "strong") {
+    return worldState?.crew?.find((member) => member.id === supportWindow.targetCrewId) || null;
+  }
+
+  if (supportWindow.strength === "soft" && supportWindow.relationshipState !== "tense") {
+    return worldState?.crew?.find((member) => member.id === supportWindow.targetCrewId) || null;
+  }
+
+  return null;
 }
 
 export function getCrewCoordinationSnapshot(worldState) {

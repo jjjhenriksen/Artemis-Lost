@@ -18,7 +18,7 @@ import {
   prependCappedEntries,
 } from "./gameLoop";
 import { createMissionTurnEffect } from "./missionMechanics";
-import { createRoleTurnEffect, getPriorityHandoffTarget } from "./roleMechanics";
+import { createRoleTurnEffect, getFollowThroughTurnTarget } from "./roleMechanics";
 import { getViewForRole } from "./roleFilters";
 import { saveSession as persistSession } from "./sessionApi";
 import { getUiState } from "./uiState";
@@ -102,8 +102,8 @@ export default function ArtemisLost({
   }
 
   function resolveNextTurnIndex(nextWorldState) {
-    const priorityTarget = getPriorityHandoffTarget(nextWorldState);
-    const priorityIndex = getCrewTurnIndexById(nextWorldState?.crew, priorityTarget?.id);
+    const followThroughTarget = getFollowThroughTurnTarget(nextWorldState);
+    const priorityIndex = getCrewTurnIndexById(nextWorldState?.crew, followThroughTarget?.id);
 
     if (priorityIndex >= 0 && priorityIndex !== turn) {
       return priorityIndex;
