@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import CharacterCreation from "./CharacterCreation";
+import LaunchSequence from "./LaunchSequence";
 import MainMenu from "./MainMenu";
 import { deleteSession, listSessions, loadSession, saveSession } from "./sessionApi";
 import { getStoredTheme, THEMES, THEME_STORAGE_KEY } from "./themes";
@@ -58,12 +59,18 @@ export default function App() {
     setScreen("game");
   }
 
+  function beginLaunchSequence(slotId, session) {
+    setActiveSession(session);
+    setActiveSlotId(slotId);
+    setScreen("launch");
+  }
+
   async function handleStartMission(slotId, profiles, missionSeed) {
     const session = createMissionSession(profiles, missionSeed);
     const saved = await saveSession(slotId, session);
     if (saved?.error) return;
     await refreshSlots();
-    launchSession(slotId, saved);
+    beginLaunchSequence(slotId, saved);
   }
 
   async function handleLoadSlot(slotId) {
@@ -111,6 +118,16 @@ export default function App() {
         onThemeChange={setThemeId}
         onBack={() => setScreen("menu")}
         onStartMission={handleStartMission}
+      />
+    );
+  }
+
+  if (screen === "launch" && activeSession?.worldState) {
+    return (
+      <LaunchSequence
+        session={activeSession}
+        slotId={activeSlotId}
+        onComplete={() => launchSession(activeSlotId, activeSession)}
       />
     );
   }
