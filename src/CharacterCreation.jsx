@@ -49,6 +49,11 @@ export default function CharacterCreation({
     );
   }
 
+  function rerollSingleProfile(profileId) {
+    if (lockedProfileIds.has(profileId)) return;
+    setProfiles((current) => rerollCharacterProfile(current, profileId));
+  }
+
   function handleSubmit(event) {
     event.preventDefault();
     onStartMission(
@@ -150,8 +155,12 @@ export default function CharacterCreation({
                   <button
                     type="button"
                     className="creator-pill"
-                    onClick={() =>
-                      setProfiles((current) => rerollCharacterProfile(current, profile.id))
+                    onClick={() => rerollSingleProfile(profile.id)}
+                    disabled={lockedProfileIds.has(profile.id)}
+                    title={
+                      lockedProfileIds.has(profile.id)
+                        ? "Unlock this crew member before rerolling."
+                        : "Reroll this crew member."
                     }
                   >
                     Reroll This
