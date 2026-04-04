@@ -16,6 +16,7 @@ export async function requestDmTurn({
   conversationHistory = [],
   currentTurn = 0,
 }) {
+  // Pull static lore and crew/location context into the prompt on each turn.
   const vaultContext = formatVaultContext(await loadVaultContext());
 
   const message = await client.messages.create({
@@ -37,6 +38,7 @@ export async function requestDmTurn({
     ],
   });
 
+  // Anthropic responses arrive as content blocks; flatten the text blocks into one DM reply.
   const text = message.content
     .filter((block) => block?.type === "text")
     .map((block) => block.text)
@@ -46,6 +48,7 @@ export async function requestDmTurn({
 }
 
 export function assertDmConfig() {
+  // Fail fast with a teammate-friendly message before we ever try to hit the API.
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error("ANTHROPIC_API_KEY is not set. Copy .env.example to .env and add your key.");
   }

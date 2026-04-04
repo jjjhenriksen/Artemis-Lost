@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { requestDmTurn, assertDmConfig } from "./api.js";
 
+// Minimal hardcoded payload for the teammate-1 milestone: one action in, narration out.
 const worldState = {
   mission: {
     id: "ARTEMIS-07",
@@ -41,6 +42,7 @@ const conversationHistory = [
 
 try {
   assertDmConfig();
+  // This mirrors the live API contract without needing the UI running.
   const result = await requestDmTurn({
     worldState,
     action,

@@ -12,10 +12,12 @@ export function createActionLogEntry(worldState, activeCrew, action) {
 }
 
 export function prependCappedEntries(entries, newEntries, limit = 12) {
+  // Normalize single entries and batches so callers can use the same helper either way.
   const normalizedNewEntries = Array.isArray(newEntries) ? newEntries : [newEntries];
   return [...normalizedNewEntries, ...entries].slice(0, limit);
 }
 
 export function appendConversationEntry(history, entry, limit = 24) {
+  // Keep only the most recent turns to stop conversation history from growing forever.
   return [...history, entry].slice(-limit);
 }

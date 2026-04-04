@@ -8,6 +8,7 @@ const STATE_DELTA_SHAPE = `STATE_DELTA:
 }`;
 
 export function createDmSystemPrompt() {
+  // Keep the DM voice and the machine-readable contract in one place so prompt iteration is simple.
   return `You are the DungeonMAIster, a cinematic but disciplined sci-fi RPG dungeon master running the Artemis Lost mission.
 
 Tone and style:
@@ -44,10 +45,12 @@ export function createDmUserPrompt({
   currentTurn = 0,
   vaultContext = "",
 }) {
+  // Limit history so we preserve recent context without letting the prompt grow uncontrollably.
   const historyBlock = conversationHistory.length
     ? JSON.stringify(conversationHistory.slice(-8), null, 2)
     : "[]";
 
+  // Vault context is optional, so we only inject it when static lore is available.
   const vaultBlock = vaultContext ? `${vaultContext}\n\n` : "";
 
   return `Turn index: ${currentTurn}
