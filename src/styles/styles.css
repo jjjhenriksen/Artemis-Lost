@@ -1132,25 +1132,35 @@ body::after {
 }
 
 .telemetry-backdrop--app {
-  opacity: 0.66;
+  opacity: 0.84;
 }
 
 .telemetry-backdrop--app .telemetry-backdrop__column {
-  color: color-mix(in srgb, var(--text-info) 52%, transparent);
+  width: 5.1%;
+  min-width: 34px;
+  font-size: clamp(10px, 0.82vw, 14px);
+  line-height: 0.84;
+  letter-spacing: 0.95px;
+  color: color-mix(in srgb, var(--text-info) 64%, transparent);
+  text-shadow:
+    0 0 16px color-mix(in srgb, var(--ambient-grid-glow) 42%, transparent),
+    0 0 28px color-mix(in srgb, var(--text-info) 12%, transparent);
 }
 
 .telemetry-backdrop--app .telemetry-backdrop__columns {
   mask-image:
     linear-gradient(
       90deg,
-      rgba(0, 0, 0, 0.96) 0%,
-      rgba(0, 0, 0, 0.96) 14%,
-      rgba(0, 0, 0, 0.18) 24%,
-      rgba(0, 0, 0, 0.04) 38%,
-      rgba(0, 0, 0, 0.04) 62%,
-      rgba(0, 0, 0, 0.18) 76%,
-      rgba(0, 0, 0, 0.96) 86%,
-      rgba(0, 0, 0, 0.96) 100%
+      rgba(0, 0, 0, 0.98) 0%,
+      rgba(0, 0, 0, 0.98) 11%,
+      rgba(0, 0, 0, 0.72) 14%,
+      rgba(0, 0, 0, 0.18) 18%,
+      rgba(0, 0, 0, 0.02) 22%,
+      rgba(0, 0, 0, 0.02) 78%,
+      rgba(0, 0, 0, 0.18) 82%,
+      rgba(0, 0, 0, 0.72) 86%,
+      rgba(0, 0, 0, 0.98) 89%,
+      rgba(0, 0, 0, 0.98) 100%
     ),
     linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.95) 12%, rgba(0, 0, 0, 0.95) 88%, transparent 100%);
   mask-composite: intersect;
@@ -1158,16 +1168,16 @@ body::after {
 
 .telemetry-backdrop--app .telemetry-backdrop__column--1,
 .telemetry-backdrop--app .telemetry-backdrop__column--4 {
-  opacity: 0.24;
+  opacity: 0.36;
 }
 
 .telemetry-backdrop--app .telemetry-backdrop__column--2,
 .telemetry-backdrop--app .telemetry-backdrop__column--3 {
-  opacity: 0.18;
+  opacity: 0.28;
 }
 
 .telemetry-backdrop--app .telemetry-backdrop__scanline {
-  opacity: 0.14;
+  opacity: 0.12;
 }
 
 .telemetry-backdrop--launch {
