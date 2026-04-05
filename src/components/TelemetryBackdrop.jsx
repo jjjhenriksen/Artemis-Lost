@@ -1,27 +1,39 @@
+const BINARY_COLUMNS = [
+  "0100101101010010010011010101001001011010010010",
+  "1010010010110101001001011010100100101101010010",
+  "0010110101001001011010010010110101001011010010",
+  "1101001001011010100100101101001001011010010010",
+  "0101010010010110101001001011010010010110100100",
+  "1001001011010010010110101001001011010100100101",
+  "0110100100101101010010010110100100101101010010",
+  "1011010010010110100100101101010010010110101001",
+  "0010010110101001001011010010010110100100101101",
+  "1100100101101010010010110100100101101001001011",
+];
+
 export default function TelemetryBackdrop({ variant = "default" }) {
   return (
     <div
       className={`telemetry-backdrop telemetry-backdrop--${variant}`}
       aria-hidden="true"
     >
-      <div className="telemetry-backdrop__field telemetry-backdrop__field--a" />
-      <div className="telemetry-backdrop__field telemetry-backdrop__field--b" />
-      <div className="telemetry-backdrop__scan telemetry-backdrop__scan--a" />
-      <div className="telemetry-backdrop__scan telemetry-backdrop__scan--b" />
-      <div className="telemetry-backdrop__cluster telemetry-backdrop__cluster--alpha">
-        <span>STACK // NOMINAL</span>
-        <span>LINK // TRACKING</span>
-        <span>DRIFT // 0.02 DEG</span>
-      </div>
-      <div className="telemetry-backdrop__cluster telemetry-backdrop__cluster--beta">
-        <span>GUIDANCE // HOLD</span>
-        <span>THERMAL // STABLE</span>
-        <span>CHANNEL // OPEN</span>
-      </div>
-      <div className="telemetry-backdrop__cluster telemetry-backdrop__cluster--gamma">
-        <span>ATTITUDE // GREEN</span>
-        <span>LATENCY // LOW</span>
-        <span>SOLUTION // LIVE</span>
+      <div className="telemetry-backdrop__noise" />
+      <div className="telemetry-backdrop__scanline telemetry-backdrop__scanline--top" />
+      <div className="telemetry-backdrop__scanline telemetry-backdrop__scanline--bottom" />
+      <div className="telemetry-backdrop__columns">
+        {BINARY_COLUMNS.map((bits, index) => (
+          <div
+            key={`${variant}-${index}`}
+            className={`telemetry-backdrop__column telemetry-backdrop__column--${(index % 4) + 1}`}
+            style={{
+              left: `${4 + index * 9.4}%`,
+              animationDelay: `${index * -1.35}s`,
+            }}
+          >
+            <span>{bits}</span>
+            <span>{bits}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
