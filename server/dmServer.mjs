@@ -25,6 +25,11 @@ const hasOpenAiKey = Boolean(process.env.OPENAI_API_KEY);
 const modelName = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 const sessionBackendMode = getSessionBackendMode();
 
+function getOwnerIdFromRequest(req) {
+  const headerValue = req.get("x-player-id");
+  return headerValue || "local-player";
+}
+
 export function createApp(deps = {}) {
   const {
     assertConfig = assertDmConfig,
@@ -64,9 +69,9 @@ export function createApp(deps = {}) {
     });
   });
 
-  app.get("/api/sessions", async (_req, res) => {
+  app.get("/api/sessions", async (req, res) => {
     try {
-      const sessions = await listSessionsImpl();
+      const sessions = await listSessionsImpl(getOwnerIdFromRequest(req));
       res.json(sessions);
     } catch (err) {
       console.error(err);
@@ -76,7 +81,7 @@ export function createApp(deps = {}) {
 
   app.get("/api/session/:slotId", async (req, res) => {
     try {
-      const session = await loadSessionImpl(req.params.slotId);
+      const session = await loadSessionImpl(req.params.slotId, getOwnerIdFromRequest(req));
       res.json({ session });
     } catch (err) {
       console.error(err);
@@ -105,7 +110,7 @@ export function createApp(deps = {}) {
         turn,
         conversationHistory,
         createdFromCharacterCreation,
-      });
+      }, getOwnerIdFromRequest(req));
 
       res.json({ session });
     } catch (err) {
@@ -116,7 +121,7 @@ export function createApp(deps = {}) {
 
   app.delete("/api/session/:slotId", async (req, res) => {
     try {
-      const result = await deleteSessionImpl(req.params.slotId);
+      const result = await deleteSessionImpl(req.params.slotId, getOwnerIdFromRequest(req));
       res.json(result);
     } catch (err) {
       console.error(err);

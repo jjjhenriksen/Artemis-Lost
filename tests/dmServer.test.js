@@ -19,13 +19,15 @@ describe("dmServer", () => {
   });
 
   test("returns session listings from injected dependencies", async () => {
+    const listSessionsImpl = vi.fn(async () => ({ activeSlotId: "slot-1", slots: [] }));
     const app = createApp({
-      listSessionsImpl: async () => ({ activeSlotId: "slot-1", slots: [] }),
+      listSessionsImpl,
     });
 
-    const res = await request(app).get("/api/sessions");
+    const res = await request(app).get("/api/sessions").set("x-player-id", "player-a");
     expect(res.status).toBe(200);
     expect(res.body.activeSlotId).toBe("slot-1");
+    expect(listSessionsImpl).toHaveBeenCalledWith("player-a");
   });
 
   test("validates turn requests before model execution", async () => {

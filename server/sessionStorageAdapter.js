@@ -7,12 +7,27 @@ const slotsRoot = path.join(dynamicVaultRoot, "slots");
 const slotsIndexPath = path.join(slotsRoot, "index.json");
 const DATABASE_URL = process.env.DATABASE_URL || "";
 const databaseEnabled = Boolean(DATABASE_URL);
+const DEFAULT_OWNER_ID = "local-player";
 
 let sqlClient = null;
 let schemaReadyPromise = null;
 
 function getSlotPath(slotId) {
   return path.join(slotsRoot, `${slotId}.json`);
+}
+
+function normalizeOwnerId(ownerId) {
+  if (!ownerId || typeof ownerId !== "string") return DEFAULT_OWNER_ID;
+  const normalized = ownerId.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  return normalized || DEFAULT_OWNER_ID;
+}
+
+function getOwnedSlotKey(ownerId, slotId) {
+  return `${normalizeOwnerId(ownerId)}:${slotId}`;
+}
+
+function getOwnerIndexPath(ownerId) {
+  return path.join(slotsRoot, `${normalizeOwnerId(ownerId)}-index.json`);
 }
 
 async function readJson(filePath, fallback = null) {
@@ -82,27 +97,30 @@ function normalizePayload(payload, lastUpdatedIso) {
   };
 }
 
-async function readSlotsIndex(saveSlots) {
-  return (await readJson(slotsIndexPath, null)) || buildEmptyIndex(saveSlots);
+async function readSlotsIndex(saveSlots, ownerId) {
+  const ownerIndexPath = getOwnerIndexPath(ownerId);
+  return (await readJson(ownerIndexPath, null)) || buildEmptyIndex(saveSlots);
 }
 
-async function writeSlotsIndex(index) {
-  await writeFile(slotsIndexPath, `${JSON.stringify(index, null, 2)}\n`, "utf8");
+async function writeSlotsIndex(index, ownerId) {
+  const ownerIndexPath = getOwnerIndexPath(ownerId);
+  await writeFile(ownerIndexPath, `${JSON.stringify(index, null, 2)}\n`, "utf8");
 }
 
-async function getActiveSlotIdFromDatabase() {
+async function getActiveSlotIdFromDatabase(ownerId) {
   await ensureDatabaseSchema();
   const sql = getSql();
-  const rows = await sql`select value from app_meta where key = 'activeSlotId'`;
+  const rows =
+    await sql`select value from app_meta where key = ${`activeSlotId:${normalizeOwnerId(ownerId)}`}`;
   return rows[0]?.value?.slotId || null;
 }
 
-async function setActiveSlotIdInDatabase(slotId) {
+async function setActiveSlotIdInDatabase(slotId, ownerId) {
   await ensureDatabaseSchema();
   const sql = getSql();
   await sql`
     insert into app_meta (key, value)
-    values ('activeSlotId', ${sql.json({ slotId })})
+    values (${`activeSlotId:${normalizeOwnerId(ownerId)}`}, ${sql.json({ slotId })})
     on conflict (key) do update set value = excluded.value
   `;
 }
@@ -121,17 +139,24 @@ export function createSessionStorageAdapter(saveSlots) {
       await writeIfMissing(slotsIndexPath, `${JSON.stringify(buildEmptyIndex(saveSlots), null, 2)}\n`);
     },
 
-    async listSessions() {
+    async listSessions(ownerId = DEFAULT_OWNER_ID) {
+      const normalizedOwnerId = normalizeOwnerId(ownerId);
+
       if (databaseEnabled) {
         await ensureDatabaseSchema();
         const sql = getSql();
         const [rows, activeSlotId] = await Promise.all([
           sql`select slot_id, payload, last_updated_iso from sessions`,
-          getActiveSlotIdFromDatabase(),
+          getActiveSlotIdFromDatabase(normalizedOwnerId),
         ]);
 
         const sessionsBySlotId = new Map(
-          rows.map((row) => [row.slot_id, normalizePayload(row.payload, row.last_updated_iso)])
+          rows
+            .filter((row) => row.slot_id.startsWith(`${normalizedOwnerId}:`))
+            .map((row) => [
+              row.slot_id.replace(`${normalizedOwnerId}:`, ""),
+              normalizePayload(row.payload, row.last_updated_iso),
+            ])
         );
 
         return {
@@ -144,12 +169,12 @@ export function createSessionStorageAdapter(saveSlots) {
         };
       }
 
-      const index = await readSlotsIndex(saveSlots);
+      const index = await readSlotsIndex(saveSlots, normalizedOwnerId);
       const slots = await Promise.all(
         saveSlots.map(async ({ id, label }) => ({
           id,
           label,
-          session: await readJson(getSlotPath(id), null),
+          session: await readJson(getSlotPath(getOwnedSlotKey(normalizedOwnerId, id)), null),
         }))
       );
 
@@ -159,15 +184,17 @@ export function createSessionStorageAdapter(saveSlots) {
       };
     },
 
-    async loadSession(slotId) {
+    async loadSession(slotId, ownerId = DEFAULT_OWNER_ID) {
+      const normalizedOwnerId = normalizeOwnerId(ownerId);
+
       if (databaseEnabled) {
         await ensureDatabaseSchema();
-        const resolvedSlotId = slotId || (await getActiveSlotIdFromDatabase());
+        const resolvedSlotId = slotId || (await getActiveSlotIdFromDatabase(normalizedOwnerId));
         if (!resolvedSlotId) return null;
 
         const sql = getSql();
         const rows =
-          await sql`select payload, last_updated_iso from sessions where slot_id = ${resolvedSlotId} limit 1`;
+          await sql`select payload, last_updated_iso from sessions where slot_id = ${getOwnedSlotKey(normalizedOwnerId, resolvedSlotId)} limit 1`;
         const row = rows[0];
         if (!row?.payload) return null;
 
@@ -177,15 +204,15 @@ export function createSessionStorageAdapter(saveSlots) {
         };
       }
 
-      const index = await readSlotsIndex(saveSlots);
+      const index = await readSlotsIndex(saveSlots, normalizedOwnerId);
       const resolvedSlotId = slotId || index.activeSlotId;
       if (!resolvedSlotId) return null;
 
-      const session = await readJson(getSlotPath(resolvedSlotId), null);
+      const session = await readJson(getSlotPath(getOwnedSlotKey(normalizedOwnerId, resolvedSlotId)), null);
       if (!session) return null;
 
       index.activeSlotId = resolvedSlotId;
-      await writeSlotsIndex(index);
+      await writeSlotsIndex(index, normalizedOwnerId);
 
       return {
         slotId: resolvedSlotId,
@@ -193,26 +220,28 @@ export function createSessionStorageAdapter(saveSlots) {
       };
     },
 
-    async saveSession(slotId, payload) {
+    async saveSession(slotId, payload, ownerId = DEFAULT_OWNER_ID) {
+      const normalizedOwnerId = normalizeOwnerId(ownerId);
+
       if (databaseEnabled) {
         await ensureDatabaseSchema();
         const sql = getSql();
 
         await sql`
           insert into sessions (slot_id, payload, last_updated_iso)
-          values (${slotId}, ${sql.json(payload)}, ${payload.lastUpdatedIso})
+          values (${getOwnedSlotKey(normalizedOwnerId, slotId)}, ${sql.json(payload)}, ${payload.lastUpdatedIso})
           on conflict (slot_id) do update
           set payload = excluded.payload,
               last_updated_iso = excluded.last_updated_iso
         `;
 
-        await setActiveSlotIdInDatabase(slotId);
+        await setActiveSlotIdInDatabase(slotId, normalizedOwnerId);
         return;
       }
 
-      await writeFile(getSlotPath(slotId), `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+      await writeFile(getSlotPath(getOwnedSlotKey(normalizedOwnerId, slotId)), `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 
-      const index = await readSlotsIndex(saveSlots);
+      const index = await readSlotsIndex(saveSlots, normalizedOwnerId);
       index.activeSlotId = slotId;
       index.slots = saveSlots.map(({ id, label }) => ({
         id,
@@ -222,27 +251,29 @@ export function createSessionStorageAdapter(saveSlots) {
             ? payload.lastUpdatedIso
             : index.slots.find((entry) => entry.id === id)?.lastUpdatedIso || null,
       }));
-      await writeSlotsIndex(index);
+      await writeSlotsIndex(index, normalizedOwnerId);
     },
 
-    async deleteSession(slotId) {
+    async deleteSession(slotId, ownerId = DEFAULT_OWNER_ID) {
+      const normalizedOwnerId = normalizeOwnerId(ownerId);
+
       if (databaseEnabled) {
         await ensureDatabaseSchema();
         const sql = getSql();
-        const activeSlotId = await getActiveSlotIdFromDatabase();
+        const activeSlotId = await getActiveSlotIdFromDatabase(normalizedOwnerId);
 
-        await sql`delete from sessions where slot_id = ${slotId}`;
+        await sql`delete from sessions where slot_id = ${getOwnedSlotKey(normalizedOwnerId, slotId)}`;
 
         if (activeSlotId === slotId) {
-          await setActiveSlotIdInDatabase(null);
+          await setActiveSlotIdInDatabase(null, normalizedOwnerId);
         }
 
         return { deletedActiveSession: activeSlotId === slotId };
       }
 
-      await rm(getSlotPath(slotId), { force: true });
+      await rm(getSlotPath(getOwnedSlotKey(normalizedOwnerId, slotId)), { force: true });
 
-      const index = await readSlotsIndex(saveSlots);
+      const index = await readSlotsIndex(saveSlots, normalizedOwnerId);
       const deletedActiveSession = index.activeSlotId === slotId;
       if (deletedActiveSession) {
         index.activeSlotId = null;
@@ -251,9 +282,9 @@ export function createSessionStorageAdapter(saveSlots) {
         id,
         label,
         lastUpdatedIso:
-          id === slotId ? null : index.slots.find((entry) => entry.id === id)?.lastUpdatedIso || null,
+            id === slotId ? null : index.slots.find((entry) => entry.id === id)?.lastUpdatedIso || null,
       }));
-      await writeSlotsIndex(index);
+      await writeSlotsIndex(index, normalizedOwnerId);
 
       return { deletedActiveSession };
     },

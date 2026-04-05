@@ -117,9 +117,9 @@ describe("sessionStore", () => {
         conversationHistory: [],
       };
 
-      await sessionStore.saveSession("slot-1", payload);
-      const loaded = await sessionStore.loadSession("slot-1");
-      const listing = await sessionStore.listSessions();
+      await sessionStore.saveSession("slot-1", payload, "player-a");
+      const loaded = await sessionStore.loadSession("slot-1", "player-a");
+      const listing = await sessionStore.listSessions("player-a");
 
       expect(loaded.slotId).toBe("slot-1");
       expect(loaded.narration).toBe("Ready");
@@ -145,13 +145,51 @@ describe("sessionStore", () => {
         narration: "Database ready",
         turn: 1,
         conversationHistory: [],
-      });
+      }, "player-b");
 
-      const loaded = await sessionStore.loadSession("slot-2");
+      const loaded = await sessionStore.loadSession("slot-2", "player-b");
       expect(loaded.slotId).toBe("slot-2");
       expect(loaded.narration).toBe("Database ready");
     } finally {
       sessionStore.restoreEnv();
+    }
+  });
+
+  test("isolates sessions by player id", async () => {
+    const dataDir = await mkdtemp(path.join(os.tmpdir(), "dungeonmaister-isolated-"));
+    const sessionStore = await importSessionStoreWithEnv({ DATA_DIR: dataDir });
+
+    try {
+      await sessionStore.saveSession(
+        "slot-1",
+        {
+          worldState: { mission: { phase: "Alpha", objectives: [] }, systems: { o2: 90, power: 90, comms: 90 }, crew: [], environment: { location: "A", anomaly: "None", hazards: [] }, eventLog: [] },
+          narration: "Player A save",
+          turn: 0,
+          conversationHistory: [],
+        },
+        "player-a"
+      );
+
+      await sessionStore.saveSession(
+        "slot-1",
+        {
+          worldState: { mission: { phase: "Beta", objectives: [] }, systems: { o2: 55, power: 55, comms: 55 }, crew: [], environment: { location: "B", anomaly: "None", hazards: [] }, eventLog: [] },
+          narration: "Player B save",
+          turn: 0,
+          conversationHistory: [],
+        },
+        "player-b"
+      );
+
+      const listingA = await sessionStore.listSessions("player-a");
+      const listingB = await sessionStore.listSessions("player-b");
+
+      expect(listingA.slots.find((slot) => slot.id === "slot-1").session.narration).toBe("Player A save");
+      expect(listingB.slots.find((slot) => slot.id === "slot-1").session.narration).toBe("Player B save");
+    } finally {
+      sessionStore.restoreEnv();
+      await rm(dataDir, { recursive: true, force: true });
     }
   });
 });
