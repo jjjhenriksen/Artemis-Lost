@@ -288,6 +288,27 @@ export function createRandomCharacterProfiles() {
   return rerollCharacterProfiles(DEFAULT_CHARACTER_PROFILES);
 }
 
+export function generateCrewAroundPlayer({
+  playerName = "",
+  playerRole = CREW_BLUEPRINTS[0]?.role || "Commander",
+} = {}) {
+  const normalizedName = String(playerName).trim();
+  const selectedBlueprint =
+    CREW_BLUEPRINTS.find((blueprint) => blueprint.role === playerRole) || CREW_BLUEPRINTS[0];
+
+  const seededProfiles = DEFAULT_CHARACTER_PROFILES.map((profile) =>
+    profile.id === selectedBlueprint.id
+      ? {
+          ...profile,
+          name: normalizedName || profile.name,
+          controller: "human",
+        }
+      : profile
+  );
+
+  return rerollCharacterProfiles(seededProfiles, [selectedBlueprint.id]);
+}
+
 export function rerollCharacterProfiles(
   currentProfiles = DEFAULT_CHARACTER_PROFILES,
   lockedProfileIds = []

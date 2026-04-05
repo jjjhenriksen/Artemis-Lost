@@ -15,11 +15,16 @@ describe("CharacterCreation", () => {
       />
     );
 
+    fireEvent.change(screen.getByLabelText("Your name"), {
+      target: { value: "Jacqueline Henriksen" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Generate Crew" }));
+
     const lockButtons = screen.getAllByRole("button", { name: "Unlocked" });
     fireEvent.click(lockButtons[0]);
 
     const rerollButtons = screen.getAllByRole("button", { name: "Reroll This" });
-    expect(rerollButtons[0]).toBeDisabled();
-    expect(rerollButtons[1]).toBeEnabled();
+    expect(rerollButtons.filter((button) => button.disabled)).toHaveLength(2);
+    expect(rerollButtons.filter((button) => !button.disabled)).toHaveLength(2);
   });
 });

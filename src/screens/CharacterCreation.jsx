@@ -3,6 +3,7 @@ import ThemePicker from "../components/ThemePicker.jsx";
 import {
   DEFAULT_CHARACTER_PROFILES,
   deriveCrewDynamics,
+  generateCrewAroundPlayer,
   rerollCharacterProfile,
   rerollCharacterProfiles,
   resolveMissionSeed,
@@ -21,8 +22,11 @@ export default function CharacterCreation({
   themes,
   onThemeChange,
 }) {
-  const [profiles, setProfiles] = useState(() => cloneProfiles(DEFAULT_CHARACTER_PROFILES));
+  const [profiles, setProfiles] = useState(() => []);
   const [lockedProfileIds, setLockedProfileIds] = useState(() => new Set());
+  const [playerRole, setPlayerRole] = useState(DEFAULT_CHARACTER_PROFILES[0]?.role || "Commander");
+  const [playerName, setPlayerName] = useState("");
+  const [hasGeneratedCrew, setHasGeneratedCrew] = useState(false);
   const [missionSeed, setMissionSeed] = useState(() => pickMissionSeed());
   const crewDynamics = useMemo(() => deriveCrewDynamics(profiles), [profiles]);
   const resolvedMissionSeed = useMemo(
@@ -31,6 +35,21 @@ export default function CharacterCreation({
   );
   const lockedCount = lockedProfileIds.size;
   const humanCount = profiles.filter((profile) => profile.controller !== "bot").length;
+  const roleOptions = DEFAULT_CHARACTER_PROFILES.map((profile) => ({
+    id: profile.id,
+    role: profile.role,
+  }));
+
+  function handleGenerateCrew() {
+    const generatedProfiles = generateCrewAroundPlayer({
+      playerName,
+      playerRole,
+    });
+    const selectedProfile = generatedProfiles.find((profile) => profile.role === playerRole);
+    setProfiles(generatedProfiles);
+    setLockedProfileIds(new Set(selectedProfile ? [selectedProfile.id] : []));
+    setHasGeneratedCrew(true);
+  }
 
   function toggleLockedProfile(id) {
     setLockedProfileIds((current) => {
@@ -56,6 +75,7 @@ export default function CharacterCreation({
 
   function handleSubmit(event) {
     event.preventDefault();
+    if (!hasGeneratedCrew) return;
     onStartMission(
       slotId,
       profiles.map((profile) => ({
@@ -82,7 +102,9 @@ export default function CharacterCreation({
           carried into the save file, vault context, and DM prompt.
         </p>
         <div className="creator-slot">Target save slot: {slotId}</div>
-        <div className="creator-slot">Human-controlled roles: {humanCount} / {profiles.length}</div>
+        <div className="creator-slot">
+          Human-controlled roles: {humanCount} / {profiles.length || DEFAULT_CHARACTER_PROFILES.length}
+        </div>
 
         <ThemePicker
           themeId={themeId}
@@ -91,13 +113,66 @@ export default function CharacterCreation({
           title="INTERFACE THEME"
         />
 
-        {crewDynamics.summary ? (
+        {!hasGeneratedCrew ? (
+          <div className="creator-seed">
+            <div className="creator-seed__header">
+              <div>
+                <div className="section-title section-title--mb-6">PLAYER INSERT</div>
+                <div className="creator-seed__title">Claim one station before the roster rolls</div>
+              </div>
+            </div>
+            <div className="creator-seed__summary">
+              Choose the specialty you want to play, type your own name, and the rest of the crew
+              will be generated around you.
+            </div>
+            <label className="creator-field">
+              <span>Your specialty</span>
+              <select
+                className="creator-input"
+                value={playerRole}
+                onChange={(event) => setPlayerRole(event.target.value)}
+              >
+                {roleOptions.map((option) => (
+                  <option key={option.id} value={option.role}>
+                    {option.role}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="creator-field">
+              <span>Your name</span>
+              <input
+                className="creator-input"
+                value={playerName}
+                onChange={(event) => setPlayerName(event.target.value)}
+                placeholder="Type your own name"
+                required
+              />
+            </label>
+            <div className="creator-actions">
+              <button type="button" className="menu-button" onClick={onBack}>
+                Back To Menu
+              </button>
+              <button
+                type="button"
+                className="menu-button menu-button--primary"
+                onClick={handleGenerateCrew}
+                disabled={!playerName.trim()}
+              >
+                Generate Crew
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {hasGeneratedCrew && crewDynamics.summary ? (
           <div className="creator-dynamics">
             <div className="section-title section-title--mb-6">CREW DYNAMIC</div>
             <div className="creator-dynamics__copy">{crewDynamics.summary}</div>
           </div>
         ) : null}
 
+        {hasGeneratedCrew ? (
         <div className="creator-seed">
           <div className="creator-seed__header">
             <div>
@@ -124,7 +199,9 @@ export default function CharacterCreation({
             <span>{resolvedMissionSeed.tone.join(" / ")}</span>
           </div>
         </div>
+        ) : null}
 
+        {hasGeneratedCrew ? (
         <div className="creator-grid">
           {profiles.map((profile) => (
             <section key={profile.id} className="creator-card">
@@ -237,7 +314,9 @@ export default function CharacterCreation({
             </section>
           ))}
         </div>
+        ) : null}
 
+        {hasGeneratedCrew ? (
         <div className="creator-actions">
           <button type="button" className="menu-button" onClick={onBack}>
             Back To Menu
@@ -246,8 +325,11 @@ export default function CharacterCreation({
             type="button"
             className="menu-button"
             onClick={() => {
-              setProfiles(cloneProfiles(DEFAULT_CHARACTER_PROFILES));
+              setProfiles([]);
               setLockedProfileIds(new Set());
+              setPlayerRole(DEFAULT_CHARACTER_PROFILES[0]?.role || "Commander");
+              setPlayerName("");
+              setHasGeneratedCrew(false);
               setMissionSeed(getMissionSeedById(MISSION_SEEDS[0]?.id));
             }}
           >
@@ -268,6 +350,7 @@ export default function CharacterCreation({
             Launch Mission
           </button>
         </div>
+        ) : null}
       </form>
     </div>
   );
