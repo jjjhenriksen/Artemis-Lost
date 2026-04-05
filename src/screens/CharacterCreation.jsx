@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import TelemetryBackdrop from "../components/TelemetryBackdrop.jsx";
 import {
   DEFAULT_CHARACTER_PROFILES,
   deriveCrewDynamics,
@@ -94,6 +95,7 @@ export default function CharacterCreation({
 
   return (
     <div className="menu-shell">
+      <TelemetryBackdrop variant="creator" />
       <form className="creator-panel" onSubmit={handleSubmit}>
         <div className="menu-panel__eyebrow">CREW ASSEMBLY</div>
         <h1 className="menu-panel__title">Crew Assembly</h1>

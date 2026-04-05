@@ -947,6 +947,159 @@ body::after {
   animation: ambientShellSweep calc(var(--ambient-duration-b) * 0.9) ease-in-out infinite alternate;
 }
 
+.telemetry-backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.72;
+}
+
+.telemetry-backdrop__field,
+.telemetry-backdrop__scan,
+.telemetry-backdrop__cluster {
+  position: absolute;
+}
+
+.telemetry-backdrop__field {
+  inset: 8% 5%;
+  border-radius: 32px;
+  border: 1px solid color-mix(in srgb, var(--border-soft) 28%, transparent);
+  background:
+    linear-gradient(color-mix(in srgb, var(--grid-line) 56%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--grid-line) 56%, transparent) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.9) 16%, rgba(0, 0, 0, 0.9) 84%, transparent 100%);
+  opacity: 0.22;
+}
+
+.telemetry-backdrop__field--a {
+  transform: perspective(1200px) rotateX(74deg) translateY(-12%);
+  transform-origin: center top;
+  animation: telemetryFieldDriftA 22s linear infinite;
+}
+
+.telemetry-backdrop__field--b {
+  inset: 16% 10% 20%;
+  opacity: 0.1;
+  transform: perspective(1200px) rotateX(74deg) translateY(-8%) scale(0.92);
+  transform-origin: center top;
+  animation: telemetryFieldDriftB 30s linear infinite;
+}
+
+.telemetry-backdrop__scan {
+  width: 42vw;
+  max-width: 620px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text-info) 74%, transparent), transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--text-info) 16%, transparent);
+  opacity: 0.26;
+}
+
+.telemetry-backdrop__scan--a {
+  top: 20%;
+  left: -10%;
+  animation: telemetrySweepA 18s ease-in-out infinite;
+}
+
+.telemetry-backdrop__scan--b {
+  right: -12%;
+  bottom: 18%;
+  opacity: 0.18;
+  animation: telemetrySweepB 24s ease-in-out infinite;
+}
+
+.telemetry-backdrop__cluster {
+  display: grid;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: color-mix(in srgb, var(--text-dim) 78%, transparent);
+  text-transform: uppercase;
+  text-shadow: 0 0 12px color-mix(in srgb, var(--ambient-grid-glow) 30%, transparent);
+}
+
+.telemetry-backdrop__cluster span {
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--border-soft) 22%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-glass) 22%, transparent);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.telemetry-backdrop__cluster--alpha {
+  top: 12%;
+  right: 6%;
+  animation: telemetryClusterFloatA 16s ease-in-out infinite;
+}
+
+.telemetry-backdrop__cluster--beta {
+  left: 5%;
+  bottom: 16%;
+  animation: telemetryClusterFloatB 19s ease-in-out infinite;
+}
+
+.telemetry-backdrop__cluster--gamma {
+  top: 48%;
+  right: 16%;
+  opacity: 0.64;
+  animation: telemetryClusterFloatC 21s ease-in-out infinite;
+}
+
+.telemetry-backdrop--menu .telemetry-backdrop__cluster--gamma,
+.telemetry-backdrop--creator .telemetry-backdrop__cluster--gamma {
+  top: 22%;
+  right: 12%;
+}
+
+.telemetry-backdrop--app .telemetry-backdrop__cluster--alpha {
+  top: 14%;
+  right: 4%;
+}
+
+.telemetry-backdrop--app .telemetry-backdrop__cluster--beta {
+  left: 3%;
+  bottom: 10%;
+}
+
+.telemetry-backdrop--launch {
+  opacity: 0.54;
+}
+
+.telemetry-backdrop--launch .telemetry-backdrop__field {
+  border-color: color-mix(in srgb, var(--panel-border-strong) 18%, transparent);
+  opacity: 0.14;
+}
+
+.telemetry-backdrop--launch .telemetry-backdrop__scan {
+  opacity: 0.16;
+}
+
+.telemetry-backdrop--launch .telemetry-backdrop__cluster {
+  color: color-mix(in srgb, var(--text-info) 60%, transparent);
+}
+
+.telemetry-backdrop--victory,
+.telemetry-backdrop--defeat {
+  opacity: 0.48;
+}
+
+.telemetry-backdrop--victory .telemetry-backdrop__scan {
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--signal-good) 68%, transparent), transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--signal-good) 14%, transparent);
+}
+
+.telemetry-backdrop--defeat .telemetry-backdrop__scan {
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text-warn) 62%, transparent), transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--text-warn) 14%, transparent);
+}
+
+.telemetry-backdrop--defeat .telemetry-backdrop__cluster {
+  color: color-mix(in srgb, var(--text-warn-soft) 54%, transparent);
+}
+
 .app-shell__glow {
   position: absolute;
   inset: auto;
@@ -2732,6 +2885,8 @@ body::after {
 
 .menu-panel,
 .creator-panel {
+  position: relative;
+  z-index: 1;
   width: min(1100px, 100%);
   background: linear-gradient(180deg, var(--panel-gradient-start) 0%, var(--panel-gradient-end) 100%);
   border: 1px solid var(--border-main);
@@ -4857,6 +5012,90 @@ body::after {
   }
 }
 
+@keyframes telemetryFieldDriftA {
+  0% {
+    transform: perspective(1200px) rotateX(74deg) translate3d(0, -12%, 0);
+  }
+  100% {
+    transform: perspective(1200px) rotateX(74deg) translate3d(0, 8%, 0);
+  }
+}
+
+@keyframes telemetryFieldDriftB {
+  0% {
+    transform: perspective(1200px) rotateX(74deg) translate3d(0, -8%, 0) scale(0.92);
+  }
+  100% {
+    transform: perspective(1200px) rotateX(74deg) translate3d(0, 12%, 0) scale(0.92);
+  }
+}
+
+@keyframes telemetrySweepA {
+  0% {
+    transform: translate3d(-10%, 0, 0);
+    opacity: 0;
+  }
+  15%,
+  78% {
+    opacity: 0.24;
+  }
+  100% {
+    transform: translate3d(150%, 0, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes telemetrySweepB {
+  0% {
+    transform: translate3d(12%, 0, 0);
+    opacity: 0;
+  }
+  18%,
+  74% {
+    opacity: 0.16;
+  }
+  100% {
+    transform: translate3d(-148%, 0, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes telemetryClusterFloatA {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.76;
+  }
+  50% {
+    transform: translate3d(-8px, 10px, 0);
+    opacity: 0.46;
+  }
+}
+
+@keyframes telemetryClusterFloatB {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.52;
+  }
+  50% {
+    transform: translate3d(10px, -12px, 0);
+    opacity: 0.8;
+  }
+}
+
+@keyframes telemetryClusterFloatC {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.34;
+  }
+  50% {
+    transform: translate3d(-10px, 8px, 0);
+    opacity: 0.6;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   body::before,
   body::after,
@@ -4864,6 +5103,9 @@ body::after {
   .menu-shell::before,
   .app-shell::after,
   .menu-shell::after,
+  .telemetry-backdrop__field,
+  .telemetry-backdrop__scan,
+  .telemetry-backdrop__cluster,
   .launch-screen__stars,
   .launch-screen__planet,
   .launch-screen__moon,

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import TelemetryBackdrop from "../components/TelemetryBackdrop.jsx";
 
 function formatSaveSummary(session) {
   if (!session?.worldState) return "No mission record on file.";
@@ -24,6 +25,7 @@ export default function MainMenu({
 
   return (
     <div className="menu-shell">
+      <TelemetryBackdrop variant="menu" />
       <div className="menu-panel">
         <div className="menu-panel__eyebrow">LUNAR INCIDENT COMMAND</div>
         <h1 className="menu-panel__title">Artemis Lost</h1>

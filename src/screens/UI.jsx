@@ -6,6 +6,7 @@ import CrewStatusBar from "../components/CrewStatusBar.jsx";
 import NarrationPanel from "../components/NarrationPanel.jsx";
 import RosterSummary from "../components/RosterSummary.jsx";
 import RoleView from "../components/RoleView.jsx";
+import TelemetryBackdrop from "../components/TelemetryBackdrop.jsx";
 import { requestAutonomousAction, requestDmTurn } from "../services/dmApi.js";
 import { appendConversationEntry } from "../game/gameLoop.js";
 import { getMissionOutcome } from "../game/missionOutcome.js";
@@ -260,6 +261,7 @@ export default function ArtemisLost({
     <div
       className={`app-shell app-shell--${uiState.dangerLevel} app-shell--failure-${uiState.dominantFailure} app-shell--anomaly-${uiState.anomalyIntensity}`}
     >
+      <TelemetryBackdrop variant="app" />
       <div className="app-shell__glow app-shell__glow--left" aria-hidden="true" />
       <div className="app-shell__glow app-shell__glow--right" aria-hidden="true" />
       <div className="app-header">

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import TelemetryBackdrop from "../components/TelemetryBackdrop.jsx";
 
 const DEFAULT_RESOLUTION_DURATION_MS = 4400;
 const REDUCED_MOTION_DURATION_MS = 1200;
@@ -36,6 +37,7 @@ export default function MissionResolution({
       className={`resolution-screen resolution-screen--${outcome.status}`}
       aria-label="Mission resolution"
     >
+      <TelemetryBackdrop variant={isVictory ? "victory" : "defeat"} />
       <div className="resolution-screen__sky" aria-hidden="true">
         <div className="resolution-screen__orb resolution-screen__orb--planet" />
         <div className="resolution-screen__orb resolution-screen__orb--horizon" />

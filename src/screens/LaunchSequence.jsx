@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import TelemetryBackdrop from "../components/TelemetryBackdrop.jsx";
 
 const DEFAULT_COUNTDOWN_STEP_MS = 1000;
 const DEFAULT_ASCENT_DURATION_MS = 7200;
@@ -112,6 +113,7 @@ export default function LaunchSequence({ session, slotId, onComplete }) {
         }
       }
     >
+      <TelemetryBackdrop variant="launch" />
       <div className="launch-screen__sky" aria-hidden="true">
         <div className="launch-screen__stars launch-screen__stars--near" />
         <div className="launch-screen__stars launch-screen__stars--far" />
