@@ -291,22 +291,36 @@ export function createRandomCharacterProfiles() {
 export function generateCrewAroundPlayer({
   playerName = "",
   playerRole = CREW_BLUEPRINTS[0]?.role || "Commander",
+  playerCallSign = "",
 } = {}) {
   const normalizedName = String(playerName).trim();
+  const normalizedCallSign = String(playerCallSign).trim();
   const selectedBlueprint =
     CREW_BLUEPRINTS.find((blueprint) => blueprint.role === playerRole) || CREW_BLUEPRINTS[0];
+  const specialOverride = getSpecialCrewOverride(normalizedName);
+  const resolvedCallSign =
+    specialOverride?.callSigns?.length > 0
+      ? pickRandom(specialOverride.callSigns)
+      : normalizedCallSign || null;
 
   const seededProfiles = DEFAULT_CHARACTER_PROFILES.map((profile) =>
     profile.id === selectedBlueprint.id
       ? {
           ...profile,
           name: normalizedName || profile.name,
+          callSign: resolvedCallSign || profile.callSign,
           controller: "human",
         }
       : profile
   );
 
   return rerollCharacterProfiles(seededProfiles, [selectedBlueprint.id]);
+}
+
+export function getCallSignExamplesForRole(role, count = 3) {
+  const blueprint = CREW_BLUEPRINTS.find((entry) => entry.role === role) || CREW_BLUEPRINTS[0];
+  const roleBank = CHARACTER_BANKS[blueprint.bankKey] || {};
+  return (roleBank.callSigns || [blueprint.defaultCallSign]).slice(0, count);
 }
 
 export function rerollCharacterProfiles(

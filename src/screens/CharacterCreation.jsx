@@ -4,6 +4,7 @@ import {
   DEFAULT_CHARACTER_PROFILES,
   deriveCrewDynamics,
   generateCrewAroundPlayer,
+  getCallSignExamplesForRole,
   rerollCharacterProfile,
   rerollCharacterProfiles,
   resolveMissionSeed,
@@ -26,6 +27,7 @@ export default function CharacterCreation({
   const [lockedProfileIds, setLockedProfileIds] = useState(() => new Set());
   const [playerRole, setPlayerRole] = useState(DEFAULT_CHARACTER_PROFILES[0]?.role || "Commander");
   const [playerName, setPlayerName] = useState("");
+  const [playerCallSign, setPlayerCallSign] = useState("");
   const [hasGeneratedCrew, setHasGeneratedCrew] = useState(false);
   const [missionSeed, setMissionSeed] = useState(() => pickMissionSeed());
   const crewDynamics = useMemo(() => deriveCrewDynamics(profiles), [profiles]);
@@ -39,11 +41,13 @@ export default function CharacterCreation({
     id: profile.id,
     role: profile.role,
   }));
+  const playerCallSignExamples = getCallSignExamplesForRole(playerRole);
 
   function handleGenerateCrew() {
     const generatedProfiles = generateCrewAroundPlayer({
       playerName,
       playerRole,
+      playerCallSign,
     });
     const selectedProfile = generatedProfiles.find((profile) => profile.role === playerRole);
     setProfiles(generatedProfiles);
@@ -149,6 +153,19 @@ export default function CharacterCreation({
                 required
               />
             </label>
+            <label className="creator-field">
+              <span>Your call sign</span>
+              <input
+                className="creator-input"
+                value={playerCallSign}
+                onChange={(event) => setPlayerCallSign(event.target.value)}
+                placeholder={playerCallSignExamples.join(" / ")}
+              />
+            </label>
+            <div className="creator-seed__summary">
+              Call sign examples for {playerRole}: {playerCallSignExamples.join(", ")}.
+              Special roster names still use their custom easter-egg callsigns.
+            </div>
             <div className="creator-actions">
               <button type="button" className="menu-button" onClick={onBack}>
                 Back To Menu
@@ -329,6 +346,7 @@ export default function CharacterCreation({
               setLockedProfileIds(new Set());
               setPlayerRole(DEFAULT_CHARACTER_PROFILES[0]?.role || "Commander");
               setPlayerName("");
+              setPlayerCallSign("");
               setHasGeneratedCrew(false);
               setMissionSeed(getMissionSeedById(MISSION_SEEDS[0]?.id));
             }}
