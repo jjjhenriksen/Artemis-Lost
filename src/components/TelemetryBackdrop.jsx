@@ -21,7 +21,7 @@ function toBinaryString(text) {
 }
 
 const BINARY_COLUMNS = TELEMETRY_PHRASES.map(toBinaryString);
-const COLUMN_LAYOUT = [
+const FULL_COLUMN_LAYOUT = [
   { left: "3.5%", top: "-12%", scale: 0.94, className: "telemetry-backdrop__column--1" },
   { left: "7.1%", top: "-6%", scale: 0.82, className: "telemetry-backdrop__column--4" },
   { left: "10.2%", top: "-4%", scale: 1.08, className: "telemetry-backdrop__column--3" },
@@ -48,7 +48,24 @@ const COLUMN_LAYOUT = [
   { left: "95.2%", top: "-16%", scale: 0.78, className: "telemetry-backdrop__column--1" },
 ];
 
+const APP_SIDE_COLUMN_LAYOUT = [
+  { left: "1.8%", top: "-12%", scale: 0.96, className: "telemetry-backdrop__column--1" },
+  { left: "4.6%", top: "-6%", scale: 0.84, className: "telemetry-backdrop__column--4" },
+  { left: "7.2%", top: "-17%", scale: 1.06, className: "telemetry-backdrop__column--3" },
+  { left: "9.8%", top: "-8%", scale: 0.88, className: "telemetry-backdrop__column--2" },
+  { left: "12.3%", top: "-20%", scale: 1.12, className: "telemetry-backdrop__column--2" },
+  { left: "15.1%", top: "-10%", scale: 0.9, className: "telemetry-backdrop__column--1" },
+  { left: "84.1%", top: "-14%", scale: 1.04, className: "telemetry-backdrop__column--3" },
+  { left: "86.9%", top: "-7%", scale: 0.84, className: "telemetry-backdrop__column--2" },
+  { left: "89.7%", top: "-18%", scale: 1.08, className: "telemetry-backdrop__column--4" },
+  { left: "92.2%", top: "-9%", scale: 0.88, className: "telemetry-backdrop__column--1" },
+  { left: "94.6%", top: "-16%", scale: 0.98, className: "telemetry-backdrop__column--3" },
+  { left: "97.1%", top: "-6%", scale: 0.8, className: "telemetry-backdrop__column--4" },
+];
+
 export default function TelemetryBackdrop({ variant = "default" }) {
+  const layout = variant === "app" ? APP_SIDE_COLUMN_LAYOUT : FULL_COLUMN_LAYOUT;
+
   return (
     <div
       className={`telemetry-backdrop telemetry-backdrop--${variant}`}
@@ -58,18 +75,16 @@ export default function TelemetryBackdrop({ variant = "default" }) {
       <div className="telemetry-backdrop__scanline telemetry-backdrop__scanline--top" />
       <div className="telemetry-backdrop__scanline telemetry-backdrop__scanline--bottom" />
       <div className="telemetry-backdrop__columns">
-        {COLUMN_LAYOUT.map((layout, index) => {
+        {layout.map((columnLayout, index) => {
           const bits = BINARY_COLUMNS[index % BINARY_COLUMNS.length];
           return (
-          (() => {
-            return (
           <div
             key={`${variant}-${index}`}
-            className={`telemetry-backdrop__column ${layout.className}`}
+            className={`telemetry-backdrop__column ${columnLayout.className}`}
             style={{
-              left: layout.left,
-              top: layout.top,
-              transform: `scale(${layout.scale})`,
+              left: columnLayout.left,
+              top: columnLayout.top,
+              transform: `scale(${columnLayout.scale})`,
               animationDelay: `${index * -1.35}s`,
             }}
           >
@@ -78,9 +93,7 @@ export default function TelemetryBackdrop({ variant = "default" }) {
             <span>{bits}</span>
             <span>{bits}</span>
           </div>
-            );
-          })()
-        );
+          );
         })}
       </div>
     </div>
