@@ -2235,6 +2235,7 @@ body::after {
   animation-delay: var(--launch-start-delay);
   animation-fill-mode: backwards;
   will-change: transform;
+  transition: opacity 160ms linear, visibility 160ms linear;
 }
 
 .rocket__contrail {
@@ -2253,6 +2254,7 @@ body::after {
   animation-delay: var(--launch-start-delay);
   animation-fill-mode: backwards;
   will-change: transform, opacity;
+  transition: opacity 160ms linear, visibility 160ms linear;
 }
 
 .rocket__body {
@@ -2375,6 +2377,7 @@ body::after {
   filter: blur(2px);
   transform-origin: center top;
   will-change: transform, opacity;
+  transition: opacity 120ms linear, visibility 120ms linear;
 }
 
 .rocket__flame--core {

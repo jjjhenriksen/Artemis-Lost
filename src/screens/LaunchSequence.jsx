@@ -51,6 +51,19 @@ export default function LaunchSequence({ session, slotId, themeId, themes, onCom
   const altitudeKm = ascentProgress <= 0 ? 0 : 184 * easedAscentProgress;
   const velocityKmPerSecond =
     ascentProgress <= 0 ? 0 : 7.6 * Math.min(1, 0.12 + ascentProgress * 0.98);
+  const isRocketClearingFrame = readyToContinue || ascentProgress >= 0.965;
+  const progressLabel =
+    countdownValue > 0
+      ? "Final countdown holding ascent systems in commit posture"
+      : ascentProgress < 0.16
+        ? "Main engines lit. Hold-down clamps released."
+        : ascentProgress < 0.34
+          ? "Vehicle clearing tower and building vertical velocity"
+          : ascentProgress < 0.58
+            ? "Guidance locked. Climbing through upper atmosphere corridor"
+            : ascentProgress < 0.82
+              ? "Ascent profile stabilizing toward orbital insertion"
+              : "Vehicle off camera. Finalizing orbital burn alignment";
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -176,7 +189,7 @@ export default function LaunchSequence({ session, slotId, themeId, themes, onCom
           </div>
         ) : null}
         <div
-          className={`launch-pad${readyToContinue ? " launch-pad--complete" : ""}`}
+          className={`launch-pad${isRocketClearingFrame ? " launch-pad--complete" : ""}`}
           aria-hidden="true"
         >
           <div className="launch-pad__halo" />
@@ -241,7 +254,7 @@ export default function LaunchSequence({ session, slotId, themeId, themes, onCom
         </div>
         <div className="launch-screen__progress">
           <div className="launch-screen__progress-label">
-            Ascent profile synchronizing with theme palette and mission seed
+            {progressLabel}
           </div>
           <div className="launch-screen__progress-bar">
             <span />
