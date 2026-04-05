@@ -1829,7 +1829,9 @@ body::after {
   line-height: 0.96;
   text-transform: uppercase;
   text-wrap: balance;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
   color: var(--text-primary);
   text-shadow: 0 0 26px color-mix(in srgb, var(--text-info) 20%, transparent);
 }
