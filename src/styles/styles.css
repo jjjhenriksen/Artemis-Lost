@@ -4188,7 +4188,7 @@ body::after {
     radial-gradient(circle at 50% 50%, color-mix(in srgb, white 28%, var(--launch-smoke)), color-mix(in srgb, var(--launch-smoke) 38%, transparent) 58%, transparent 78%);
   filter: blur(7px);
   opacity: 0;
-  animation: resolutionSpray 2.8s ease-out infinite;
+  animation: resolutionSpray 4s ease-out forwards;
 }
 
 .resolution-screen__spray--left {
@@ -4290,7 +4290,7 @@ body::after {
 .resolution-screen__capsule--drift {
   top: 54px;
   transform: translateX(-50%);
-  animation: resolutionCapsuleDrift 11.2s ease-in-out infinite alternate;
+  animation: resolutionCapsuleDrift 16.8s cubic-bezier(0.38, 0.02, 0.22, 1) infinite alternate;
 }
 
 .resolution-screen__capsule-body {
@@ -4466,7 +4466,7 @@ body::after {
 }
 
 .resolution-screen--defeat .resolution-screen__capsule-trail {
-  animation: resolutionTrailFade 11.2s ease-in-out infinite alternate;
+  animation: resolutionTrailFade 16.8s ease-in-out infinite alternate;
 }
 
 .resolution-screen__summary-grid {
@@ -4573,8 +4573,7 @@ body::after {
 }
 
 @keyframes resolutionCapsuleDrop {
-  0%,
-  100% {
+  0% {
     transform: translateX(-50%) translateY(-104px) rotate(-8deg);
   }
   44% {
@@ -4585,6 +4584,9 @@ body::after {
   }
   76% {
     transform: translateX(-50%) translateY(4px) rotate(1deg);
+  }
+  100% {
+    transform: translateX(-50%) translateY(8px) rotate(0deg);
   }
 }
 
@@ -4651,16 +4653,20 @@ body::after {
 
 @keyframes resolutionSpray {
   0%,
-  100% {
+  42% {
     opacity: 0;
     transform: translate3d(0, 0, 0) scale(0.54);
   }
-  18% {
+  48% {
     opacity: 0.36;
   }
-  70% {
+  74% {
     opacity: 0;
     transform: translate3d(0, -34px, 0) scale(1.36);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -42px, 0) scale(1.44);
   }
 }
 

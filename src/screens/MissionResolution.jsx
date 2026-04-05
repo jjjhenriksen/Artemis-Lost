@@ -42,8 +42,12 @@ export default function MissionResolution({
       <div className="resolution-screen__sky" aria-hidden="true">
         <div className="resolution-screen__orb resolution-screen__orb--planet" />
         <div className="resolution-screen__orb resolution-screen__orb--horizon" />
-        <div className="resolution-screen__spray resolution-screen__spray--left" />
-        <div className="resolution-screen__spray resolution-screen__spray--right" />
+        {isVictory ? (
+          <>
+            <div className="resolution-screen__spray resolution-screen__spray--left" />
+            <div className="resolution-screen__spray resolution-screen__spray--right" />
+          </>
+        ) : null}
       </div>
 
       <div className="resolution-screen__panel">
