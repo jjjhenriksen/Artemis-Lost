@@ -67,6 +67,7 @@ export default function MissionResolution({
             <div className="resolution-screen__capsule resolution-screen__capsule--recovery">
               <div className="resolution-screen__capsule-body" />
               <div className="resolution-screen__capsule-window" />
+              <div className="resolution-screen__surface" />
               <div className="resolution-screen__impact-ring" />
               <div className="resolution-screen__impact-column resolution-screen__impact-column--left" />
               <div className="resolution-screen__impact-column resolution-screen__impact-column--right" />
@@ -81,6 +82,13 @@ export default function MissionResolution({
                 <span />
               </div>
               <div className="resolution-screen__capsule-wake" />
+              <div className="resolution-screen__foam resolution-screen__foam--left" />
+              <div className="resolution-screen__foam resolution-screen__foam--right" />
+              <div className="resolution-screen__ripples">
+                <span />
+                <span />
+                <span />
+              </div>
             </div>
           ) : (
             <div className="resolution-screen__capsule resolution-screen__capsule--drift">

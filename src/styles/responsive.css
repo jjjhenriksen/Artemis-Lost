@@ -1,0 +1,169 @@
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  body::after,
+  .app-shell::before,
+  .menu-shell::before,
+  .app-shell::after,
+  .menu-shell::after,
+  .app-header::after,
+  .telemetry-backdrop__column,
+  .telemetry-backdrop__scanline,
+  .launch-screen__stars,
+  .launch-screen__planet,
+  .launch-screen__moon,
+  .launch-screen__trail,
+  .launch-screen__countdown,
+  .launch-pad__service-arm,
+  .launch-pad__smoke,
+  .launch-pad__halo,
+  .launch-pad__shockwave,
+  .rocket,
+  .rocket__contrail,
+  .rocket__flame,
+  .launch-screen__progress-bar span,
+  .narration-panel--listening::after,
+  .narration-panel__signal span,
+  .status-strip__item--pulse,
+  .status-strip__item--pulse::after,
+  .event-log__row--entered,
+  .action-input__panel--drafting::after,
+  .action-input__drafting-dots span,
+  .crew-card__focus-sweep {
+    animation: none;
+  }
+
+  .panel-boot {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .launch-screen__countdown-value {
+    animation: none;
+    opacity: 0.92;
+    transform: none;
+    filter: none;
+  }
+
+  .narration-panel--listening::after,
+  .crew-card__focus-sweep {
+    opacity: 0;
+  }
+
+  .resolution-screen__spray,
+  .resolution-screen__capsule--recovery,
+  .resolution-screen__capsule--drift,
+  .resolution-screen__surface,
+  .resolution-screen__capsule-wake,
+  .resolution-screen__foam,
+  .resolution-screen__ripples span,
+  .resolution-screen__impact-ring,
+  .resolution-screen__impact-column,
+  .resolution-screen__droplets,
+  .resolution-screen__droplets span,
+  .resolution-screen__capsule-beacon,
+  .resolution-screen--defeat .resolution-screen__capsule-trail {
+    animation: none;
+  }
+}
+
+@media (max-width: 920px) {
+  .app-shell {
+    padding: 12px;
+  }
+
+  .app-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "narration"
+      "action"
+      "bottom";
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .app-header__controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .theme-picker--compact {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .theme-picker__controls {
+    grid-template-columns: 1fr;
+  }
+
+  .action-input__row {
+    flex-direction: column;
+  }
+
+  .app-grid__bottom .roster-summary__list,
+  .app-grid__bottom .roster-summary__coordination-list {
+    grid-template-columns: 1fr;
+  }
+
+  .bottom-deck {
+    grid-template-columns: 1fr;
+  }
+
+  .al-btn {
+    min-height: 48px;
+    width: 100%;
+  }
+
+  .creator-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .launch-screen {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 18px;
+  }
+
+  .launch-screen__hud,
+  .launch-screen__manifest,
+  .launch-screen__viewport {
+    width: 100%;
+  }
+
+  .launch-screen__manifest {
+    justify-self: stretch;
+  }
+
+  .launch-screen__manifest-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .launch-screen__viewport-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .launch-pad {
+    min-height: 56vh;
+  }
+
+  .rocket {
+    height: 440px;
+  }
+
+  .launch-pad__readout {
+    bottom: 14%;
+  }
+
+  .launch-screen__actions {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    justify-self: start;
+    flex-wrap: wrap;
+  }
+}
