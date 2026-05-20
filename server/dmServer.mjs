@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { assertDmConfig, requestAutonomousCrewAction, requestDmTurn } from "./api.js";
+import { getLlmConfig, isLlmConfigured } from "./llmConfig.js";
 import {
   deleteSession,
   getSessionBackendMode,
@@ -21,8 +22,8 @@ const indexHtmlPath = path.join(distRoot, "index.html");
 
 const PORT = Number(process.env.PORT || process.env.DM_API_PORT || 8787);
 const hasBuiltClient = existsSync(indexHtmlPath);
-const hasOpenAiKey = Boolean(process.env.OPENAI_API_KEY);
-const modelName = process.env.OPENAI_MODEL || "gpt-4.1-mini";
+const llmConfig = getLlmConfig();
+const hasLlmKey = isLlmConfigured();
 const sessionBackendMode = getSessionBackendMode();
 
 function getOwnerIdFromRequest(req) {
@@ -61,8 +62,9 @@ export function createApp(deps = {}) {
       ok: true,
       service: "artemis-lost",
       frontend: hasBuiltClient ? "built" : "not-built",
-      openaiConfigured: hasOpenAiKey,
-      model: modelName,
+      llmConfigured: hasLlmKey,
+      llmProvider: llmConfig.provider,
+      model: llmConfig.model,
       storageMode,
       sessionBackendMode,
       dynamicVaultRoot,
@@ -157,7 +159,7 @@ export function createApp(deps = {}) {
       res.json({ narration, stateDelta });
     } catch (err) {
       console.error(err);
-      const status = /OPENAI_API_KEY/.test(err.message || "") ? 503 : 500;
+      const status = /API_KEY is not set/.test(err.message || "") ? 503 : 500;
       res.status(status).json({ error: err.message || String(err) });
     }
   });
@@ -188,7 +190,7 @@ export function createApp(deps = {}) {
       res.json({ action });
     } catch (err) {
       console.error(err);
-      const status = /OPENAI_API_KEY/.test(err.message || "") ? 503 : 500;
+      const status = /API_KEY is not set/.test(err.message || "") ? 503 : 500;
       res.status(status).json({ error: err.message || String(err) });
     }
   });
@@ -218,8 +220,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
         ? `Artemis Lost listening on http://localhost:${PORT}`
         : `DM API listening on http://localhost:${PORT}`
     );
-    if (!hasOpenAiKey) {
-      console.warn("OPENAI_API_KEY is not set. Gameplay requests to /api/turn and /api/autonomous-action will return 503.");
+    if (!hasLlmKey) {
+      console.warn(
+        "No LLM API key is set. Add OPENAI_API_KEY or ANTHROPIC_API_KEY to .env. Gameplay requests to /api/turn and /api/autonomous-action will return 503."
+      );
+    } else {
+      console.log(`LLM provider: ${llmConfig.provider} (${llmConfig.model})`);
     }
     console.log(`Dynamic session storage: ${dynamicVaultRoot} (${storageMode})`);
     console.log(`Session backend: ${sessionBackendMode}`);

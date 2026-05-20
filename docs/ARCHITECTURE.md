@@ -55,7 +55,8 @@ Artemis Lost is a small full-stack app with a React frontend, a Node/Express ser
 
 - [src/services/dmApi.js](../src/services/dmApi.js): browser request helper for `/api/turn`
 - [server/dmServer.mjs](../server/dmServer.mjs): Express API for DM turns and sessions
-- [server/api.js](../server/api.js): OpenAI Responses API call path and response extraction
+- [server/llmConfig.js](../server/llmConfig.js): provider selection and env-based model configuration (`openai` or `anthropic`)
+- [server/api.js](../server/api.js): LLM request execution (OpenAI Responses API or Anthropic Messages API) and response extraction
 - [server/prompts.js](../server/prompts.js): system and user prompt assembly rules
 - [src/game/deltaParser.js](../src/game/deltaParser.js): normalizes model output into safe state deltas
 - [src/game/applyStateDelta.js](../src/game/applyStateDelta.js): merges validated deltas into local state
@@ -90,7 +91,7 @@ The backend owns:
 - environment validation
 - session loading and saving
 - vault-context assembly
-- OpenAI request execution
+- LLM request execution (OpenAI or Anthropic, selected via `LLM_PROVIDER` and related env vars)
 - DM response parsing and normalization
 - safe `STATE_DELTA` extraction
 
