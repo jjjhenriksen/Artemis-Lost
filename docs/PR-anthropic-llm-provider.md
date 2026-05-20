@@ -26,7 +26,7 @@ Players and deployers may prefer Claude over OpenAI. Anthropic does not support 
 - [ ] `npm run dev` — open http://localhost:5173 and complete at least one DM turn
 - [ ] `GET /api/health` returns `llmConfigured: true`, `llmProvider: "anthropic"`, and the configured model
 - [ ] Default OpenAI configuration still works when `LLM_PROVIDER=openai` (or unset) and `OPENAI_API_KEY` is set
-- [ ] `npm test` on Node **≥ 20.19.0** (see README; `llmConfig` unit tests included)
+- [ ] `npm test` passes (includes `llmConfig` unit tests; repo pins `jsdom@25` for Node 20.18+)
 
 ## Notes
 

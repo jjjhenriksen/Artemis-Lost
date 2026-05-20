@@ -68,15 +68,11 @@ npm run preview
 Run the test suite:
 
 ```bash
+npm install
 npm test
 ```
 
-Tests require **Node.js 20.19.0 or newer** (see `jsdom@29`). The app itself runs on Node 20.18+, but upgrade Node if `npm test` fails with `ERR_REQUIRE_ESM`:
-
-```bash
-nvm install 20.19
-nvm use 20.19
-```
+If you see `ERR_REQUIRE_ESM` from `html-encoding-sniffer`, reinstall dependencies so `jsdom@25` is used (not `jsdom@29`).
 
 Run tests in watch mode:
 
