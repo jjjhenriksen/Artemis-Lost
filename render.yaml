@@ -7,7 +7,13 @@ services:
     startCommand: npm start
     healthCheckPath: /healthz
     envVars:
+      - key: LLM_PROVIDER
+        value: openai
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_MODEL
         value: gpt-4.1-mini
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-sonnet-4-6

@@ -34,7 +34,7 @@ This document describes the current end-to-end runtime flow for a mission turn.
    - mission-seed context already embedded into `worldState`
    - vault static context
    - vault dynamic session context
-9. OpenAI returns narration plus a `STATE_DELTA` block.
+9. The configured LLM provider (OpenAI or Anthropic) returns narration plus a `STATE_DELTA` block.
 10. The backend extracts and normalizes the delta.
 11. The frontend:
    - advances mission elapsed time

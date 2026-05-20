@@ -19,7 +19,7 @@ The app now includes:
 
 - Frontend: React + Vite
 - Backend: Express / Node server
-- Model provider: OpenAI Responses API
+- Model provider: OpenAI Responses API or Anthropic Claude Messages API
 - Persistence: browser-scoped slot saves plus vault-backed session mirrors
 
 ## Run
@@ -36,11 +36,19 @@ Create `.env` from `.env.example`:
 cp .env.example .env
 ```
 
-Then fill in:
+Then fill in either OpenAI or Claude:
 
 ```bash
+# OpenAI (default)
+LLM_PROVIDER=openai
 OPENAI_API_KEY=your_key_here
 OPENAI_MODEL=gpt-4.1-mini
+
+# Or Claude
+# LLM_PROVIDER=anthropic
+# ANTHROPIC_API_KEY=your_key_here
+# ANTHROPIC_MODEL=claude-sonnet-4-6
+
 DM_API_PORT=8787
 ```
 
@@ -60,8 +68,11 @@ npm run preview
 Run the test suite:
 
 ```bash
+npm install
 npm test
 ```
+
+If you see `ERR_REQUIRE_ESM` from `html-encoding-sniffer`, reinstall dependencies so `jsdom@25` is used (not `jsdom@29`).
 
 Run tests in watch mode:
 
@@ -85,8 +96,14 @@ The repo is now set up for single-service deployment on hosts like Render or Rai
 Required environment variables:
 
 ```bash
+# OpenAI
 OPENAI_API_KEY=your_key_here
 OPENAI_MODEL=gpt-4.1-mini
+
+# Or Claude
+LLM_PROVIDER=anthropic
+ANTHROPIC_API_KEY=your_key_here
+ANTHROPIC_MODEL=claude-sonnet-4-6
 ```
 
 Optional persistent storage variable:
@@ -104,7 +121,7 @@ DATABASE_URL=postgres://user:password@host/dbname?sslmode=require
 Operational endpoints:
 
 - `GET /healthz`: deployment health probe for the combined app
-- `GET /api/health`: runtime status including whether OpenAI is configured
+- `GET /api/health`: runtime status including `llmConfigured`, `llmProvider`, and active model
 
 Render path:
 

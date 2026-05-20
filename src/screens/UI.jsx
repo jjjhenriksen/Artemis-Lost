@@ -132,7 +132,7 @@ export default function ArtemisLost({
     });
 
     if (result.error) {
-      const errorNarration = `Could not reach the DM service.\n\n${result.error}\n\nCheck that both dev servers are running (\`npm run dev\`), your .env has OPENAI_API_KEY, and OPENAI_MODEL matches an available model.`;
+      const errorNarration = `Could not reach the DM service.\n\n${result.error}\n\nCheck that both dev servers are running (\`npm run dev\`), your .env has OPENAI_API_KEY or ANTHROPIC_API_KEY (with LLM_PROVIDER), and the model name matches an available model.`;
       const { nextWorldState, nextTurn } = resolveTurnWorldState({
         worldState: ws,
         activeCrew,

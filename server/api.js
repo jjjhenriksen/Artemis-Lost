@@ -5,12 +5,10 @@ import {
   createDmSystemPrompt,
   createDmUserPrompt,
 } from "./prompts.js";
+import { getLlmConfig } from "./llmConfig.js";
 import { formatVaultContext, loadVaultContext } from "./vault.js";
 
-const MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
-const OPENAI_API_URL = "https://api.openai.com/v1/responses";
-
-function extractResponseText(payload) {
+function extractOpenAiResponseText(payload) {
   if (typeof payload?.output_text === "string" && payload.output_text.trim()) {
     return payload.output_text.trim();
   }
@@ -30,6 +28,83 @@ function extractResponseText(payload) {
   return fragments.join("\n").trim();
 }
 
+function extractAnthropicResponseText(payload) {
+  const fragments = [];
+  for (const block of payload?.content || []) {
+    if (block?.type === "text" && typeof block.text === "string") {
+      fragments.push(block.text);
+    }
+  }
+  return fragments.join("\n").trim();
+}
+
+function getProviderErrorMessage(provider, payload, status) {
+  return (
+    payload?.error?.message ||
+    payload?.message ||
+    payload?.error?.type ||
+    `${provider} request failed (${status})`
+  );
+}
+
+async function requestLlmText({ systemPrompt, userPrompt }) {
+  const { provider, apiKey, model, apiUrl } = getLlmConfig();
+
+  if (provider === "anthropic") {
+    const res = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
+      }),
+    });
+
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(getProviderErrorMessage("Anthropic", payload, res.status));
+    }
+
+    const text = extractAnthropicResponseText(payload);
+    if (!text) {
+      throw new Error("Anthropic returned an empty response");
+    }
+
+    return text;
+  }
+
+  const res = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      instructions: systemPrompt,
+      input: userPrompt,
+    }),
+  });
+
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(getProviderErrorMessage("OpenAI", payload, res.status));
+  }
+
+  const text = extractOpenAiResponseText(payload);
+  if (!text) {
+    throw new Error("OpenAI returned an empty response");
+  }
+
+  return text;
+}
+
 export async function requestDmTurn({
   worldState,
   action,
@@ -44,39 +119,17 @@ export async function requestDmTurn({
     })
   );
 
-  const res = await fetch(OPENAI_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      instructions: createDmSystemPrompt(),
-      input: createDmUserPrompt({
-        worldState,
-        action,
-        activeCrew,
-        conversationHistory,
-        currentTurn,
-        vaultContext,
-      }),
+  const text = await requestLlmText({
+    systemPrompt: createDmSystemPrompt(),
+    userPrompt: createDmUserPrompt({
+      worldState,
+      action,
+      activeCrew,
+      conversationHistory,
+      currentTurn,
+      vaultContext,
     }),
   });
-
-  const payload = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const message =
-      payload?.error?.message ||
-      payload?.message ||
-      `OpenAI request failed (${res.status})`;
-    throw new Error(message);
-  }
-
-  const text = extractResponseText(payload);
-  if (!text) {
-    throw new Error("OpenAI returned an empty response");
-  }
 
   return extractTurnResult(text);
 }
@@ -94,44 +147,34 @@ export async function requestAutonomousCrewAction({
     })
   );
 
-  const res = await fetch(OPENAI_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      instructions: createAutonomousCrewSystemPrompt(),
-      input: createAutonomousCrewUserPrompt({
-        worldState,
-        activeCrew,
-        conversationHistory,
-        currentTurn,
-        vaultContext,
-      }),
+  const text = await requestLlmText({
+    systemPrompt: createAutonomousCrewSystemPrompt(),
+    userPrompt: createAutonomousCrewUserPrompt({
+      worldState,
+      activeCrew,
+      conversationHistory,
+      currentTurn,
+      vaultContext,
     }),
   });
-
-  const payload = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const message =
-      payload?.error?.message ||
-      payload?.message ||
-      `OpenAI request failed (${res.status})`;
-    throw new Error(message);
-  }
-
-  const text = extractResponseText(payload);
-  if (!text) {
-    throw new Error("OpenAI returned an empty autonomous action");
-  }
 
   return text.replace(/\s+/g, " ").trim();
 }
 
 export function assertDmConfig() {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY is not set. Copy .env.example to .env and add your key.");
+  const { provider, apiKey } = getLlmConfig();
+
+  if (apiKey) {
+    return;
   }
+
+  if (provider === "anthropic") {
+    throw new Error(
+      "ANTHROPIC_API_KEY is not set. Copy .env.example to .env, set LLM_PROVIDER=anthropic, and add your key."
+    );
+  }
+
+  throw new Error(
+    "OPENAI_API_KEY is not set. Copy .env.example to .env and add your key, or switch to Claude with LLM_PROVIDER=anthropic."
+  );
 }
