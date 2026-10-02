@@ -17,6 +17,7 @@ export default function MainMenu({
   onLoadSlot,
   onNewMission,
   onResumeMission,
+  onMultiplayer,
 }) {
   const hasActiveMission = Boolean(activeSession?.worldState);
   const hasContinueSlot = Boolean(activeSlotId);
@@ -34,6 +35,7 @@ export default function MainMenu({
         </p>
 
         <div className="menu-actions">
+          {onMultiplayer ? <button className="menu-button" onClick={onMultiplayer}>Play co-op</button> : null}
           {hasContinueSlot ? (
             <button className="menu-button menu-button--primary" onClick={onContinue}>
               Continue {activeSlotId.toUpperCase()}

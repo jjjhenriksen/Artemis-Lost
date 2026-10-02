@@ -1,0 +1,39 @@
+.coop-shell { width: min(100%, 76rem); margin: 0 auto; padding: 1rem; color: var(--text-body); font-family: var(--font-ui); font-size: 1rem; line-height: 1.5; overflow-wrap: anywhere; }
+.coop-shell *, .coop-shell *::before, .coop-shell *::after { box-sizing: border-box; }
+.coop-shell h1, .coop-shell h2, .coop-shell h3 { color: var(--text-primary); line-height: 1.25; margin: 0 0 1rem; }
+.coop-shell h1 { font-size: clamp(1.5rem, 4vw, 2.5rem); }
+.coop-shell h2 { font-size: 1.25rem; }
+.coop-shell p { margin: 0 0 1rem; overflow-wrap: anywhere; }
+.coop-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.coop-eyebrow { font-size: .875rem; color: var(--text-muted); letter-spacing: .05em; }
+.coop-status { min-height: 2rem; color: var(--text-muted); margin: 1rem 0; }
+.coop-panel { background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: .5rem; padding: 1rem; min-width: 0; }
+.coop-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.coop-shell form, .coop-shell label { display: flex; flex-direction: column; gap: .5rem; }
+.coop-shell form { gap: 1rem; }
+.coop-shell label { margin: 1rem 0; }
+.coop-shell input, .coop-shell select, .coop-shell textarea { width: 100%; min-height: 2.75rem; padding: .75rem; background: var(--bg-root); color: var(--text-primary); border: 1px solid var(--border-main); border-radius: .25rem; font: inherit; }
+.coop-shell textarea { min-height: 6rem; resize: vertical; }
+.coop-shell button { min-height: 2.75rem; padding: .5rem 1rem; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-main); border-radius: .25rem; font: inherit; cursor: pointer; transition: background-color 150ms ease-out; }
+.coop-shell button:hover:not(:disabled), .coop-shell button[aria-pressed="true"] { background: var(--bg-card-active); }
+.coop-shell button:active:not(:disabled) { background: var(--bg-panel-alt); }
+.coop-shell button:disabled { cursor: not-allowed; opacity: .65; }
+.coop-shell .coop-primary { color: var(--text-good-strong); background: var(--bg-status-good); border-color: var(--border-good); }
+.coop-shell :is(button,input,select,textarea):focus-visible { outline: 2px solid var(--text-info); outline-offset: 3px; }
+.coop-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.coop-roster { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 1rem; }
+.coop-roster li { display: flex; flex-direction: column; gap: .25rem; }
+.coop-roster span, .coop-muted { color: var(--text-muted); }
+.coop-room-details { margin: 1rem 0 1.5rem; overflow-wrap: anywhere; }
+.coop-room-details code { font: inherit; color: var(--text-primary); user-select: all; }
+.coop-error, .coop-notice, .coop-pending { border-left: 3px solid var(--border-warn-strong); background: var(--bg-status-warn); color: var(--text-warn-soft); padding: 1rem; margin-bottom: 1rem; }
+.coop-chat { list-style: none; padding: 0; max-height: 20rem; overflow-y: auto; overflow-wrap: anywhere; }
+.coop-chat li { padding: .5rem 0; border-bottom: 1px solid var(--border-soft); }
+.coop-chat li p { white-space: pre-wrap; margin: .25rem 0; }
+.coop-narration { white-space: pre-wrap; max-width: 70ch; }
+.coop-telemetry { font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.coop-mission .role-view { margin: 1rem 0; }
+.coop-mission .role-view__key, .coop-mission .role-view__value, .coop-mission .role-view__console-copy, .coop-mission .role-view__console-title { font-size: .875rem; overflow-wrap: anywhere; }
+.coop-mission .role-view__key { color: var(--text-muted); }
+@media (min-width: 60rem) { .coop-shell { padding: 2rem; } .coop-grid { grid-template-columns: minmax(14rem, 1fr) minmax(0, 2fr); } .coop-mission { grid-row: span 2; } }
+@media (prefers-reduced-motion: reduce) { .coop-shell *, .coop-shell *::before, .coop-shell *::after { animation: none !important; transition: none !important; } }

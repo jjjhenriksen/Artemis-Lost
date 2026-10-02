@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import CharacterCreation from "../screens/CharacterCreation.jsx";
 import LaunchSequence from "../screens/LaunchSequence.jsx";
 import MainMenu from "../screens/MainMenu.jsx";
@@ -13,6 +13,8 @@ import {
 } from "../game/themes.js";
 import ArtemisLost from "../screens/UI.jsx";
 import { createMissionSession } from "../game/worldState.js";
+
+const Multiplayer = lazy(() => import("../screens/Multiplayer.jsx"));
 
 function getResolutionPreviewMode() {
   if (typeof window === "undefined") return null;
@@ -138,7 +140,7 @@ export default function App() {
     document.body.dataset.theme = themeId;
     document.body.dataset.themeFamily = themeFamily;
     document.body.dataset.themeMode = themeMode;
-    window.localStorage.setItem(THEME_STORAGE_KEY, themeId);
+    try { window.localStorage.setItem(THEME_STORAGE_KEY, themeId); } catch { /* Theme remains active when browser storage is unavailable. */ }
   }, [themeId]);
 
   function launchSession(slotId, session) {
@@ -221,6 +223,10 @@ export default function App() {
     );
   }
 
+  if (screen === "multiplayer") {
+    return <Suspense fallback={<div className="menu-loading" role="status">Connecting to shared mission control…</div>}><Multiplayer onBack={() => setScreen("menu")} /></Suspense>;
+  }
+
   if (screen === "launch" && activeSession?.worldState) {
     return (
       <LaunchSequence
@@ -282,6 +288,7 @@ export default function App() {
         setScreen("create");
       }}
       onResumeMission={handleResumeMission}
+      onMultiplayer={() => setScreen("multiplayer")}
     />
   );
 }
