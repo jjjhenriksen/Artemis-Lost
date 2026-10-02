@@ -50,16 +50,18 @@ function createMockPostgres() {
   function sql(strings, ...values) {
     const query = strings.join(" ").toLowerCase().replace(/\s+/g, " ").trim();
 
+    if (query.includes("pg_advisory_xact_lock")) return Promise.resolve([]);
+
     if (query.startsWith("create table")) return Promise.resolve([]);
 
     if (query.includes("select value from app_meta")) {
       return Promise.resolve(
-        state.meta.has("activeSlotId") ? [{ value: state.meta.get("activeSlotId") }] : []
+        state.meta.has(values[0]) ? [{ value: state.meta.get(values[0]) }] : []
       );
     }
 
     if (query.includes("insert into app_meta")) {
-      state.meta.set("activeSlotId", values[0]);
+      state.meta.set(values[0], values[1]);
       return Promise.resolve([]);
     }
 
@@ -98,6 +100,17 @@ function createMockPostgres() {
     throw new Error(`Unhandled query in mock postgres: ${query}`);
   }
 
+  sql.begin = async (operation) => {
+    const sessions = new Map(state.sessions);
+    const meta = new Map(state.meta);
+    try {
+      return await operation(sql);
+    } catch (error) {
+      state.sessions = sessions;
+      state.meta = meta;
+      throw error;
+    }
+  };
   sql.json = (value) => value;
   return sql;
 }
@@ -132,8 +145,9 @@ describe("sessionStore", () => {
   });
 
   test("uses database mode when DATABASE_URL is configured", async () => {
+    const dataDir = await mkdtemp(path.join(os.tmpdir(), "dungeonmaister-db-"));
     const sessionStore = await importSessionStoreWithEnv(
-      { DATABASE_URL: "postgres://example?sslmode=require" },
+      { DATA_DIR: dataDir, DATABASE_URL: "postgres://example?sslmode=require" },
       () => createMockPostgres()
     );
 
@@ -152,6 +166,7 @@ describe("sessionStore", () => {
       expect(loaded.narration).toBe("Database ready");
     } finally {
       sessionStore.restoreEnv();
+      await rm(dataDir, { recursive: true, force: true });
     }
   });
 
@@ -187,6 +202,25 @@ describe("sessionStore", () => {
 
       expect(listingA.slots.find((slot) => slot.id === "slot-1").session.narration).toBe("Player A save");
       expect(listingB.slots.find((slot) => slot.id === "slot-1").session.narration).toBe("Player B save");
+    } finally {
+      sessionStore.restoreEnv();
+      await rm(dataDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("validation before any storage mutation", () => {
+  test("rejects invalid direct calls without creating save or mirror paths", async () => {
+    const { readdir } = await import("node:fs/promises");
+    const dataDir = await mkdtemp(path.join(os.tmpdir(), "artemis-no-mutation-"));
+    const sessionStore = await importSessionStoreWithEnv({ DATA_DIR: dataDir });
+    try {
+      await expect(sessionStore.loadSession("unknown", "player")).rejects.toMatchObject({ status: 400 });
+      await expect(sessionStore.deleteSession("unknown", "player")).rejects.toMatchObject({ status: 400 });
+      await expect(sessionStore.saveSession("unknown", {}, "player")).rejects.toMatchObject({ status: 400 });
+      await expect(sessionStore.saveSession("slot-1", { worldState: {}, turn: 0 }, "player"))
+        .rejects.toMatchObject({ status: 400 });
+      expect(await readdir(dataDir)).toEqual([]);
     } finally {
       sessionStore.restoreEnv();
       await rm(dataDir, { recursive: true, force: true });
