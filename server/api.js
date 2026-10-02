@@ -47,11 +47,31 @@ function getProviderErrorMessage(provider, payload, status) {
   );
 }
 
-async function requestLlmText({ systemPrompt, userPrompt }) {
+async function requestLlmText({ systemPrompt, userPrompt, signal, timeoutMs = 30000 }) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const requestSignal = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
+  try {
+    return await requestProviderText({ systemPrompt, userPrompt, signal: requestSignal });
+  } catch (error) {
+    if (requestSignal.aborted) {
+      const timeoutError = new Error("The narration service timed out. Retry the turn.");
+      timeoutError.status = 504;
+      timeoutError.code = "TURN_TIMEOUT";
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function requestProviderText({ systemPrompt, userPrompt, signal }) {
   const { provider, apiKey, model, apiUrl } = getLlmConfig();
 
   if (provider === "anthropic") {
     const res = await fetch(apiUrl, {
+      signal,
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -80,6 +100,7 @@ async function requestLlmText({ systemPrompt, userPrompt }) {
   }
 
   const res = await fetch(apiUrl, {
+    signal,
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -111,15 +132,21 @@ export async function requestDmTurn({
   activeCrew,
   conversationHistory = [],
   currentTurn = 0,
+  sharedRoom = false,
+  signal,
+  timeoutMs,
 }) {
   const vaultContext = formatVaultContext(
     await loadVaultContext({
       worldState,
       activeCrew,
+      sharedRoom,
     })
   );
 
   const text = await requestLlmText({
+    signal,
+    timeoutMs,
     systemPrompt: createDmSystemPrompt(),
     userPrompt: createDmUserPrompt({
       worldState,
