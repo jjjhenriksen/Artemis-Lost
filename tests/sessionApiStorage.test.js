@@ -54,7 +54,8 @@ test("valid full fixture round-trips through the API and mirror generation", asy
   expect(response.status).toBe(200);
   const loaded = await request(app).get("/api/session/slot-2").set("x-player-id", "player");
   expect(loaded.body.session.worldState).toEqual(response.body.session.worldState);
-  expect((await snapshot())["vault/dynamic/session-state.md"]).toContain("slot: slot-2");
+  const { getOwnerMirrorPaths } = await import("../server/sessionMirrors.js");
+  expect(await readFile(getOwnerMirrorPaths("player").sessionStateMdPath, "utf8")).toContain("slot: slot-2");
   expect(saved.slotId).toBe("slot-1");
 });
 
