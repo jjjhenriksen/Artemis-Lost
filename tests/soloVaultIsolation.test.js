@@ -55,6 +55,11 @@ test("alternating synthetic players isolate mirrors, overrides and both provider
       }
     }
     const session = createMissionSession();
+    const traversal = { worldState: session.worldState, activeCrew: { ...session.worldState.crew[0], id: "../../dynamic/players/owner-player-b/session-state" }, action: "Check the cabin" };
+    for (const endpoint of ["/api/turn", "/api/autonomous-action"]) {
+      expect((await request(app).post(endpoint).set("x-player-id", "player-a").send(traversal)).status).toBe(200);
+      expect(prompts.at(-1)).not.toContain("PLAYER-B_PRIVATE_MARKER");
+    }
     const badOverride = getOwnerMirrorPaths("player-a").locationDeltaPath;
     await rm(badOverride);
     await mkdir(badOverride);

@@ -29,7 +29,8 @@ function trimToSection(label, content) {
 
 async function readStaticContext(worldState, activeCrew) {
   const locationSlug = slugify(worldState?.environment?.location);
-  const crewId = activeCrew?.id;
+  const crewId = typeof activeCrew?.id === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(activeCrew.id)
+    ? activeCrew.id : "";
 
   const [locationFile, crewFile, missionBrief, anomaly] = await Promise.all([
     locationSlug
