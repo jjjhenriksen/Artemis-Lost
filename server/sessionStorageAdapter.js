@@ -101,7 +101,11 @@ async function ensureDatabaseSchema() {
         value jsonb not null
       )
     `;
-  })();
+  })().catch((error) => {
+    // Share one in-flight attempt, but do not permanently cache an outage.
+    schemaReadyPromise = null;
+    throw error;
+  });
 
   return schemaReadyPromise;
 }

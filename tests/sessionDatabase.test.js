@@ -135,3 +135,44 @@ describe.skipIf(!testUrl)("real PostgreSQL session transactions", () => {
     expect((await snapshot()).meta[0].value).toEqual({ slotId: null });
   });
 });
+
+describe.skipIf(!testUrl)("schema initialization recovery without process restart", () => {
+  let admin, adapter, root, schema;
+  const clients = [], queries = [];
+  beforeAll(async () => {
+    schema = `artemis_retry_${randomUUID().replaceAll("-", "")}`;
+    root = await mkdtemp(path.join(os.tmpdir(), "artemis-db-retry-"));
+    admin = postgres(testUrl, { ssl: false });
+    vi.stubEnv("DATA_DIR", root); vi.stubEnv("DATABASE_URL", testUrl); vi.resetModules();
+    vi.doMock("postgres", () => ({ default: (url, options) => {
+      const client = postgres(url, { ...options, ssl: false, connection: { search_path: schema },
+        debug: (_, query) => { if (/create table/i.test(query)) queries.push(query); } });
+      clients.push(client); return client;
+    } }));
+    const { createSessionStorageAdapter } = await import("../server/sessionStorageAdapter.js");
+    adapter = createSessionStorageAdapter(SAVE_SLOTS);
+  });
+  afterAll(async () => {
+    vi.doUnmock("postgres"); vi.unstubAllEnvs();
+    await Promise.all(clients.map((client) => client.end({ timeout: 1 })));
+    if (admin) { await admin.unsafe(`drop schema if exists ${schema} cascade`); await admin.end({ timeout: 1 }); }
+    if (root) await rm(root, { recursive: true, force: true });
+  });
+  test("shares a failed real database attempt, retries after recovery and caches success", async () => {
+    // The isolated search_path schema does not exist yet: PostgreSQL actually
+    // rejects CREATE TABLE. Recovery creates it without restarting the adapter.
+    const failures = await Promise.allSettled([adapter.ensurePaths(), adapter.ensurePaths()]);
+    expect(failures.every((result) => result.status === "rejected")).toBe(true);
+    expect(failures[0].reason).toMatchObject({ code: "3F000" });
+    expect(queries).toHaveLength(1);
+    await admin.unsafe(`create schema ${schema}`);
+    await Promise.all([adapter.ensurePaths(), adapter.ensurePaths()]);
+    expect(queries).toHaveLength(3);
+    const payload = { ...createMissionSession(), narration: "Recovered", lastUpdatedIso: "2026-01-01T00:00:00.000Z" };
+    await adapter.saveSession("slot-1", payload, "retry-player");
+    expect((await adapter.loadSession(undefined, "retry-player")).session.narration).toBe("Recovered");
+    expect((await adapter.listSessions("retry-player")).activeSlotId).toBe("slot-1");
+    await adapter.ensurePaths();
+    expect(queries).toHaveLength(3);
+  });
+});
