@@ -219,19 +219,24 @@ export function createSessionStorageAdapter(saveSlots) {
 
       if (databaseEnabled) {
         await ensureDatabaseSchema();
-        const resolvedSlotId = slotId || (await getActiveSlotIdFromDatabase(normalizedOwnerId));
-        if (!resolvedSlotId) return null;
-
         const sql = getSql();
-        const rows =
-          await sql`select payload, last_updated_iso from sessions where slot_id = ${getOwnedSlotKey(normalizedOwnerId, resolvedSlotId)} limit 1`;
-        const row = rows[0];
-        if (!row?.payload) return null;
+        return sql.begin(async (transaction) => {
+          await transaction`select pg_advisory_xact_lock(hashtextextended(${normalizedOwnerId}, 0))`;
+          const resolvedSlotId = slotId || (await getActiveSlotIdFromDatabase(normalizedOwnerId, transaction));
+          if (!resolvedSlotId) return null;
+          assertKnownSlot(resolvedSlotId);
 
-        return {
-          slotId: resolvedSlotId,
-          session: normalizePayload(row.payload, row.last_updated_iso),
-        };
+          const rows = await transaction`select payload, last_updated_iso from sessions
+            where slot_id = ${getOwnedSlotKey(normalizedOwnerId, resolvedSlotId)} limit 1`;
+          const row = rows[0];
+          if (!row?.payload) return null;
+
+          await setActiveSlotIdInDatabase(resolvedSlotId, normalizedOwnerId, transaction);
+          return {
+            slotId: resolvedSlotId,
+            session: normalizePayload(row.payload, row.last_updated_iso),
+          };
+        });
       }
 
       return withFilesystemOwner(normalizedOwnerId, async () => {

@@ -115,3 +115,16 @@ test("reports permission denial with a safe actionable message", async () => {
     vi.doUnmock("node:fs/promises");
   }
 });
+
+
+test("filesystem parity: loading an older slot updates listing and subsequent default load", async () => {
+  await adapter.saveSession("slot-1", { ...payload(), narration: "Older" }, "player");
+  await adapter.saveSession("slot-2", { ...payload(), narration: "Newer" }, "player");
+  await adapter.saveSession("slot-2", { ...payload(), narration: "Other player" }, "other-player");
+  expect((await adapter.loadSession("slot-1", "player")).session.narration).toBe("Older");
+  expect((await adapter.listSessions("player")).activeSlotId).toBe("slot-1");
+  expect(await adapter.loadSession(undefined, "player")).toMatchObject({ slotId: "slot-1", session: { narration: "Older" } });
+  expect((await adapter.listSessions("other-player")).activeSlotId).toBe("slot-2");
+  expect(await adapter.loadSession("slot-3", "player")).toBeNull();
+  expect((await adapter.listSessions("player")).activeSlotId).toBe("slot-1");
+});
