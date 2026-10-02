@@ -1,6 +1,7 @@
 /**
  * Calls the local dev proxy (see server/dmServer.mjs). Same-origin /api in dev via Vite proxy.
  */
+import { getPlayerId } from "./sessionApi.js";
 export async function requestDmTurn({
   worldState,
   action,
@@ -10,7 +11,7 @@ export async function requestDmTurn({
 }) {
   const res = await fetch("/api/turn", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-player-id": getPlayerId() },
     body: JSON.stringify({
       worldState,
       action,
@@ -36,7 +37,7 @@ export async function requestAutonomousAction({
 }) {
   const res = await fetch("/api/autonomous-action", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-player-id": getPlayerId() },
     body: JSON.stringify({
       worldState,
       activeCrew,

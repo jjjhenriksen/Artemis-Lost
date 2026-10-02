@@ -163,6 +163,7 @@ export function createApp(deps = {}) {
         activeCrew,
         conversationHistory,
         currentTurn,
+        ownerId: getOwnerIdFromRequest(req),
       });
 
       res.json({ narration, stateDelta });
@@ -194,6 +195,7 @@ export function createApp(deps = {}) {
         activeCrew,
         conversationHistory,
         currentTurn,
+        ownerId: getOwnerIdFromRequest(req),
       });
 
       res.json({ action });

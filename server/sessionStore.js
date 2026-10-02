@@ -1,17 +1,9 @@
-import { ensureSessionMirrorPaths, syncActiveMirror } from "./sessionMirrors.js";
+import { ensureSessionMirrorPaths, syncActiveMirror, normalizeSoloOwner as normalizeOwnerId } from "./sessionMirrors.js";
 import { createSessionStorageAdapter } from "./sessionStorageAdapter.js";
 import { SAVE_SLOTS, assertKnownSlot, assertValidSession } from "./sessionValidation.js";
 export { SAVE_SLOTS } from "./sessionValidation.js";
 
 const storageAdapter = createSessionStorageAdapter(SAVE_SLOTS);
-const DEFAULT_OWNER_ID = "local-player";
-
-function normalizeOwnerId(ownerId) {
-  if (!ownerId || typeof ownerId !== "string") return DEFAULT_OWNER_ID;
-  const normalized = ownerId.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
-  return normalized || DEFAULT_OWNER_ID;
-}
-
 function withSlotMetadata(slotId, session) {
   const slot = SAVE_SLOTS.find((entry) => entry.id === slotId);
   return {
@@ -32,12 +24,12 @@ function toSessionPayload(session) {
   };
 }
 
-export async function ensureSessionPaths() {
-  await Promise.all([storageAdapter.ensurePaths(), ensureSessionMirrorPaths()]);
+export async function ensureSessionPaths(ownerId) {
+  await Promise.all([storageAdapter.ensurePaths(), ensureSessionMirrorPaths(normalizeOwnerId(ownerId))]);
 }
 
 export async function listSessions(ownerId) {
-  await ensureSessionPaths();
+  await ensureSessionPaths(ownerId);
   const listing = await storageAdapter.listSessions(normalizeOwnerId(ownerId));
 
   return {
@@ -52,33 +44,33 @@ export async function listSessions(ownerId) {
 
 export async function loadSession(slotId, ownerId) {
   if (slotId !== undefined && slotId !== null) assertKnownSlot(slotId);
-  await ensureSessionPaths();
+  await ensureSessionPaths(ownerId);
   const loaded = await storageAdapter.loadSession(slotId, normalizeOwnerId(ownerId));
   if (!loaded) return null;
 
-  await syncActiveMirror(loaded.slotId, loaded.session, withSlotMetadata);
+  await syncActiveMirror(loaded.slotId, loaded.session, withSlotMetadata, normalizeOwnerId(ownerId));
   return withSlotMetadata(loaded.slotId, loaded.session);
 }
 
 export async function saveSession(slotId, session, ownerId) {
   assertKnownSlot(slotId);
   assertValidSession(session);
-  await ensureSessionPaths();
+  await ensureSessionPaths(ownerId);
 
   const payload = toSessionPayload(session);
   await storageAdapter.saveSession(slotId, payload, normalizeOwnerId(ownerId));
-  await syncActiveMirror(slotId, payload, withSlotMetadata);
+  await syncActiveMirror(slotId, payload, withSlotMetadata, normalizeOwnerId(ownerId));
 
   return withSlotMetadata(slotId, payload);
 }
 
 export async function deleteSession(slotId, ownerId) {
   assertKnownSlot(slotId);
-  await ensureSessionPaths();
+  await ensureSessionPaths(ownerId);
   const { deletedActiveSession } = await storageAdapter.deleteSession(slotId, normalizeOwnerId(ownerId));
 
   if (deletedActiveSession) {
-    await syncActiveMirror(null, null, withSlotMetadata);
+    await syncActiveMirror(null, null, withSlotMetadata, normalizeOwnerId(ownerId));
   }
 
   return { slotId, deleted: true };
