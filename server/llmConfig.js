@@ -6,6 +6,12 @@ export function getLlmProvider() {
   if (explicit === "openai" || explicit === "anthropic") {
     return explicit;
   }
+  if (explicit) {
+    throw Object.assign(new Error("Unsupported LLM_PROVIDER. Choose openai or anthropic, or leave it unset for key-based selection."), {
+      code: "INVALID_LLM_PROVIDER",
+      status: 503,
+    });
+  }
 
   if (process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY) {
     return "anthropic";
