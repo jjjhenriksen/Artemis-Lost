@@ -41,3 +41,14 @@ jobs:
           name: multiplayer-browser-proof
           path: output/playwright/
           retention-days: 7
+  windows-save-paths:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify portable save paths and actual filesystem behavior
+        run: npx vitest run tests/sessionFilePaths.test.js tests/sessionStorageAdapter.test.js --testNamePattern "portable|long owner|filesystem parity|serializes concurrent|corrupt owner index|missing save|reports malformed save"
