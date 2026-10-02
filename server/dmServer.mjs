@@ -12,6 +12,7 @@ import {
   loadSession,
   saveSession,
 } from "./sessionStore.js";
+import { assertKnownSlot, assertValidSession } from "./sessionValidation.js";
 import { dynamicVaultRoot, storageMode } from "./storagePaths.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -76,58 +77,49 @@ export function createApp(deps = {}) {
       const sessions = await listSessionsImpl(getOwnerIdFromRequest(req));
       res.json(sessions);
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: err.message || String(err) });
+      if (err.status !== 400) console.error(err);
+      res.status(err.status || 500).json({ error: err.message || String(err), code: err.code });
     }
   });
 
   app.get("/api/session/:slotId", async (req, res) => {
     try {
+      assertKnownSlot(req.params.slotId);
       const session = await loadSessionImpl(req.params.slotId, getOwnerIdFromRequest(req));
       res.json({ session });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: err.message || String(err) });
+      if (err.status !== 400) console.error(err);
+      res.status(err.status || 500).json({ error: err.message || String(err), code: err.code });
     }
   });
 
   app.put("/api/session/:slotId", async (req, res) => {
     try {
+      assertKnownSlot(req.params.slotId);
+      assertValidSession(req.body);
       const {
-        worldState,
-        narration,
-        turn,
-        conversationHistory = [],
-        createdFromCharacterCreation = false,
-      } = req.body || {};
-
-      if (!worldState || typeof turn !== "number") {
-        res.status(400).json({ error: "Missing worldState or turn" });
-        return;
-      }
-
+        worldState, narration = "", turn,
+        conversationHistory = [], createdFromCharacterCreation = false,
+      } = req.body;
       const session = await saveSessionImpl(req.params.slotId, {
-        worldState,
-        narration: narration || "",
-        turn,
-        conversationHistory,
-        createdFromCharacterCreation,
+        worldState, narration, turn, conversationHistory, createdFromCharacterCreation,
       }, getOwnerIdFromRequest(req));
 
       res.json({ session });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: err.message || String(err) });
+      if (err.status !== 400) console.error(err);
+      res.status(err.status || 500).json({ error: err.message || String(err), code: err.code });
     }
   });
 
   app.delete("/api/session/:slotId", async (req, res) => {
     try {
+      assertKnownSlot(req.params.slotId);
       const result = await deleteSessionImpl(req.params.slotId, getOwnerIdFromRequest(req));
       res.json(result);
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: err.message || String(err) });
+      if (err.status !== 400) console.error(err);
+      res.status(err.status || 500).json({ error: err.message || String(err), code: err.code });
     }
   });
 
