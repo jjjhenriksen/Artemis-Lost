@@ -4,7 +4,7 @@ Solo save requests, narration requests and autonomous action requests carry the
 same browser `x-player-id`. This identifier partitions local data; it is not an
 authentication credential. Co-op retains its separate authenticated room model.
 
-Dynamic mirrors now live under `vault/dynamic/players/<normalized-player-id>/`,
+Dynamic mirrors now live under `vault/dynamic/players/<portable-owner-path>/`,
 including session JSON, state, history and the two override files. Normalization
 matches the existing save adapter. Requests without an identifier use a separate
 `local-player` directory. They never read another browser's mirrors.

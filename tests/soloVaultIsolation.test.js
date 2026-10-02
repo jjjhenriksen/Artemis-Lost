@@ -17,9 +17,12 @@ test("alternating synthetic players isolate mirrors, overrides and both provider
   const { loadVaultContext } = await import("../server/vault.js");
   const { createApp } = await import("../server/dmServer.mjs");
   const root = path.join(directory, "vault", "dynamic");
-  for (const owner of ["CON", "PRN", "NUL", "../player-a", "\\..\\player-b"]) {
+  for (const owner of ["CON", "PRN", "NUL", "../player-a", "\\..\\player-b", "x".repeat(300)]) {
     const scoped = getOwnerMirrorPaths(owner).root;
-    expect(path.relative(path.join(root, "players"), scoped)).toMatch(/^owner-[a-z0-9_-]+$/);
+    const relative = path.relative(path.join(root, "players"), scoped);
+    expect(relative.startsWith("..") || path.isAbsolute(relative)).toBe(false);
+    expect(relative.split(path.sep).every((component) => component.length <= 66)).toBe(true);
+    expect(relative).toContain("owners-v1");
   }
   await mkdir(path.join(root, "overrides"), { recursive: true });
   for (const file of ["session.json", "session-state.md", "log.md", "overrides/npc-override.md", "overrides/location-delta.md"]) {
@@ -55,7 +58,8 @@ test("alternating synthetic players isolate mirrors, overrides and both provider
       }
     }
     const session = createMissionSession();
-    const traversal = { worldState: session.worldState, activeCrew: { ...session.worldState.crew[0], id: "../../dynamic/players/owner-player-b/session-state" }, action: "Check the cabin" };
+    const relativeOtherOwner = path.relative(path.join(root, "players"), getOwnerMirrorPaths("player-b").root).split(path.sep).join("/");
+    const traversal = { worldState: session.worldState, activeCrew: { ...session.worldState.crew[0], id: `../../dynamic/players/${relativeOtherOwner}/session-state` }, action: "Check the cabin" };
     for (const endpoint of ["/api/turn", "/api/autonomous-action"]) {
       expect((await request(app).post(endpoint).set("x-player-id", "player-a").send(traversal)).status).toBe(200);
       expect(prompts.at(-1)).not.toContain("PLAYER-B_PRIVATE_MARKER");

@@ -1,16 +1,14 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { atomicWriteFile } from "./atomicFile.js";
+import { getPortableOwnerRelativePath, normalizeOwnerId as normalizeSoloOwner } from "./sessionFilePaths.js";
 import { dynamicVaultRoot } from "./storagePaths.js";
 
 // Match the existing save partition. Legacy singleton files are deliberately
 // preserved but never imported: their last writer cannot be identified safely.
-export function normalizeSoloOwner(ownerId) {
-  const normalized = typeof ownerId === "string" ? ownerId.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "") : "";
-  return normalized || "local-player";
-}
+export { normalizeSoloOwner };
 export function getOwnerMirrorPaths(ownerId) {
-  const root = path.join(dynamicVaultRoot, "players", `owner-${normalizeSoloOwner(ownerId)}`);
+  const root = path.join(dynamicVaultRoot, "players", getPortableOwnerRelativePath(normalizeSoloOwner(ownerId)));
   const overridesRoot = path.join(root, "overrides");
   return { root, overridesRoot,
     sessionJsonPath: path.join(root, "session.json"),
