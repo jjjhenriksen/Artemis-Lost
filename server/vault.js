@@ -44,7 +44,9 @@ async function readStaticContext(worldState, activeCrew) {
   };
 }
 
-export async function loadVaultContext({ worldState, activeCrew }) {
+export async function loadVaultContext({ worldState, activeCrew, sharedRoom = false }) {
+  // Shared missions never read the singleton solo session, log or override files.
+  if (sharedRoom) return readStaticContext(worldState, activeCrew);
   const [staticContext, sessionState, log, npcOverride, locationDelta] = await Promise.all([
     readStaticContext(worldState, activeCrew),
     safeRead(path.join(dynamicVaultRoot, "session-state.md")),
