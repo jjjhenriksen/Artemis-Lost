@@ -17,6 +17,10 @@ test("alternating synthetic players isolate mirrors, overrides and both provider
   const { loadVaultContext } = await import("../server/vault.js");
   const { createApp } = await import("../server/dmServer.mjs");
   const root = path.join(directory, "vault", "dynamic");
+  for (const owner of ["CON", "PRN", "NUL", "../player-a", "\\..\\player-b"]) {
+    const scoped = getOwnerMirrorPaths(owner).root;
+    expect(path.relative(path.join(root, "players"), scoped)).toMatch(/^owner-[a-z0-9_-]+$/);
+  }
   await mkdir(path.join(root, "overrides"), { recursive: true });
   for (const file of ["session.json", "session-state.md", "log.md", "overrides/npc-override.md", "overrides/location-delta.md"]) {
     await writeFile(path.join(root, file), "UNIDENTIFIED_LEGACY_PRIVATE_MARKER");

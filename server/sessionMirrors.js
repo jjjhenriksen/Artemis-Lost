@@ -10,7 +10,7 @@ export function normalizeSoloOwner(ownerId) {
   return normalized || "local-player";
 }
 export function getOwnerMirrorPaths(ownerId) {
-  const root = path.join(dynamicVaultRoot, "players", normalizeSoloOwner(ownerId));
+  const root = path.join(dynamicVaultRoot, "players", `owner-${normalizeSoloOwner(ownerId)}`);
   const overridesRoot = path.join(root, "overrides");
   return { root, overridesRoot,
     sessionJsonPath: path.join(root, "session.json"),
