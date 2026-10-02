@@ -129,5 +129,9 @@ export function formatVaultContext(vaultContext, budget = getVaultContextBudget(
   if (!Number.isSafeInteger(limit) || limit < 64) {
     throw Object.assign(new Error("Vault context budget is too small."), { status: 503, code: "INVALID_CONTEXT_BUDGET" });
   }
-  return prefix + sections.map(([title, value, recent]) => `## ${title}\n${clipped(value, limit, recent)}`).join("\n\n");
+  return prefix + sections.map(([title, value, recent]) => {
+    const heading = `## ${title}\n`;
+    const contentLimit = Math.min(limit, budget.sectionMaxBytes - Buffer.byteLength(heading));
+    return heading + clipped(value, contentLimit, recent);
+  }).join("\n\n");
 }

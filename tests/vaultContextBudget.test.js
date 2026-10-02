@@ -14,8 +14,28 @@ test("per-section and total context budgets include metadata even when every sec
   const budget = { sectionMaxBytes: 4000, totalMaxBytes: 4096 };
   const formatted = formatVaultContext(context, budget);
   expect(Buffer.byteLength(formatted)).toBeLessThanOrEqual(budget.totalMaxBytes);
-  for (const section of formatted.split(/^## /m).slice(1)) {
-    expect(Buffer.byteLength(section.slice(section.indexOf("\n") + 1).trimEnd())).toBeLessThanOrEqual(budget.sectionMaxBytes);
+  for (const section of formatted.split(/\n\n(?=## )/).slice(1)) {
+    expect(Buffer.byteLength(section)).toBeLessThanOrEqual(budget.sectionMaxBytes);
+    expect(section).toContain("Context truncated:");
+    expect(section).not.toContain("�");
+  }
+});
+
+test.each([
+  { sectionMaxBytes: 256, totalMaxBytes: 262144 },
+  { sectionMaxBytes: 65536, totalMaxBytes: 2048 },
+  { sectionMaxBytes: 256, totalMaxBytes: 2048 },
+  { sectionMaxBytes: 65536, totalMaxBytes: 262144 },
+])("rendered Unicode sections include headings/notices within %j", (budget) => {
+  const context = Object.fromEntries(["location", "crew", "missionBrief", "anomaly", "sessionState", "log", "npcOverride", "locationDelta"]
+    .map((key) => [key, "🌘é漢".repeat(40000)]));
+  const formatted = formatVaultContext(context, budget);
+  const sections = formatted.split(/\n\n(?=## )/).slice(1);
+  expect(sections).toHaveLength(8);
+  expect(Buffer.byteLength(formatted)).toBeLessThanOrEqual(budget.totalMaxBytes);
+  for (const section of sections) {
+    expect(Buffer.byteLength(section)).toBeLessThanOrEqual(budget.sectionMaxBytes);
+    expect(section).toMatch(/^## /);
     expect(section).toContain("Context truncated:");
     expect(section).not.toContain("�");
   }
