@@ -41,6 +41,16 @@ test("quota failures do not generate a new identity for every request", async ()
   await verifyStableNetworkIdentity();
 });
 
+test("a denied read cannot overwrite a previously stored identity through an allowed write", async () => {
+  window.localStorage.setItem("artemis-lost-player-id", "existing-player-123");
+  const read = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new DOMException("Read denied", "SecurityError"); });
+  const write = vi.spyOn(Storage.prototype, "setItem");
+  await verifyStableNetworkIdentity();
+  expect(write).not.toHaveBeenCalled();
+  read.mockRestore();
+  expect(window.localStorage.getItem("artemis-lost-player-id")).toBe("existing-player-123");
+});
+
 test("an existing identity remains stable if storage becomes unavailable later", async () => {
   window.localStorage.setItem("artemis-lost-player-id", "existing-player-123");
   const api = await import("../src/services/sessionApi.js");

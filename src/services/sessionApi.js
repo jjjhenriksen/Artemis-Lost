@@ -20,6 +20,9 @@ export function getPlayerId() {
     }
   } catch {
     // Privacy settings can deny both the storage getter and individual reads.
+    // Do not overwrite an existing identity that could not be read.
+    memoryPlayerId ||= createPlayerId();
+    return memoryPlayerId;
   }
 
   memoryPlayerId ||= createPlayerId();
