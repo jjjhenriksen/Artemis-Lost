@@ -177,13 +177,13 @@ export function createSessionStorageAdapter(saveSlots) {
         await ensureDatabaseSchema();
         const sql = getSql();
         const [rows, activeSlotId] = await Promise.all([
-          sql`select slot_id, payload, last_updated_iso from sessions`,
+          sql`select slot_id, payload, last_updated_iso from sessions
+            where slot_id in ${sql(saveSlots.map(({ id }) => getOwnedSlotKey(normalizedOwnerId, id)))}`,
           getActiveSlotIdFromDatabase(normalizedOwnerId),
         ]);
 
         const sessionsBySlotId = new Map(
           rows
-            .filter((row) => row.slot_id.startsWith(`${normalizedOwnerId}:`))
             .map((row) => [
               row.slot_id.replace(`${normalizedOwnerId}:`, ""),
               normalizePayload(row.payload, row.last_updated_iso),

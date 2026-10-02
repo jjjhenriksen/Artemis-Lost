@@ -12,7 +12,7 @@ import { SAVE_SLOTS } from "../server/sessionValidation.js";
 const testUrl = process.env.ARTEMIS_TEST_DATABASE_URL;
 describe.skipIf(!testUrl)("real PostgreSQL session transactions", () => {
   let admin, control, adapter, root, schema;
-  const clients = [];
+  const clients = [], fetchedSlotKeys = [], listingQueries = [];
   beforeAll(async () => {
     schema = `artemis_test_${randomUUID().replaceAll("-", "")}`;
     root = await mkdtemp(path.join(os.tmpdir(), "artemis-db-"));
@@ -23,7 +23,10 @@ describe.skipIf(!testUrl)("real PostgreSQL session transactions", () => {
     vi.stubEnv("DATABASE_URL", testUrl);
     vi.resetModules();
     vi.doMock("postgres", () => ({ default: (url, options) => {
-      const client = postgres(url, { ...options, ssl: false, connection: { search_path: schema } });
+      const client = postgres(url, { ...options, ssl: false, connection: { search_path: schema },
+        debug: (_, query, parameters) => { if (/select slot_id, payload/i.test(query)) listingQueries.push({ query, parameters: [...parameters] }); },
+        transform: { row: (row) => { if (row.slot_id && row.payload) fetchedSlotKeys.push(row.slot_id); return row; } },
+      });
       clients.push(client);
       return client;
     } }));
@@ -47,6 +50,7 @@ describe.skipIf(!testUrl)("real PostgreSQL session transactions", () => {
   beforeEach(async () => {
     await control`update fault_control set enabled = false`;
     await control`truncate sessions, app_meta`;
+    fetchedSlotKeys.length = 0; listingQueries.length = 0;
   });
   afterAll(async () => {
     vi.doUnmock("postgres");
@@ -101,6 +105,22 @@ describe.skipIf(!testUrl)("real PostgreSQL session transactions", () => {
     expect(await snapshot()).toEqual(before);
     await control`update fault_control set enabled = false`;
     expect((await adapter.loadSession(undefined, "owner-a")).slotId).toBe("slot-2");
+  });
+
+  test("owner listing fetches only its exact three known keys at the SQL boundary", async () => {
+    await adapter.saveSession("slot-1", payload("Requested first"), "owner_a");
+    await adapter.saveSession("slot-3", payload("Requested third"), "owner_a");
+    await adapter.saveSession("slot-1", payload("Unrelated prefix"), "owner_a-shadow");
+    await adapter.saveSession("slot-1", payload("Unrelated wildcard"), "ownerxa");
+    await control`insert into sessions (slot_id, payload, last_updated_iso)
+      values (${"owner_a:slot-99"}, ${control.json(payload("Unknown slot"))}, ${"2026-01-01T00:00:00.000Z"})`;
+    const listing = await adapter.listSessions("OWNER_A");
+    expect(listing.slots.map((slot) => slot.id)).toEqual(["slot-1", "slot-2", "slot-3"]);
+    expect(listing.slots.map((slot) => slot.session?.narration || null)).toEqual(["Requested first", null, "Requested third"]);
+    expect(fetchedSlotKeys.sort()).toEqual(["owner_a:slot-1", "owner_a:slot-3"]);
+    expect(listingQueries).toHaveLength(1);
+    expect(listingQueries[0].query).toMatch(/where slot_id in/i);
+    expect(listingQueries[0].parameters).toEqual(["owner_a:slot-1", "owner_a:slot-2", "owner_a:slot-3"]);
   });
 
   test("rolls back an existing slot replacement when metadata fails", async () => {
