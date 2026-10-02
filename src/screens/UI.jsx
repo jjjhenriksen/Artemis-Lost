@@ -34,6 +34,13 @@ function createFallbackSession() {
   };
 }
 
+function RecoveryAlert({ message, label, onRetry, disabled = false }) {
+  return <div className="mission-alert" role="alert" style={{ fontSize: "0.875rem", lineHeight: 1.5 }}>
+    <p>{message}</p>
+    <button className="header-button" style={{ minHeight: "2.75rem", fontSize: "inherit", justifySelf: "start" }} disabled={disabled} onClick={onRetry}>{label}</button>
+  </div>;
+}
+
 export default function ArtemisLost({
   initialSession,
   slotId,
@@ -56,8 +63,19 @@ export default function ArtemisLost({
   const [botPreview, setBotPreview] = useState("");
   const [narrationReady, setNarrationReady] = useState(false);
   const [botPreviewLoading, setBotPreviewLoading] = useState(false);
+  const [turnError, setTurnError] = useState("");
+  const [botPreviewError, setBotPreviewError] = useState("");
+  const [previewAttempt, setPreviewAttempt] = useState(0);
   const [showResolutionScreen, setShowResolutionScreen] = useState(false);
   const inputRef = useRef(null);
+  const turnPendingRef = useRef(false);
+  const plannedPreviewRef = useRef(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const activeCrew = ws.crew[turn];
   const roleView = useMemo(() => getViewForRole(ws, turn), [ws, turn]);
@@ -87,7 +105,10 @@ export default function ArtemisLost({
   async function saveCurrentSession(overrides = {}) {
     const payload = buildSessionPayload(overrides);
     setSaveState("saving");
-    const persisted = await persistSession(slotId, payload);
+    let persisted;
+    try { persisted = await persistSession(slotId, payload); }
+    catch { if (mountedRef.current) setSaveState("error"); return; }
+    if (!mountedRef.current) return;
     if (!persisted?.error) {
       setSaveState("saved");
       onSessionPersisted?.(persisted);
@@ -110,10 +131,12 @@ export default function ArtemisLost({
   }, [missionResolved]);
 
   async function resolveTurn(action) {
-    if (!action.trim() || waiting || missionResolved) return;
+    if (!action.trim() || turnPendingRef.current || missionResolved) return false;
     const actionText = action.trim();
 
+    turnPendingRef.current = true;
     setWaiting(true);
+    setTurnError("");
 
     const nextConversationHistory = appendConversationEntry(conversationHistory, {
       role: "user",
@@ -121,40 +144,22 @@ export default function ArtemisLost({
       crewName: activeCrew.name,
       content: actionText,
     });
-    setConversationHistory(nextConversationHistory);
-
-    const result = await requestDmTurn({
-      worldState: ws,
-      action: actionText,
-      activeCrew,
-      conversationHistory: nextConversationHistory,
-      currentTurn: turn,
-    });
-
-    if (result.error) {
-      const errorNarration = `Could not reach the DM service.\n\n${result.error}\n\nCheck that both dev servers are running (\`npm run dev\`), your .env has OPENAI_API_KEY or ANTHROPIC_API_KEY (with LLM_PROVIDER), and the model name matches an available model.`;
-      const { nextWorldState, nextTurn } = resolveTurnWorldState({
-        worldState: ws,
-        activeCrew,
-        actionText,
-        currentTurn: turn,
+    let result;
+    try {
+      result = await requestDmTurn({
+        worldState: ws, action: actionText, activeCrew,
+        conversationHistory: nextConversationHistory, currentTurn: turn,
       });
-      const nextOutcome = nextWorldState?.mission?.outcome || missionOutcome;
-      const resolvedNarration =
-        missionOutcome.status === "active" && nextOutcome.status !== "active"
-          ? `${errorNarration}\n\n${nextOutcome.title}: ${nextOutcome.summary}`
-          : errorNarration;
-
-      setNarration(resolvedNarration);
-      setWs(nextWorldState);
-      await saveCurrentSession({
-        worldState: nextWorldState,
-        narration: resolvedNarration,
-        turn: nextTurn,
-        conversationHistory: nextConversationHistory,
-      });
-      completeTurn(nextTurn);
-      return;
+      if (!mountedRef.current) { turnPendingRef.current = false; return false; }
+      if (result?.error || typeof result?.narration !== "string") throw new Error("Narration unavailable");
+    } catch {
+      turnPendingRef.current = false;
+      if (mountedRef.current) {
+        setWaiting(false);
+        setTurnError("Mission control could not resolve this action. Your mission and action are unchanged. Retry when connected.");
+        inputRef.current?.focus();
+      }
+      return false;
     }
 
     const { narration: nextText, stateDelta } = result;
@@ -187,49 +192,60 @@ export default function ArtemisLost({
       conversationHistory: assistantHistory,
     });
     completeTurn(nextTurn);
+    turnPendingRef.current = false;
+    return true;
   }
 
   async function handleSubmit() {
     if (!input.trim() || waiting || isBotTurn || missionResolved) return;
     const action = input.trim();
-    setInput("");
-    await resolveTurn(action);
+    if (await resolveTurn(action)) setInput("");
   }
 
   useEffect(() => {
-    if (!isBotTurn || waiting || !activeCrew || missionResolved) {
+    if (waiting) return undefined;
+    if (!isBotTurn || !activeCrew || missionResolved) {
       setBotPreview("");
       setBotPreviewLoading(false);
+      setBotPreviewError("");
+      plannedPreviewRef.current = null;
       return;
     }
 
+    const planned = plannedPreviewRef.current;
+    if (planned?.worldState === ws && planned.turn === turn && planned.attempt === previewAttempt) return undefined;
+    plannedPreviewRef.current = { worldState: ws, turn, attempt: previewAttempt };
+
     let cancelled = false;
+    let finished = false;
     const fallbackAction = createBotAction(ws, activeCrew);
     setBotPreview(fallbackAction);
     setBotPreviewLoading(true);
+    setBotPreviewError("");
 
     async function hydrateAutonomousAction() {
-      const result = await requestAutonomousAction({
-        worldState: ws,
-        activeCrew,
-        conversationHistory,
-        currentTurn: turn,
-      });
-
-      if (cancelled) return;
-
-      if (!result?.error && typeof result?.action === "string" && result.action.trim()) {
+      try {
+        const result = await requestAutonomousAction({ worldState: ws, activeCrew, conversationHistory, currentTurn: turn });
+        if (cancelled) return;
+        if (result?.error || typeof result?.action !== "string" || !result.action.trim()) throw new Error("Autonomous plan unavailable");
         setBotPreview(result.action.trim());
+      } catch {
+        if (cancelled) return;
+        setBotPreview("");
+        setBotPreviewError("The AI crew could not prepare an action. Your mission is unchanged. Retry planning when connected.");
+      } finally {
+        finished = true;
+        if (!cancelled) setBotPreviewLoading(false);
       }
-      setBotPreviewLoading(false);
     }
 
     hydrateAutonomousAction();
 
     return () => {
       cancelled = true;
+      if (!finished) plannedPreviewRef.current = null;
     };
-  }, [activeCrew, conversationHistory, isBotTurn, turn, waiting, ws, missionResolved]);
+  }, [activeCrew, conversationHistory, isBotTurn, turn, waiting, ws, missionResolved, previewAttempt]);
 
   async function handleAdvanceAutonomousTurn() {
     if (!isBotTurn || !botPreview || waiting || !narrationReady || missionResolved) return;
@@ -311,8 +327,9 @@ export default function ArtemisLost({
           />
         </div>
 
-        <div className="app-grid__action">
-          <ActionInput
+        <div className="app-grid__action" style={{ flexDirection: "column" }}>
+          {turnError ? <RecoveryAlert message={turnError} label="Retry action" disabled={waiting} onRetry={isBotTurn ? handleAdvanceAutonomousTurn : handleSubmit} /> : null}
+          {botPreviewError ? <RecoveryAlert message={botPreviewError} label="Retry AI planning" onRetry={() => setPreviewAttempt((attempt) => attempt + 1)} /> : <ActionInput
             activeCrew={activeCrew}
             input={input}
             inputRef={inputRef}
@@ -326,7 +343,7 @@ export default function ArtemisLost({
             narrationReady={narrationReady}
             uiState={uiState}
             missionResolved={missionResolved}
-          />
+          />}
         </div>
 
         <div className="sidebar-panel app-grid__bottom">
