@@ -24,6 +24,9 @@ export async function requestDmTurn({
   if (!res.ok) {
     return {
       error: data.error || data.message || `Request failed (${res.status})`,
+      code: data.code,
+      retryable: data.retryable === true,
+      status: res.status,
     };
   }
   return data;
@@ -49,6 +52,9 @@ export async function requestAutonomousAction({
   if (!res.ok) {
     return {
       error: data.error || data.message || `Request failed (${res.status})`,
+      code: data.code,
+      retryable: data.retryable === true,
+      status: res.status,
     };
   }
   return data;
