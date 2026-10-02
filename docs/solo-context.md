@@ -26,3 +26,12 @@ the prompt builder's recent conversation history.
 
 Stored saves and mirrored logs retain their full content. Budgeting happens when
 formatting model context; it never rewrites or truncates persisted history.
+
+Both provider transports abort stalled requests and stalled response-body reads.
+`LLM_TIMEOUT_MS` defaults to 30,000 ms and accepts integer values from 1 through
+120,000. Invalid settings reject a call with `INVALID_PROVIDER_TIMEOUT` before
+starting its network request. Solo DM and autonomous endpoints return HTTP 504,
+`code: TURN_TIMEOUT` and `retryable: true` for a timeout. Client helpers retain
+these fields, so callers can distinguish this failure from a normal response.
+No automatic retry invokes a provider a second time. Co-op keeps its additional
+30-second authoritative turn deadline and durable command receipts.

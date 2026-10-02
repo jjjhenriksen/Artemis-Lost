@@ -11,3 +11,10 @@ test("solo DM and AI actions use the same existing player partition as saved ses
   expect(fetch).toHaveBeenCalledTimes(2);
   for (const [, init] of fetch.mock.calls) expect(init.headers["x-player-id"]).toBe("fixture-player");
 });
+
+test("client callers retain distinguishable retryable timeout information", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 504, json: async () => ({ error: "Timed out", code: "TURN_TIMEOUT", retryable: true }) })));
+  for (const invoke of [requestDmTurn, requestAutonomousAction]) {
+    expect(await invoke({ worldState: {}, activeCrew: {}, action: "Fixture" })).toMatchObject({ code: "TURN_TIMEOUT", retryable: true, status: 504 });
+  }
+});

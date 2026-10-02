@@ -34,6 +34,16 @@ function getOwnerIdFromRequest(req) {
   return headerValue || "local-player";
 }
 
+function sendTurnError(res, error) {
+  if (error.code === "TURN_TIMEOUT") {
+    return res.status(504).json({ error: "The narration service timed out. Retry the turn.", code: "TURN_TIMEOUT", retryable: true });
+  }
+  const status = Number.isInteger(error.status) && error.status >= 400 && error.status <= 599
+    ? error.status : /API_KEY is not set/.test(error.message || "") ? 503 : 500;
+  if (status === 500) console.error(error);
+  return res.status(status).json({ error: error.message || String(error), code: error.code });
+}
+
 export function createApp(deps = {}) {
   const {
     assertConfig = assertDmConfig,
@@ -168,9 +178,7 @@ export function createApp(deps = {}) {
 
       res.json({ narration, stateDelta });
     } catch (err) {
-      console.error(err);
-      const status = /API_KEY is not set/.test(err.message || "") ? 503 : 500;
-      res.status(status).json({ error: err.message || String(err) });
+      sendTurnError(res, err);
     }
   });
 
@@ -200,9 +208,7 @@ export function createApp(deps = {}) {
 
       res.json({ action });
     } catch (err) {
-      console.error(err);
-      const status = /API_KEY is not set/.test(err.message || "") ? 503 : 500;
-      res.status(status).json({ error: err.message || String(err) });
+      sendTurnError(res, err);
     }
   });
 

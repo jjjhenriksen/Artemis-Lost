@@ -7,6 +7,7 @@ import {
 } from "./prompts.js";
 import { getLlmConfig } from "./llmConfig.js";
 import { formatVaultContext, loadVaultContext } from "./vault.js";
+import { getProviderTimeoutMs } from "./providerTimeout.js";
 
 function extractOpenAiResponseText(payload) {
   if (typeof payload?.output_text === "string" && payload.output_text.trim()) {
@@ -47,9 +48,10 @@ function getProviderErrorMessage(provider, payload, status) {
   );
 }
 
-async function requestLlmText({ systemPrompt, userPrompt, signal, timeoutMs = 30000 }) {
+async function requestLlmText({ systemPrompt, userPrompt, signal, timeoutMs }) {
+  const boundedTimeoutMs = Math.min(getProviderTimeoutMs(), timeoutMs === undefined ? 120000 : getProviderTimeoutMs(timeoutMs));
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const timer = setTimeout(() => controller.abort(), boundedTimeoutMs);
   const requestSignal = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
   try {
     return await requestProviderText({ systemPrompt, userPrompt, signal: requestSignal });
@@ -58,6 +60,7 @@ async function requestLlmText({ systemPrompt, userPrompt, signal, timeoutMs = 30
       const timeoutError = new Error("The narration service timed out. Retry the turn.");
       timeoutError.status = 504;
       timeoutError.code = "TURN_TIMEOUT";
+      timeoutError.retryable = true;
       throw timeoutError;
     }
     throw error;
@@ -169,6 +172,8 @@ export async function requestAutonomousCrewAction({
   conversationHistory = [],
   currentTurn = 0,
   ownerId,
+  signal,
+  timeoutMs,
 }) {
   const vaultContext = formatVaultContext(
     await loadVaultContext({
@@ -179,6 +184,8 @@ export async function requestAutonomousCrewAction({
   );
 
   const text = await requestLlmText({
+    signal,
+    timeoutMs,
     systemPrompt: createAutonomousCrewSystemPrompt(),
     userPrompt: createAutonomousCrewUserPrompt({
       worldState,
