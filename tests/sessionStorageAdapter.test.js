@@ -3,6 +3,7 @@ import { mkdtemp, mkdir, readFile, writeFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { createMissionSession } from "../src/game/worldState.js";
+import { getPortableSlotRelativePath, getPortableOwnerRelativePath } from "../server/sessionFilePaths.js";
 
 const slots = [1, 2, 3].map((n) => ({ id: `slot-${n}`, label: `Slot ${n}` }));
 let root;
@@ -15,14 +16,17 @@ beforeEach(async () => {
   const { createSessionStorageAdapter } = await import("../server/sessionStorageAdapter.js");
   adapter = createSessionStorageAdapter(slots);
   await adapter.ensurePaths();
+  await mkdir(path.dirname(slotPath()), { recursive: true });
 });
 afterEach(async () => {
   vi.unstubAllEnvs();
   await rm(root, { recursive: true, force: true });
 });
 const payload = () => ({ ...createMissionSession(), lastUpdatedIso: new Date().toISOString() });
-const slotPath = () => path.join(root, "vault/dynamic/slots/player:slot-1.json");
-const indexPath = () => path.join(root, "vault/dynamic/slots/player-index.json");
+const slotPath = () => path.join(root, "vault/dynamic/slots", getPortableSlotRelativePath("player", "slot-1"));
+const legacySlotPath = () => path.join(root, "vault/dynamic/slots/player:slot-1.json");
+const indexPath = () => path.join(root, "vault/dynamic/slots", getPortableOwnerRelativePath("player"), "index.json");
+const legacyIndexPath = () => path.join(root, "vault/dynamic/slots/player-index.json");
 
 test("only a missing save is an empty slot", async () => {
   expect(await adapter.loadSession("slot-1", "player")).toBeNull();
@@ -127,4 +131,70 @@ test("filesystem parity: loading an older slot updates listing and subsequent de
   expect((await adapter.listSessions("other-player")).activeSlotId).toBe("slot-2");
   expect(await adapter.loadSession("slot-3", "player")).toBeNull();
   expect((await adapter.listSessions("player")).activeSlotId).toBe("slot-1");
+});
+
+
+test.skipIf(process.platform === "win32")("legacy saves remain readable and are preserved on portable replacement", async () => {
+  const legacy = { ...payload(), narration: "Legacy mission" };
+  const bytes = JSON.stringify(legacy);
+  await writeFile(legacySlotPath(), bytes);
+  expect((await adapter.listSessions("player")).slots[0].session.narration).toBe("Legacy mission");
+  expect((await adapter.loadSession("slot-1", "player")).session.narration).toBe("Legacy mission");
+  await adapter.saveSession("slot-1", { ...payload(), narration: "Portable replacement" }, "player");
+  expect(await readFile(legacySlotPath(), "utf8")).toBe(bytes);
+  expect((await adapter.loadSession("slot-1", "player")).session.narration).toBe("Portable replacement");
+  expect(await adapter.deleteSession("slot-1", "player")).toMatchObject({ deletedActiveSession: true });
+  await expect(readFile(legacySlotPath())).rejects.toMatchObject({ code: "ENOENT" });
+  await expect(readFile(slotPath())).rejects.toMatchObject({ code: "ENOENT" });
+  expect(await adapter.loadSession("slot-1", "player")).toBeNull();
+});
+
+test.skipIf(process.platform === "win32")("migration fallback preserves corrupt legacy data and never hides corrupt portable data", async () => {
+  await writeFile(legacySlotPath(), "broken legacy bytes");
+  await expect(adapter.loadSession("slot-1", "player")).rejects.toMatchObject({ code: "SAVE_CORRUPT" });
+  expect(await readFile(legacySlotPath(), "utf8")).toBe("broken legacy bytes");
+  await adapter.saveSession("slot-1", payload(), "player");
+  expect(await readFile(legacySlotPath(), "utf8")).toBe("broken legacy bytes");
+  await writeFile(legacySlotPath(), JSON.stringify(payload()));
+  await writeFile(slotPath(), "broken portable bytes");
+  await expect(adapter.loadSession("slot-1", "player")).rejects.toMatchObject({ code: "SAVE_CORRUPT" });
+  expect(await readFile(slotPath(), "utf8")).toBe("broken portable bytes");
+});
+
+test.skipIf(process.platform === "win32")("deleting a legacy-only slot cannot resurrect it on a later list", async () => {
+  await writeFile(legacySlotPath(), JSON.stringify(payload()));
+  await adapter.loadSession("slot-1", "player");
+  await adapter.deleteSession("slot-1", "player");
+  expect((await adapter.listSessions("player")).slots[0].session).toBeNull();
+});
+
+
+test.skipIf(process.platform === "win32")("legacy active index supports default resume and is preserved on migration", async () => {
+  const saved = payload();
+  const legacyIndex = JSON.stringify({ activeSlotId: "slot-1", slots: slots.map((s) => ({ ...s, lastUpdatedIso: s.id === "slot-1" ? saved.lastUpdatedIso : null })) });
+  await writeFile(legacySlotPath(), JSON.stringify(saved));
+  await writeFile(legacyIndexPath(), legacyIndex);
+  expect((await adapter.loadSession(undefined, "player")).slotId).toBe("slot-1");
+  expect(await readFile(legacyIndexPath(), "utf8")).toBe(legacyIndex);
+  expect(JSON.parse(await readFile(indexPath(), "utf8")).activeSlotId).toBe("slot-1");
+});
+
+test("long owner identities use bounded components for saves and active indexes", async () => {
+  const owner = "a".repeat(300);
+  await adapter.saveSession("slot-1", { ...payload(), narration: "Long owner" }, owner);
+  expect((await adapter.loadSession(undefined, owner)).session.narration).toBe("Long owner");
+  expect((await adapter.listSessions(owner)).activeSlotId).toBe("slot-1");
+  await adapter.deleteSession("slot-1", owner);
+  expect(await adapter.loadSession(undefined, owner)).toBeNull();
+});
+
+test.skipIf(process.platform === "win32")("corrupt legacy index blocks migration writes and preserves all original bytes", async () => {
+  const original = JSON.stringify(payload());
+  await writeFile(legacySlotPath(), original);
+  await writeFile(legacyIndexPath(), "broken legacy index");
+  await expect(adapter.saveSession("slot-1", payload(), "player")).rejects.toMatchObject({ code: "SAVE_CORRUPT" });
+  await expect(adapter.deleteSession("slot-1", "player")).rejects.toMatchObject({ code: "SAVE_CORRUPT" });
+  expect(await readFile(legacyIndexPath(), "utf8")).toBe("broken legacy index");
+  expect(await readFile(legacySlotPath(), "utf8")).toBe(original);
+  await expect(readFile(slotPath())).rejects.toMatchObject({ code: "ENOENT" });
 });

@@ -4,23 +4,33 @@ import postgres from "postgres";
 import { dynamicVaultRoot } from "./storagePaths.js";
 import { atomicWriteFile, withOwnerIndexLock } from "./atomicFile.js";
 import { assertKnownSlot, assertValidSession } from "./sessionValidation.js";
+import { DEFAULT_OWNER_ID, normalizeOwnerId, getPortableSlotRelativePath, getPortableOwnerRelativePath } from "./sessionFilePaths.js";
 
 const slotsRoot = path.join(dynamicVaultRoot, "slots");
 const DATABASE_URL = process.env.DATABASE_URL || "";
 const databaseEnabled = Boolean(DATABASE_URL);
-const DEFAULT_OWNER_ID = "local-player";
 
 let sqlClient = null;
 let schemaReadyPromise = null;
 
-function getSlotPath(slotId) {
-  return path.join(slotsRoot, `${slotId}.json`);
+function getOwnedSlotPath(ownerId, slotId) {
+  return path.join(slotsRoot, getPortableSlotRelativePath(ownerId, slotId));
 }
 
-function normalizeOwnerId(ownerId) {
-  if (!ownerId || typeof ownerId !== "string") return DEFAULT_OWNER_ID;
-  const normalized = ownerId.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
-  return normalized || DEFAULT_OWNER_ID;
+function getLegacySlotPath(ownerId, slotId) {
+  return path.join(slotsRoot, `${getOwnedSlotKey(ownerId, slotId)}.json`);
+}
+
+async function readOwnedSession(ownerId, slotId) {
+  const portable = await readJson(getOwnedSlotPath(ownerId, slotId), null, assertValidSession);
+  // Existing colon-named saves cannot exist as ordinary files on Windows.
+  // A corrupt/unreadable new file must never be hidden by an older fallback.
+  if (portable !== null || process.platform === "win32") return portable;
+  const legacyPath = getLegacySlotPath(ownerId, slotId);
+  // A component beyond 255 ASCII bytes could never be a legacy filename on
+  // supported ordinary filesystems; avoid probing an impossible legacy path.
+  if (path.basename(legacyPath).length > 255) return null;
+  return readJson(legacyPath, null, assertValidSession);
 }
 
 function getOwnedSlotKey(ownerId, slotId) {
@@ -28,6 +38,10 @@ function getOwnedSlotKey(ownerId, slotId) {
 }
 
 function getOwnerIndexPath(ownerId) {
+  return path.join(slotsRoot, getPortableOwnerRelativePath(ownerId), "index.json");
+}
+
+function getLegacyOwnerIndexPath(ownerId) {
   return path.join(slotsRoot, `${normalizeOwnerId(ownerId)}-index.json`);
 }
 
@@ -126,7 +140,7 @@ function normalizePayload(payload, lastUpdatedIso) {
 
 async function readSlotsIndex(saveSlots, ownerId) {
   const ownerIndexPath = getOwnerIndexPath(ownerId);
-  return (await readJson(ownerIndexPath, null, (index) => {
+  const validate = (index) => {
     if (!index || !Array.isArray(index.slots)) throw new Error("Invalid slot index");
     if (index.activeSlotId !== null) assertKnownSlot(index.activeSlotId);
     for (const slot of saveSlots) {
@@ -136,11 +150,17 @@ async function readSlotsIndex(saveSlots, ownerId) {
         throw new Error("Invalid slot metadata");
       }
     }
-  })) || buildEmptyIndex(saveSlots);
+  };
+  const portable = await readJson(ownerIndexPath, null, validate);
+  if (portable !== null) return portable;
+  const legacyPath = getLegacyOwnerIndexPath(ownerId);
+  return (path.basename(legacyPath).length <= 255 ? await readJson(legacyPath, null, validate) : null)
+    || buildEmptyIndex(saveSlots);
 }
 
 async function writeSlotsIndex(index, ownerId) {
   const ownerIndexPath = getOwnerIndexPath(ownerId);
+  await mkdir(path.dirname(ownerIndexPath), { recursive: true });
   await atomicWriteFile(ownerIndexPath, `${JSON.stringify(index, null, 2)}\n`);
 }
 
@@ -206,7 +226,7 @@ export function createSessionStorageAdapter(saveSlots) {
           saveSlots.map(async ({ id, label }) => ({
             id,
             label,
-            session: await readJson(getSlotPath(getOwnedSlotKey(normalizedOwnerId, id)), null, assertValidSession),
+            session: await readOwnedSession(normalizedOwnerId, id),
           }))
         );
 
@@ -249,7 +269,7 @@ export function createSessionStorageAdapter(saveSlots) {
         if (!resolvedSlotId) return null;
         assertKnownSlot(resolvedSlotId);
 
-        const session = await readJson(getSlotPath(getOwnedSlotKey(normalizedOwnerId, resolvedSlotId)), null, assertValidSession);
+        const session = await readOwnedSession(normalizedOwnerId, resolvedSlotId);
         if (!session) return null;
 
         index.activeSlotId = resolvedSlotId;
@@ -288,7 +308,9 @@ export function createSessionStorageAdapter(saveSlots) {
 
       return withFilesystemOwner(normalizedOwnerId, async () => {
         const index = await readSlotsIndex(saveSlots, normalizedOwnerId);
-        await atomicWriteFile(getSlotPath(getOwnedSlotKey(normalizedOwnerId, slotId)), `${JSON.stringify(payload, null, 2)}\n`);
+        const slotPath = getOwnedSlotPath(normalizedOwnerId, slotId);
+        await mkdir(path.dirname(slotPath), { recursive: true });
+        await atomicWriteFile(slotPath, `${JSON.stringify(payload, null, 2)}\n`);
         index.activeSlotId = slotId;
         index.slots = saveSlots.map(({ id, label }) => ({
           id,
@@ -325,7 +347,11 @@ export function createSessionStorageAdapter(saveSlots) {
 
       return withFilesystemOwner(normalizedOwnerId, async () => {
         const index = await readSlotsIndex(saveSlots, normalizedOwnerId);
-        await rm(getSlotPath(getOwnedSlotKey(normalizedOwnerId, slotId)), { force: true });
+        await rm(getOwnedSlotPath(normalizedOwnerId, slotId), { force: true });
+        // Explicit deletion removes the older representation too, so fallback
+        // cannot resurrect a slot after deleting its portable replacement.
+        const legacyPath = getLegacySlotPath(normalizedOwnerId, slotId);
+        if (process.platform !== "win32" && path.basename(legacyPath).length <= 255) await rm(legacyPath, { force: true });
         const deletedActiveSession = index.activeSlotId === slotId;
         if (deletedActiveSession) {
           index.activeSlotId = null;

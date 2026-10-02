@@ -1,3 +1,4 @@
+import { getPortableSlotRelativePath } from "../server/sessionFilePaths.js";
 // @vitest-environment node
 import request from "supertest";
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
@@ -61,7 +62,7 @@ test("distinguishes a missing save from corrupt save responses without exposing 
   const absent = await request(app).get("/api/session/slot-3").set("x-player-id", "player");
   expect(absent.status).toBe(200);
   expect(absent.body).toEqual({ session: null });
-  const file = path.join(root, "vault/dynamic/slots/player:slot-1.json");
+  const file = path.join(root, "vault/dynamic/slots", getPortableSlotRelativePath("player", "slot-1"));
   await writeFile(file, "broken");
   vi.spyOn(console, "error").mockImplementation(() => {});
   const response = await request(app).get("/api/session/slot-1").set("x-player-id", "player");
