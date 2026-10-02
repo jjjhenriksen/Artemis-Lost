@@ -133,6 +133,7 @@ export async function requestDmTurn({
   conversationHistory = [],
   currentTurn = 0,
   sharedRoom = false,
+  ownerId,
   signal,
   timeoutMs,
 }) {
@@ -141,6 +142,7 @@ export async function requestDmTurn({
       worldState,
       activeCrew,
       sharedRoom,
+      ownerId,
     })
   );
 
@@ -166,11 +168,13 @@ export async function requestAutonomousCrewAction({
   activeCrew,
   conversationHistory = [],
   currentTurn = 0,
+  ownerId,
 }) {
   const vaultContext = formatVaultContext(
     await loadVaultContext({
       worldState,
       activeCrew,
+      ownerId,
     })
   );
 

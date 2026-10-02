@@ -1,13 +1,23 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { atomicWriteFile } from "./atomicFile.js";
+import { getPortableOwnerRelativePath, normalizeOwnerId as normalizeSoloOwner } from "./sessionFilePaths.js";
 import { dynamicVaultRoot } from "./storagePaths.js";
 
-const overridesRoot = path.join(dynamicVaultRoot, "overrides");
-const sessionJsonPath = path.join(dynamicVaultRoot, "session.json");
-const sessionStateMdPath = path.join(dynamicVaultRoot, "session-state.md");
-const logMdPath = path.join(dynamicVaultRoot, "log.md");
-const npcOverridePath = path.join(overridesRoot, "npc-override.md");
-const locationDeltaPath = path.join(overridesRoot, "location-delta.md");
+// Match the existing save partition. Legacy singleton files are deliberately
+// preserved but never imported: their last writer cannot be identified safely.
+export { normalizeSoloOwner };
+export function getOwnerMirrorPaths(ownerId) {
+  const root = path.join(dynamicVaultRoot, "players", getPortableOwnerRelativePath(normalizeSoloOwner(ownerId)));
+  const overridesRoot = path.join(root, "overrides");
+  return { root, overridesRoot,
+    sessionJsonPath: path.join(root, "session.json"),
+    sessionStateMdPath: path.join(root, "session-state.md"),
+    logMdPath: path.join(root, "log.md"),
+    npcOverridePath: path.join(overridesRoot, "npc-override.md"),
+    locationDeltaPath: path.join(overridesRoot, "location-delta.md"),
+  };
+}
 
 function joinLines(lines) {
   return lines.join("\n");
@@ -104,15 +114,13 @@ function buildLogMarkdown(conversationHistory = [], slotId) {
 }
 
 async function writeIfMissing(targetPath, content) {
-  try {
-    await readFile(targetPath, "utf8");
-  } catch {
-    await writeFile(targetPath, content, "utf8");
-  }
+  try { await writeFile(targetPath, content, { encoding: "utf8", flag: "wx", mode: 0o600 }); }
+  catch (error) { if (error.code !== "EEXIST") throw error; }
 }
 
-export async function ensureSessionMirrorPaths() {
-  await mkdir(dynamicVaultRoot, { recursive: true });
+export async function ensureSessionMirrorPaths(ownerId) {
+  const { root, overridesRoot, npcOverridePath, locationDeltaPath } = getOwnerMirrorPaths(ownerId);
+  await mkdir(root, { recursive: true, mode: 0o700 });
   await mkdir(overridesRoot, { recursive: true });
 
   await Promise.all([
@@ -127,23 +135,23 @@ export async function ensureSessionMirrorPaths() {
   ]);
 }
 
-export async function syncActiveMirror(slotId, payload, withSlotMetadata) {
+export async function syncActiveMirror(slotId, payload, withSlotMetadata, ownerId) {
+  const { sessionJsonPath, sessionStateMdPath, logMdPath } = getOwnerMirrorPaths(ownerId);
   if (!payload?.worldState || !slotId) {
     await Promise.all([
-      writeFile(sessionJsonPath, "null\n", "utf8"),
-      writeFile(sessionStateMdPath, "# Session State\n\nNo active session loaded.\n", "utf8"),
-      writeFile(logMdPath, "# Session Log\n\nNo active session loaded.\n", "utf8"),
+      atomicWriteFile(sessionJsonPath, "null\n"),
+      atomicWriteFile(sessionStateMdPath, "# Session State\n\nNo active session loaded.\n"),
+      atomicWriteFile(logMdPath, "# Session Log\n\nNo active session loaded.\n"),
     ]);
     return;
   }
 
   await Promise.all([
-    writeFile(
+    atomicWriteFile(
       sessionJsonPath,
-      `${JSON.stringify(withSlotMetadata(slotId, payload), null, 2)}\n`,
-      "utf8"
+      `${JSON.stringify(withSlotMetadata(slotId, payload), null, 2)}\n`
     ),
-    writeFile(
+    atomicWriteFile(
       sessionStateMdPath,
       buildSessionStateMarkdown({
         worldState: payload.worldState,
@@ -151,9 +159,8 @@ export async function syncActiveMirror(slotId, payload, withSlotMetadata) {
         narration: payload.narration,
         conversationHistory: payload.conversationHistory ?? [],
         slotId,
-      }),
-      "utf8"
+      })
     ),
-    writeFile(logMdPath, buildLogMarkdown(payload.conversationHistory ?? [], slotId), "utf8"),
+    atomicWriteFile(logMdPath, buildLogMarkdown(payload.conversationHistory ?? [], slotId)),
   ]);
 }

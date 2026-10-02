@@ -1,12 +1,16 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { dynamicVaultRoot, staticVaultRoot } from "./storagePaths.js";
+import { staticVaultRoot } from "./storagePaths.js";
+import { getOwnerMirrorPaths } from "./sessionMirrors.js";
 
 async function safeRead(filePath) {
   try {
     return await readFile(filePath, "utf8");
-  } catch {
-    return "";
+  } catch (error) {
+    if (error.code === "ENOENT") return "";
+    throw Object.assign(new Error("Mission context could not be read. Check storage access and retry."), {
+      status: 503, code: "CONTEXT_UNAVAILABLE",
+    });
   }
 }
 
@@ -25,7 +29,8 @@ function trimToSection(label, content) {
 
 async function readStaticContext(worldState, activeCrew) {
   const locationSlug = slugify(worldState?.environment?.location);
-  const crewId = activeCrew?.id;
+  const crewId = typeof activeCrew?.id === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(activeCrew.id)
+    ? activeCrew.id : "";
 
   const [locationFile, crewFile, missionBrief, anomaly] = await Promise.all([
     locationSlug
@@ -44,15 +49,16 @@ async function readStaticContext(worldState, activeCrew) {
   };
 }
 
-export async function loadVaultContext({ worldState, activeCrew, sharedRoom = false }) {
+export async function loadVaultContext({ worldState, activeCrew, sharedRoom = false, ownerId }) {
   // Shared missions never read the singleton solo session, log or override files.
   if (sharedRoom) return readStaticContext(worldState, activeCrew);
+  const paths = getOwnerMirrorPaths(ownerId);
   const [staticContext, sessionState, log, npcOverride, locationDelta] = await Promise.all([
     readStaticContext(worldState, activeCrew),
-    safeRead(path.join(dynamicVaultRoot, "session-state.md")),
-    safeRead(path.join(dynamicVaultRoot, "log.md")),
-    safeRead(path.join(dynamicVaultRoot, "overrides", "npc-override.md")),
-    safeRead(path.join(dynamicVaultRoot, "overrides", "location-delta.md")),
+    safeRead(paths.sessionStateMdPath),
+    safeRead(paths.logMdPath),
+    safeRead(paths.npcOverridePath),
+    safeRead(paths.locationDeltaPath),
   ]);
 
   return {
