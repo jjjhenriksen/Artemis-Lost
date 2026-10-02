@@ -80,6 +80,29 @@ describe.skipIf(!testUrl)("real PostgreSQL session transactions", () => {
     expect((await adapter.loadSession("slot-1", "owner-b")).session.narration).toBe("Other owner");
   });
 
+  test("loading an older slot updates listing and subsequent default load for only its owner", async () => {
+    await adapter.saveSession("slot-1", payload("Older"), "owner-a");
+    await adapter.saveSession("slot-2", payload("Newer"), "owner-a");
+    await adapter.saveSession("slot-2", payload("Other player"), "owner-b");
+    expect((await adapter.loadSession("slot-1", "owner-a")).session.narration).toBe("Older");
+    expect((await adapter.listSessions("owner-a")).activeSlotId).toBe("slot-1");
+    expect(await adapter.loadSession(undefined, "owner-a")).toMatchObject({ slotId: "slot-1", session: { narration: "Older" } });
+    expect((await adapter.listSessions("owner-b")).activeSlotId).toBe("slot-2");
+    expect(await adapter.loadSession("slot-3", "owner-a")).toBeNull();
+    expect((await adapter.listSessions("owner-a")).activeSlotId).toBe("slot-1");
+  });
+
+  test("failed activation cannot acknowledge a loaded slot or replace the active pointer", async () => {
+    await adapter.saveSession("slot-1", payload("Older"), "owner-a");
+    await adapter.saveSession("slot-2", payload("Active"), "owner-a");
+    const before = await snapshot();
+    await control`update fault_control set enabled = true`;
+    await expect(adapter.loadSession("slot-1", "owner-a")).rejects.toThrow("injected active-slot write failure");
+    expect(await snapshot()).toEqual(before);
+    await control`update fault_control set enabled = false`;
+    expect((await adapter.loadSession(undefined, "owner-a")).slotId).toBe("slot-2");
+  });
+
   test("rolls back an existing slot replacement when metadata fails", async () => {
     await adapter.saveSession("slot-1", payload(), "owner-a");
     await adapter.saveSession("slot-2", payload("Active"), "owner-a");
