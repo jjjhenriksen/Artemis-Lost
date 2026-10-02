@@ -1,4 +1,5 @@
 const PLAYER_STORAGE_KEY = "artemis-lost-player-id";
+let memoryPlayerId;
 
 function createPlayerId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -11,13 +12,23 @@ function createPlayerId() {
 export function getPlayerId() {
   if (typeof window === "undefined") return "local-player";
 
-  let playerId = window.localStorage.getItem(PLAYER_STORAGE_KEY);
-  if (!playerId) {
-    playerId = createPlayerId();
-    window.localStorage.setItem(PLAYER_STORAGE_KEY, playerId);
+  try {
+    const storedPlayerId = window.localStorage.getItem(PLAYER_STORAGE_KEY);
+    if (storedPlayerId) {
+      memoryPlayerId = storedPlayerId;
+      return storedPlayerId;
+    }
+  } catch {
+    // Privacy settings can deny both the storage getter and individual reads.
   }
 
-  return playerId;
+  memoryPlayerId ||= createPlayerId();
+  try {
+    window.localStorage.setItem(PLAYER_STORAGE_KEY, memoryPlayerId);
+  } catch {
+    // Keep one identity for this tab when writes are denied or quota is full.
+  }
+  return memoryPlayerId;
 }
 
 function createSessionHeaders(extraHeaders = {}) {
