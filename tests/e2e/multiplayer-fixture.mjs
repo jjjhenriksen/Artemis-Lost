@@ -10,6 +10,8 @@ const app = createApp({
   multiplayerRepository: createFileRoomRepository({ directory }),
   multiplayerRequestTurn: async ({ action }) => {
     await appendFile(`${directory}/provider-calls.ndjson`, JSON.stringify({ action }) + "\n");
+    // Expose the difference between an invoked provider and a committed turn.
+    await new Promise((resolve) => setTimeout(resolve, 150));
     return { narration: "Fixture mission control acknowledges the crew. All players see this shared turn.", stateDelta: {} };
   },
 });

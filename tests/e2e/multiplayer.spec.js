@@ -114,8 +114,12 @@ test("two real clients share a mission, recover a lost response once, run bots a
     await guest.getByRole("button", { name: "Send action", exact: true }).click();
     await expect.poll(calls).toBe(2);
     await expect(host.getByRole("button", { name: "Advance AI turn", exact: true })).toBeEnabled();
+    const beforeBot = await roomState(host, a);
     await host.getByRole("button", { name: "Advance AI turn", exact: true }).click();
     await expect.poll(calls).toBe(3);
+    // A provider call is observed before its durable commit. Wait for the
+    // acknowledged revision before selecting the next console.
+    await expect.poll(async () => (await roomState(host, a)).revision).toBe(beforeBot.revision + 1);
     // Existing role follow-through can hand control back to a human after a bot.
     const botResolved = await roomState(host, a);
     const nextActor = botResolved.session.worldState.crew[botResolved.session.turn].id;
