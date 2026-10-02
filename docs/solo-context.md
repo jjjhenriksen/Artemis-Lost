@@ -13,3 +13,16 @@ Existing singleton files directly under `vault/dynamic/` are preserved and ignor
 Their owner cannot be recovered safely. Load or save an existing owner-scoped slot
 to regenerate its new mirrors. Move any legacy overrides manually only after
 identifying the correct owner; no automatic migration assumes who wrote them.
+
+Vault prompt context has a default 4,000-byte maximum per section and
+16,000-byte total maximum, including headings and truncation notices.
+`VAULT_SECTION_MAX_BYTES` accepts 256–65,536 and `VAULT_TOTAL_MAX_BYTES` accepts
+2,048–262,144 integer UTF-8 byte counts. Each section receives a fair share
+of the total, so long static lore cannot crowd out the latest log. Truncated log
+context keeps its newest entries and explicitly tells the model that older
+material was omitted. Other sections retain their beginning with a truncation
+notice. These limits apply to vault context, independently of world state and
+the prompt builder's recent conversation history.
+
+Stored saves and mirrored logs retain their full content. Budgeting happens when
+formatting model context; it never rewrites or truncates persisted history.
