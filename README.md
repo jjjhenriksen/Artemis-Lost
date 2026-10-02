@@ -3,6 +3,7 @@
 Artemis Lost is a full-stack sci-fi command game where an OpenAI-powered mission director reacts to a stranded lunar crew in crisis. Players assemble a crew, launch into the incident, and steer the story through role-based decisions, autonomous crew roles, evolving handoffs, and end-of-mission resolution.
 
 The app now includes:
+- private co-op rooms with synchronized crew turns, chat and reconnect
 - a main menu with save-slot support
 - player-first character creation for a four-role crew
 - a launch sequence between setup and mission start
@@ -14,6 +15,8 @@ The app now includes:
 - durable save support through Postgres
 - vault-backed prompt context
 - structured state-delta updates from the DM
+
+See [Private co-op missions](docs/multiplayer.md) for invitations, server storage, deployment boundaries and repeatable browser proof.
 
 ## Stack
 

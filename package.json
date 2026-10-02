@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:multiplayer:e2e": "playwright test"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
@@ -22,6 +23,8 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@vitejs/plugin-react": "^4.3.4",
