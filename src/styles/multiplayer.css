@@ -1,4 +1,4 @@
-.coop-shell { width: min(100%, 76rem); margin: 0 auto; padding: 1rem; color: var(--text-body); font-family: var(--font-ui); font-size: 1rem; line-height: 1.5; }
+.coop-shell { width: min(100%, 76rem); margin: 0 auto; padding: 1rem; color: var(--text-body); font-family: var(--font-ui); font-size: 1rem; line-height: 1.5; overflow-wrap: anywhere; }
 .coop-shell *, .coop-shell *::before, .coop-shell *::after { box-sizing: border-box; }
 .coop-shell h1, .coop-shell h2, .coop-shell h3 { color: var(--text-primary); line-height: 1.25; margin: 0 0 1rem; }
 .coop-shell h1 { font-size: clamp(1.5rem, 4vw, 2.5rem); }
@@ -33,6 +33,7 @@
 .coop-narration { white-space: pre-wrap; max-width: 70ch; }
 .coop-telemetry { font-variant-numeric: tabular-nums; color: var(--text-muted); }
 .coop-mission .role-view { margin: 1rem 0; }
-.coop-mission .role-view__key, .coop-mission .role-view__value, .coop-mission .role-view__console-copy { font-size: .875rem; overflow-wrap: anywhere; }
+.coop-mission .role-view__key, .coop-mission .role-view__value, .coop-mission .role-view__console-copy, .coop-mission .role-view__console-title { font-size: .875rem; overflow-wrap: anywhere; }
+.coop-mission .role-view__key { color: var(--text-muted); }
 @media (min-width: 60rem) { .coop-shell { padding: 2rem; } .coop-grid { grid-template-columns: minmax(14rem, 1fr) minmax(0, 2fr); } .coop-mission { grid-row: span 2; } }
 @media (prefers-reduced-motion: reduce) { .coop-shell *, .coop-shell *::before, .coop-shell *::after { animation: none !important; transition: none !important; } }
