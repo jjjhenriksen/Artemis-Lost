@@ -14,6 +14,8 @@ import {
 } from "./sessionStore.js";
 import { assertKnownSlot, assertValidSession } from "./sessionValidation.js";
 import { dynamicVaultRoot, storageMode } from "./storagePaths.js";
+import { createMultiplayerRepository } from "./multiplayerRepository.js";
+import { createMultiplayerRouter } from "./multiplayerRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,11 +43,26 @@ export function createApp(deps = {}) {
     loadSessionImpl = loadSession,
     saveSessionImpl = saveSession,
     deleteSessionImpl = deleteSession,
+    multiplayerRepository = createMultiplayerRepository(),
+    multiplayerRequestTurn = (input) => requestDmTurn({ ...input, sharedRoom: true }),
+    multiplayerLimits,
+    multiplayerNow,
   } = deps;
 
   const app = express();
   app.disable("x-powered-by");
   app.use(express.json({ limit: "512kb" }));
+  app.use("/api/multiplayer", (error, _req, res, _next) => {
+    const tooLarge = error.type === "entity.too.large";
+    res.set("Cache-Control", "no-store").status(tooLarge ? 413 : 400).json({
+      error: tooLarge ? "The room request is too large." : "Send a valid JSON object.",
+      code: tooLarge ? "REQUEST_TOO_LARGE" : "INVALID_JSON",
+    });
+  });
+  app.use("/api/multiplayer", createMultiplayerRouter({
+    repository: multiplayerRepository, requestTurn: multiplayerRequestTurn,
+    limits: multiplayerLimits, now: multiplayerNow,
+  }));
 
   app.get("/healthz", (_req, res) => {
     res.status(200).json({
