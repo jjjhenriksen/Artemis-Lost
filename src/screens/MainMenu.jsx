@@ -12,6 +12,8 @@ export default function MainMenu({
   activeSession,
   activeSlotId,
   slots,
+  loadError,
+  onRetryLoad,
   onContinue,
   onDeleteSlot,
   onLoadSlot,
@@ -55,6 +57,13 @@ export default function MainMenu({
               {continueSlot.worldState.mission.id} // {continueSlot.worldState.mission.name}
             </div>
             <div className="save-card__body">{formatSaveSummary(continueSlot)}</div>
+          </div>
+        ) : null}
+
+        {loadError ? (
+          <div className="continue-card menu-load-error">
+            <p role="alert">{loadError}</p>
+            <button className="menu-button" onClick={onRetryLoad}>Retry saved missions</button>
           </div>
         ) : null}
 

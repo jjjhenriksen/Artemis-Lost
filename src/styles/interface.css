@@ -3471,3 +3471,13 @@
   border-radius: 999px;
 }
 
+
+.menu-load-error {
+  display: grid;
+  gap: 12px;
+}
+
+.menu-load-error .menu-button {
+  min-height: 44px;
+  justify-self: start;
+}
