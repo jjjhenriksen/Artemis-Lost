@@ -81,6 +81,8 @@ function createResolutionPreviewSession(status) {
 export default function App() {
   const [screen, setScreen] = useState("loading");
   const [slots, setSlots] = useState([]);
+  const [menuError, setMenuError] = useState("");
+  const [menuAttempt, setMenuAttempt] = useState(0);
   const [activeSession, setActiveSession] = useState(null);
   const [activeSlotId, setActiveSlotId] = useState(null);
   const [pendingSlotId, setPendingSlotId] = useState("slot-1");
@@ -104,15 +106,19 @@ export default function App() {
     let cancelled = false;
 
     async function hydrateMenu() {
-      const response = await listSessions();
-      if (cancelled || response?.error) {
-        setScreen("menu");
-        return;
+      try {
+        const response = await listSessions();
+        if (cancelled) return;
+        if (response?.error) throw new Error(response.error);
+        setSlots(response.slots || []);
+        setActiveSlotId(response.activeSlotId || null);
+        setMenuError("");
+      } catch {
+        if (cancelled) return;
+        setMenuError("Saved missions could not be loaded. Check your connection and try again.");
+      } finally {
+        if (!cancelled) setScreen("menu");
       }
-
-      setSlots(response.slots || []);
-      setActiveSlotId(response.activeSlotId || null);
-      setScreen("menu");
     }
 
     hydrateMenu();
@@ -120,7 +126,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [resolutionPreviewMode]);
+  }, [resolutionPreviewMode, menuAttempt]);
 
   useEffect(() => {
     const previewMode = getResolutionPreviewMode();
@@ -277,6 +283,12 @@ export default function App() {
       activeSession={activeSession}
       activeSlotId={activeSlotId}
       slots={slots}
+      loadError={menuError}
+      onRetryLoad={() => {
+        setMenuError("");
+        setScreen("loading");
+        setMenuAttempt((attempt) => attempt + 1);
+      }}
       themeId={themeId}
       themes={THEMES}
       onThemeChange={setThemeId}
